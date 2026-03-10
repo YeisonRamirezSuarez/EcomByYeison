@@ -1,11 +1,14 @@
 "use client";
-import { headerData } from "@/constants/data";
+import { getHeaderData } from "@/constants/data";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import React from "react";
+import useStore from "@/store";
 
 const HeaderMenu = () => {
   const pathname = usePathname();
+  const { locale } = useStore();
+  const headerData = getHeaderData(locale);
 
   return (
     <div className="hidden md:inline-flex w-1/3 items-center justify-center gap-7 text-sm capitalize font-semibold text-lightColor">

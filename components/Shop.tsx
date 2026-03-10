@@ -2,7 +2,6 @@
 import { BRANDS_QUERYResult, Category, Product } from "@/sanity.types";
 import React, { useEffect, useState } from "react";
 import Container from "./Container";
-import Title from "./Title";
 import CategoryList from "./shop/CategoryList";
 import { useSearchParams } from "next/navigation";
 import BrandList from "./shop/BrandList";
@@ -11,12 +10,15 @@ import { client } from "@/sanity/lib/client";
 import { Loader2 } from "lucide-react";
 import NoProductAvailable from "./NoProductAvailable";
 import ProductCard from "./ProductCard";
+import useStore from "@/store";
+import { t } from "@/lib/i18n";
 
 interface Props {
   categories: Category[];
   brands: BRANDS_QUERYResult;
 }
 const Shop = ({ categories, brands }: Props) => {
+  const { locale } = useStore();
   const searchParams = useSearchParams();
   const brandParams = searchParams?.get("brand");
   const categoryParams = searchParams?.get("category");
@@ -70,9 +72,7 @@ const Shop = ({ categories, brands }: Props) => {
       <Container className="mt-5">
         <div className="sticky top-0 z-10 mb-5">
           <div className="flex items-center justify-between">
-            <Title className="text-lg uppercase tracking-wide">
-              Get the products as your needs
-            </Title>
+            <h1 className="text-3xl font-bold text-darkColor">{t(locale, "shopHeadline")}</h1>
             {(selectedCategory !== null ||
               selectedBrand !== null ||
               selectedPrice !== null) && (
@@ -82,9 +82,9 @@ const Shop = ({ categories, brands }: Props) => {
                   setSelectedBrand(null);
                   setSelectedPrice(null);
                 }}
-                className="text-shop_dark_green underline text-sm mt-2 font-medium hover:text-darkRed hoverEffect"
+                className="text-shop_dark_green underline text-sm font-medium hover:text-darkRed hoverEffect"
               >
-                Reset Filters
+                {t(locale, "shopResetFilters")}
               </button>
             )}
           </div>
@@ -112,7 +112,7 @@ const Shop = ({ categories, brands }: Props) => {
                 <div className="p-20 flex flex-col gap-2 items-center justify-center bg-white">
                   <Loader2 className="w-10 h-10 text-shop_dark_green animate-spin" />
                   <p className="font-semibold tracking-wide text-base">
-                    Product is loading . . .
+                    {t(locale, "shopLoadingProducts")}
                   </p>
                 </div>
               ) : products?.length > 0 ? (

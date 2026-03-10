@@ -3,6 +3,8 @@ import React from "react";
 import Title from "../Title";
 import { RadioGroup, RadioGroupItem } from "../ui/radio-group";
 import { Label } from "../ui/label";
+import useStore from "@/store";
+import { t } from "@/lib/i18n";
 
 interface Props {
   brands: BRANDS_QUERYResult;
@@ -11,9 +13,11 @@ interface Props {
 }
 
 const BrandList = ({ brands, selectedBrand, setSelectedBrand }: Props) => {
+  const { locale } = useStore();
+
   return (
     <div className="w-full bg-white p-5">
-      <Title className="text-base font-black">Brands</Title>
+      <Title className="text-base font-black">{t(locale, "shopBrands")}</Title>
       <RadioGroup value={selectedBrand || ""} className="mt-2 space-y-1">
         {brands?.map((brand) => (
           <div
@@ -39,7 +43,7 @@ const BrandList = ({ brands, selectedBrand, setSelectedBrand }: Props) => {
             onClick={() => setSelectedBrand(null)}
             className="text-sm font-medium mt-2 underline underline-offset-2 decoration-[1px] hover:text-shop_dark_green hoverEffect text-left"
           >
-            Reset selection
+            {t(locale, "shopResetSelection")}
           </button>
         )}
       </RadioGroup>

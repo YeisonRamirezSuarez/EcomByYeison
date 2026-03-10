@@ -7,18 +7,20 @@ import { BookOpen, Calendar, ArrowRight } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import React from "react";
-
-dayjs.locale("es");
+import { getServerLocale } from "@/lib/locale";
+import { t } from "@/lib/i18n";
 
 const BlogPage = async () => {
+  const locale = await getServerLocale();
+  dayjs.locale(locale === "es" ? "es" : "en");
   const blogs = await getAllBlogs(20);
 
   return (
     <div className="py-10">
       <Container>
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-darkColor">Blog</h1>
-          <p className="text-gray-500 mt-1">Noticias, reviews y consejos del mundo tech</p>
+          <h1 className="text-3xl font-bold text-darkColor">{t(locale, "blogTitle")}</h1>
+          <p className="text-gray-500 mt-1">{t(locale, "blogSubtitle")}</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -49,14 +51,14 @@ const BlogPage = async () => {
               </div>
 
               <div className="p-5 flex flex-col gap-2 flex-1">
-                <p className="text-[10px] font-bold text-shop_dark_green uppercase tracking-wider">Blog</p>
+                <p className="text-[10px] font-bold text-shop_dark_green uppercase tracking-wider">{t(locale, "blogLabel")}</p>
                 <h2 className="font-bold text-darkColor text-base leading-snug line-clamp-2 group-hover:text-shop_dark_green hoverEffect">
                   {blog?.title}
                 </h2>
                 <p className="flex items-center gap-1 text-xs text-gray-400 mt-auto pt-2">
                   <Calendar size={12} />
-                  {dayjs(blog.publishedAt).format("D [de] MMMM [de] YYYY")}
-                  <span className="ml-auto flex items-center gap-1">Leer mas <ArrowRight size={11} /></span>
+                  {dayjs(blog.publishedAt).format(locale === "es" ? "D [de] MMMM [de] YYYY" : "MMMM D, YYYY")}
+                  <span className="ml-auto flex items-center gap-1">{t(locale, "blogReadMore")} <ArrowRight size={11} /></span>
                 </p>
               </div>
             </Link>

@@ -2,6 +2,7 @@ import "./globals.css";
 import { Toaster } from "react-hot-toast";
 import { Poppins } from "next/font/google";
 import ThemeInitializer from "@/components/ThemeInitializer";
+import { getServerLocale } from "@/lib/locale";
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -10,13 +11,16 @@ const poppins = Poppins({
   display: "swap",
 });
 
-const RootLayout = ({ children }: { children: React.ReactNode }) => {
+const RootLayout = async ({ children }: { children: React.ReactNode }) => {
+  const locale = await getServerLocale();
   const themeBootScript = `
     (() => {
       try {
         const raw = window.localStorage.getItem('cart-store');
         const parsed = raw ? JSON.parse(raw) : null;
         const themeName = parsed?.state?.themeName || 'emerald';
+        const locale = parsed?.state?.locale || 'es';
+        document.documentElement.lang = locale === 'en' ? 'en' : 'es';
 
         const themes = {
           emerald: {
@@ -102,7 +106,7 @@ const RootLayout = ({ children }: { children: React.ReactNode }) => {
   `;
 
   return (
-    <html lang="es" className={poppins.variable}>
+    <html lang={locale} className={poppins.variable}>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeBootScript }} />
       </head>

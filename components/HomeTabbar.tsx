@@ -1,12 +1,17 @@
 "use client";
-import { productType } from "@/constants/data";
+import { getProductType } from "@/constants/data";
+import { t } from "@/lib/i18n";
 import Link from "next/link";
+import useStore from "@/store";
 interface Props {
   selectedTab: string;
   onTabSelect: (tab: string) => void;
 }
 
 const HomeTabbar = ({ selectedTab, onTabSelect }: Props) => {
+  const { locale } = useStore();
+  const productType = getProductType(locale);
+
   return (
     <div className="flex items-center flex-wrap gap-5 justify-between">
       <div className="flex items-center gap-1.5 text-sm font-semibold">
@@ -26,7 +31,7 @@ const HomeTabbar = ({ selectedTab, onTabSelect }: Props) => {
         href={"/shop"}
         className="border border-darkColor px-4 py-1 rounded-full hover:bg-shop_light_green hover:text-white hover:border-shop_light_green hoverEffect"
       >
-        See all
+        {locale === "en" ? "See all" : "Ver todo"}
       </Link>
     </div>
   );

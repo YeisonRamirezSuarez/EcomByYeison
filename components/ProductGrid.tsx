@@ -8,8 +8,9 @@ import NoProductAvailable from "./NoProductAvailable";
 import { Loader2 } from "lucide-react";
 import Container from "./Container";
 import HomeTabbar from "./HomeTabbar";
-import { productType } from "@/constants/data";
+import { getProductType } from "@/constants/data";
 import { Product } from "@/sanity.types";
+import useStore from "@/store";
 
 interface ProductGridProps {
   initialProducts?: Product[];
@@ -17,6 +18,8 @@ interface ProductGridProps {
 }
 
 const ProductGrid = ({ initialProducts = [], initialTab }: ProductGridProps) => {
+  const { locale } = useStore();
+  const productType = getProductType(locale);
   const defaultTab = initialTab || productType[0]?.title || "";
   const [products, setProducts] = useState<Product[]>(initialProducts);
   const [loading, setLoading] = useState(false);
@@ -49,7 +52,7 @@ const ProductGrid = ({ initialProducts = [], initialTab }: ProductGridProps) => 
         <div className="flex flex-col items-center justify-center py-10 min-h-80 space-y-4 text-center bg-gray-100 rounded-lg w-full mt-10">
           <motion.div className="flex items-center space-x-2 text-blue-600">
             <Loader2 className="w-5 h-5 animate-spin" />
-            <span>Product is loading...</span>
+            <span>{locale === "en" ? "Products are loading..." : "Cargando productos..."}</span>
           </motion.div>
         </div>
       ) : products?.length ? (

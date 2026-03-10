@@ -5,11 +5,14 @@ import LatestBlog from "@/components/LatestBlog";
 import ProductGrid from "@/components/ProductGrid";
 import ShopByBrands from "@/components/ShopByBrands";
 import { getCategories, getProductsByVariant } from "@/sanity/queries";
-import { productType } from "@/constants/data";
+import { getProductType } from "@/constants/data";
+import { getServerLocale } from "@/lib/locale";
 
 import React from "react";
 
 const Home = async () => {
+  const locale = await getServerLocale();
+  const productType = getProductType(locale);
   const [categories, initialProducts] = await Promise.all([
     getCategories(6),
     getProductsByVariant(productType[0]?.value || "gadget"),

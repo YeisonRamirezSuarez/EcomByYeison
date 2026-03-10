@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import useStore from "@/store";
 import { Palette, X, Check } from "lucide-react";
 import { t } from "@/lib/i18n";
+import { Locale } from "@/lib/i18n";
 
 export const THEMES: Record<
   string,
@@ -212,6 +213,11 @@ export function applyTheme(themeName: string) {
 }
 
 const ThemePanel = () => {
+    const handleLocaleChange = (nextLocale: Locale) => {
+      setLocale(nextLocale);
+      document.cookie = `app-locale=${nextLocale}; path=/; max-age=31536000; samesite=lax`;
+    };
+
   const [open, setOpen] = useState(false);
   const { themeName, setThemeName, locale, setLocale } = useStore();
 
@@ -251,7 +257,7 @@ const ThemePanel = () => {
             <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"
-                onClick={() => setLocale("es")}
+                onClick={() => handleLocaleChange("es")}
                 className={`rounded-lg px-3 py-2 text-sm font-semibold transition-colors ${
                   locale === "es"
                     ? "bg-shop_dark_green text-white"
@@ -262,7 +268,7 @@ const ThemePanel = () => {
               </button>
               <button
                 type="button"
-                onClick={() => setLocale("en")}
+                onClick={() => handleLocaleChange("en")}
                 className={`rounded-lg px-3 py-2 text-sm font-semibold transition-colors ${
                   locale === "en"
                     ? "bg-shop_dark_green text-white"

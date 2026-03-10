@@ -12,6 +12,7 @@ export interface Metadata {
   customerEmail: string;
   clerkUserId?: string;
   address?: Address | null;
+  locale?: "es" | "en";
 }
 
 export interface GroupedCartItems {
@@ -32,12 +33,14 @@ export async function createCheckoutSession(
     const customerId = customers?.data?.length > 0 ? customers.data[0].id : "";
 
     const sessionPayload: Stripe.Checkout.SessionCreateParams = {
+      locale: metadata.locale === "en" ? "en" : "es",
       metadata: {
         orderNumber: metadata.orderNumber,
         customerName: metadata.customerName,
         customerEmail: metadata.customerEmail,
         clerkUserId: metadata.clerkUserId!,
         address: JSON.stringify(metadata.address),
+        locale: metadata.locale || "es",
       },
       mode: "payment",
       allow_promotion_codes: true,
@@ -54,7 +57,7 @@ export async function createCheckoutSession(
           currency: "USD",
           unit_amount: Math.round(item?.product?.price! * 100),
           product_data: {
-            name: item?.product?.name || "Unknown Product",
+            name: item?.product?.name || (metadata.locale === "en" ? "Unknown Product" : "Producto desconocido"),
             description: item?.product?.description,
             metadata: { id: item?.product?._id },
             images:

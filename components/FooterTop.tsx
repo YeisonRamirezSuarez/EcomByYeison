@@ -1,5 +1,6 @@
 import { Clock, Mail, MapPin, Phone } from "lucide-react";
 import React from "react";
+import { Locale, t } from "@/lib/i18n";
 
 interface ContactItemData {
   title: string;
@@ -7,38 +8,31 @@ interface ContactItemData {
   icon: React.ReactNode;
 }
 
-const data: ContactItemData[] = [
+const getData = (locale: Locale): ContactItemData[] => [
   {
-    title: "Vísítanos",
-    subtitle: "Colombia, Latam",
-    icon: (
-      <MapPin className="h-6 w-6 text-shop_light_green" />
-    ),
+    title: t(locale, "footerVisitUs"),
+    subtitle: locale === "en" ? "Colombia, Latam" : "Colombia, Latam",
+    icon: <MapPin className="h-6 w-6 text-shop_light_green" />,
   },
   {
-    title: "Llámenos",
+    title: t(locale, "footerCallUs"),
     subtitle: "+57 300 000 0000",
-    icon: (
-      <Phone className="h-6 w-6 text-shop_light_green" />
-    ),
+    icon: <Phone className="h-6 w-6 text-shop_light_green" />,
   },
   {
-    title: "Horario",
-    subtitle: "Lun - Sáb: 9:00 AM - 7:00 PM",
-    icon: (
-      <Clock className="h-6 w-6 text-shop_light_green" />
-    ),
+    title: t(locale, "footerSchedule"),
+    subtitle: t(locale, "footerScheduleValue"),
+    icon: <Clock className="h-6 w-6 text-shop_light_green" />,
   },
   {
-    title: "Escríbenos",
+    title: t(locale, "footerWriteUs"),
     subtitle: "contacto@ecombyyeison.com",
-    icon: (
-      <Mail className="h-6 w-6 text-shop_light_green" />
-    ),
+    icon: <Mail className="h-6 w-6 text-shop_light_green" />,
   },
 ];
 
-const FooterTop = () => {
+const FooterTop = ({ locale }: { locale: Locale }) => {
+  const data = getData(locale);
   return (
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 border-b border-gray-100 pb-8">
       {data?.map((item, index) => (

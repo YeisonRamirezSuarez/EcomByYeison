@@ -15,6 +15,7 @@ const ThemeInitializer = () => {
     if (!hasHydrated) return;
     applyTheme(themeName);
     document.documentElement.lang = locale;
+    document.cookie = `app-locale=${locale}; path=/; max-age=31536000; samesite=lax`;
   }, [themeName, locale, hasHydrated]);
 
   return null;

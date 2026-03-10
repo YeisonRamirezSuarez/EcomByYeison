@@ -14,12 +14,16 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import React from "react";
+import { getServerLocale } from "@/lib/locale";
+import { t } from "@/lib/i18n";
 
 const SingleBlogPage = async ({
   params,
 }: {
   params: Promise<{ slug: string }>;
 }) => {
+  const locale = await getServerLocale();
+  dayjs.locale(locale === "es" ? "es" : "en");
   const { slug } = await params;
   const blog: SINGLE_BLOG_QUERYResult = await getSingleBlog(slug);
   if (!blog) return notFound();
@@ -58,7 +62,7 @@ const SingleBlogPage = async ({
               </p>
               <p className="flex items-center gap-1 text-lightColor relative group hover:cursor-pointer hover:text-shop_dark_green hoverEffect">
                 <Calendar size={15} />{" "}
-                {dayjs(blog.publishedAt).format("MMMM D, YYYY")}
+                {dayjs(blog.publishedAt).format(locale === "es" ? "D [de] MMMM [de] YYYY" : "MMMM D, YYYY")}
                 <span className="absolute left-0 -bottom-1.5 bg-lightColor/30 inline-block w-full h-[2px] group-hover:bg-shop_dark_green hoverEffect" />
               </p>
             </div>
@@ -176,7 +180,7 @@ const SingleBlogPage = async ({
                     <Link href="/blog" className="flex items-center gap-1">
                       <ChevronLeftIcon className="size-5" />
                       <span className="text-sm font-semibold">
-                        Back to blog
+                        {t(locale, "blogBack")}
                       </span>
                     </Link>
                   </div>
@@ -185,20 +189,20 @@ const SingleBlogPage = async ({
             </div>
           </div>
         </div>
-        <BlogLeft slug={slug} />
+        <BlogLeft slug={slug} locale={locale} />
       </Container>
     </div>
   );
 };
 
-const BlogLeft = async ({ slug }: { slug: string }) => {
+const BlogLeft = async ({ slug, locale }: { slug: string; locale: "es" | "en" }) => {
   const categories = await getBlogCategories();
   const blogs = await getOthersBlog(slug, 5);
 
   return (
     <div>
       <div className="border border-lightColor p-5 rounded-md">
-        <Title className="text-base">Blog Categories</Title>
+        <Title className="text-base">{t(locale, "blogCategories")}</Title>
         <div className="space-y-2 mt-2">
           {categories?.map((item: BLOG_CATEGORIESResult[number], index: number) => (
             <div
@@ -212,7 +216,7 @@ const BlogLeft = async ({ slug }: { slug: string }) => {
         </div>
       </div>
       <div className="border border-lightColor p-5 rounded-md mt-10">
-        <Title className="text-base">Latest Blogs</Title>
+        <Title className="text-base">{t(locale, "blogLatest")}</Title>
         <div className="space-y-4 mt-4">
           {blogs?.map((blog: OTHERS_BLOG_QUERYResult[number], index: number) => (
             <Link
