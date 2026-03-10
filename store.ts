@@ -25,6 +25,8 @@ interface StoreState {
   // theme
   themeName: string;
   setThemeName: (name: string) => void;
+  hasHydrated: boolean;
+  setHasHydrated: (value: boolean) => void;
 }
 
 const useStore = create<StoreState>()(
@@ -118,9 +120,14 @@ const useStore = create<StoreState>()(
       // theme
       themeName: "emerald",
       setThemeName: (name: string) => set({ themeName: name }),
+      hasHydrated: false,
+      setHasHydrated: (value: boolean) => set({ hasHydrated: value }),
     }),
     {
       name: "cart-store",
+      onRehydrateStorage: () => (state) => {
+        state?.setHasHydrated(true);
+      },
     }
   )
 );

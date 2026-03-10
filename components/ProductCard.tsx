@@ -86,7 +86,7 @@ const ProductCard = ({ product }: { product: Product }) => {
         {/* Category */}
         {product?.categories && (
           <p className="text-[10px] font-bold text-shop_light_green uppercase tracking-widest line-clamp-1">
-            {(product.categories as string[]).join(", ")}
+            {(product.categories as unknown as string[]).join(", ")}
           </p>
         )}
 

@@ -30,7 +30,9 @@ const categoryIcons: Record<string, LucideIcon> = {
 
 
 
-const HomeCategories = ({ categories }: { categories: Category[] }) => {
+type CategoryWithCount = Category & { productCount?: number };
+
+const HomeCategories = ({ categories }: { categories: CategoryWithCount[] }) => {
   return (
     <div className="my-10 md:my-16">
       <div className="flex items-center justify-between mb-6">

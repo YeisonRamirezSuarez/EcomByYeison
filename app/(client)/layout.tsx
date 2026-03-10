@@ -19,7 +19,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <ClerkProvider>
+    <ClerkProvider signInUrl="/sign-in" signUpUrl="/sign-up">
       <div className="flex flex-col min-h-screen overflow-x-hidden">
         <Header />
         <main className="flex-1">{children}</main>
