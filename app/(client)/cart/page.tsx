@@ -42,6 +42,7 @@ const CartPage = () => {
     getSubTotalPrice,
     resetCart,
     locale,
+    themeName,
   } = useStore();
   const [loading, setLoading] = useState(false);
   const groupedItems = useStore((state) => state.getGroupedItems());
@@ -89,6 +90,7 @@ const CartPage = () => {
         clerkUserId: user?.id,
         address: selectedAddress,
         locale,
+        themeName,
       };
       const checkoutUrl = await createCheckoutSession(groupedItems, metadata);
       if (checkoutUrl) {

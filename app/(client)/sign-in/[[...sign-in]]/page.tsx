@@ -1,18 +1,6 @@
-import { SignIn } from "@clerk/nextjs";
+import { redirect } from "next/navigation";
 
-// Fallback route for OAuth/callback when popup is blocked or flow falls back to redirect.
+// Silent fallback route: when popup auth falls back to path, do not render UI.
 export default function SignInPage() {
-  return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-shop_light_bg">
-      <SignIn
-        routing="path"
-        path="/sign-in"
-        signUpUrl="/sign-up"
-        forceRedirectUrl="/"
-        fallbackRedirectUrl="/"
-        signUpForceRedirectUrl="/"
-        signUpFallbackRedirectUrl="/"
-      />
-    </div>
-  );
+  redirect("/");
 }

@@ -1,10 +1,12 @@
 import { sanityFetch } from "../lib/live";
+import { backendClient } from "../lib/backendClient";
 import {
   BLOG_CATEGORIES,
   BRAND_QUERY,
   BRANDS_QUERY,
   DEAL_PRODUCTS,
   GET_ALL_BLOG,
+  GET_ALL_ORDERS_QUERY,
   LATEST_BLOG_QUERY,
   MY_ORDERS_QUERY,
   OTHERS_BLOG_QUERY,
@@ -92,18 +94,27 @@ const getBrand = async (slug: string) => {
 };
 const getMyOrders = async (userId: string) => {
   try {
-    console.log("🔍 Fetching orders for userId:", userId);
-    const orders = await sanityFetch({
-      query: MY_ORDERS_QUERY,
-      params: { userId },
-    });
-    console.log("📦 Orders found:", orders?.data?.length ?? 0);
-    return orders?.data || null;
+    // Use backendClient directly to bypass caching for fresh order status
+    const orders = await backendClient.fetch(MY_ORDERS_QUERY, { userId });
+    return orders || null;
   } catch (error) {
-    console.error("Error fetching product by ID:", error);
+    console.error("Error fetching user orders:", error);
     return null;
   }
 };
+
+const getAllOrders = async () => {
+  try {
+    const orders = await sanityFetch({
+      query: GET_ALL_ORDERS_QUERY,
+    });
+    return orders?.data || null;
+  } catch (error) {
+    console.error("Error fetching all orders:", error);
+    return null;
+  }
+};
+
 const getAllBlogs = async (quantity: number) => {
   try {
     const { data } = await sanityFetch({
@@ -175,6 +186,7 @@ export {
   getProductBySlug,
   getBrand,
   getMyOrders,
+  getAllOrders,
   getAllBlogs,
   getSingleBlog,
   getBlogCategories,

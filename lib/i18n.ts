@@ -164,6 +164,11 @@ type Messages = {
   ordersBrowseProducts: string;
   ordersPaid: string;
   ordersPending: string;
+  ordersProcessing: string;
+  ordersShipped: string;
+  ordersOutForDelivery: string;
+  ordersDelivered: string;
+  ordersCancelled: string;
   ordersViewDetails: string;
   ordersActionNotAvailable: string;
   ordersDetailsTitle: string;
@@ -173,6 +178,24 @@ type Messages = {
   ordersPrice: string;
   ordersDiscount: string;
   ordersSubtotal: string;
+  adminOrdersManagement: string;
+  adminOrdersDescription: string;
+  adminStatusPending: string;
+  adminStatusPaid: string;
+  adminStatusProcessing: string;
+  adminStatusShipped: string;
+  adminStatusOutForDelivery: string;
+  adminStatusDelivered: string;
+  adminStatusCancelled: string;
+  adminFilterAll: string;
+  adminAction: string;
+  adminChangeStatus: string;
+  adminNoOrders: string;
+  adminUpdateOrderStatus: string;
+  adminCurrentStatus: string;
+  adminSelectNewStatus: string;
+  adminClose: string;
+  adminUpdateError: string;
 };
 
 export const MESSAGES: Record<Locale, Messages> = {
@@ -340,6 +363,11 @@ export const MESSAGES: Record<Locale, Messages> = {
     ordersBrowseProducts: "Ver productos",
     ordersPaid: "Pagado",
     ordersPending: "Pendiente",
+    ordersProcessing: "Procesando",
+    ordersShipped: "Enviado",
+    ordersOutForDelivery: "En camino",
+    ordersDelivered: "Entregado",
+    ordersCancelled: "Cancelado",
     ordersViewDetails: "Haz clic para ver los detalles de la orden",
     ordersActionNotAvailable: "Acción disponible solo para administradores",
     ordersDetailsTitle: "Detalles de la orden",
@@ -349,6 +377,24 @@ export const MESSAGES: Record<Locale, Messages> = {
     ordersPrice: "Precio",
     ordersDiscount: "Descuento",
     ordersSubtotal: "Subtotal",
+    adminOrdersManagement: "Gestión de órdenes",
+    adminOrdersDescription: "Visualiza y actualiza el estado de todos los pedidos realizados",
+    adminStatusPending: "Pendiente",
+    adminStatusPaid: "Pagado",
+    adminStatusProcessing: "Procesando",
+    adminStatusShipped: "Enviado",
+    adminStatusOutForDelivery: "En camino",
+    adminStatusDelivered: "Entregado",
+    adminStatusCancelled: "Cancelado",
+    adminFilterAll: "Todos",
+    adminAction: "Acción",
+    adminChangeStatus: "Cambiar estado",
+    adminNoOrders: "No hay órdenes disponibles",
+    adminUpdateOrderStatus: "Actualizar estado de la orden",
+    adminCurrentStatus: "Estado actual",
+    adminSelectNewStatus: "Selecciona el nuevo estado",
+    adminClose: "Cerrar",
+    adminUpdateError: "Error al actualizar el estado de la orden",
   },
   en: {
     themePanelTitle: "Customize theme",
@@ -514,6 +560,11 @@ export const MESSAGES: Record<Locale, Messages> = {
     ordersBrowseProducts: "Browse Products",
     ordersPaid: "Paid",
     ordersPending: "Pending",
+    ordersProcessing: "Processing",
+    ordersShipped: "Shipped",
+    ordersOutForDelivery: "Out for Delivery",
+    ordersDelivered: "Delivered",
+    ordersCancelled: "Cancelled",
     ordersViewDetails: "Click to see order details",
     ordersActionNotAvailable: "Action available for admins only",
     ordersDetailsTitle: "Order Details",
@@ -523,6 +574,24 @@ export const MESSAGES: Record<Locale, Messages> = {
     ordersPrice: "Price",
     ordersDiscount: "Discount",
     ordersSubtotal: "Subtotal",
+    adminOrdersManagement: "Order Management",
+    adminOrdersDescription: "View and update the status of all customer orders",
+    adminStatusPending: "Pending",
+    adminStatusPaid: "Paid",
+    adminStatusProcessing: "Processing",
+    adminStatusShipped: "Shipped",
+    adminStatusOutForDelivery: "Out for Delivery",
+    adminStatusDelivered: "Delivered",
+    adminStatusCancelled: "Cancelled",
+    adminFilterAll: "All",
+    adminAction: "Action",
+    adminChangeStatus: "Change Status",
+    adminNoOrders: "No orders available",
+    adminUpdateOrderStatus: "Update Order Status",
+    adminCurrentStatus: "Current Status",
+    adminSelectNewStatus: "Select New Status",
+    adminClose: "Close",
+    adminUpdateError: "Failed to update order status",
   },
 };
 

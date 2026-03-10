@@ -6,7 +6,6 @@ export const backendClient = createClient({
   projectId,
   dataset,
   apiVersion,
-  useCdn: true, // Set to false if statically generating pages, using ISR or tag-based revalidation
-  //  revalidation
+  useCdn: false, // Disable CDN to always get fresh data for admin operations
   token: process.env.SANITY_API_TOKEN,
 });

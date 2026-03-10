@@ -142,31 +142,26 @@ export const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
             </div>
           ) : (
             <div className="w-full auth-modal-clerk">
-              {authView === "signIn" ? (
+              <div className={authView === "signIn" ? "block" : "hidden"}>
                 <SignIn
                   routing="hash"
                   oauthFlow="popup"
-                  withSignUp
                   transferable={true}
-                  signUpUrl="/sign-up"
                   forceRedirectUrl="/"
                   fallbackRedirectUrl="/"
-                  signUpForceRedirectUrl="/"
-                  signUpFallbackRedirectUrl="/"
                   appearance={clerkAppearance}
                 />
-              ) : (
+              </div>
+
+              <div className={authView === "signUp" ? "block" : "hidden"}>
                 <SignUp
                   routing="hash"
                   oauthFlow="popup"
-                  signInUrl="/sign-in"
                   forceRedirectUrl="/"
                   fallbackRedirectUrl="/"
-                  signInForceRedirectUrl="/"
-                  signInFallbackRedirectUrl="/"
                   appearance={clerkAppearance}
                 />
-              )}
+              </div>
 
               <div className="mt-4 text-center text-sm text-lightColor">
                 {authView === "signIn" ? (
