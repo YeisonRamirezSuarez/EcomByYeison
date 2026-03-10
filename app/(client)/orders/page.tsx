@@ -13,6 +13,10 @@ import React from "react";
 import { t } from "@/lib/i18n";
 import { getServerLocale } from "@/lib/locale";
 
+// Force dynamic rendering to always fetch fresh data
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 const OrdersPage = async () => {
   const { userId } = await auth();
   const locale = await getServerLocale();

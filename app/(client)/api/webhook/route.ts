@@ -1,6 +1,7 @@
 import { Metadata } from "@/actions/createCheckoutSession";
 import stripe from "@/lib/stripe";
 import { backendClient } from "@/sanity/lib/backendClient";
+import { sendOrderConfirmationEmail } from "@/lib/email";
 import { headers } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
@@ -18,7 +19,6 @@ export async function POST(req: NextRequest) {
   }
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
   if (!webhookSecret) {
-    console.log("Stripe webhook secret is not set");
     return NextResponse.json(
       {
         error: "Stripe webhook secret is not set",
@@ -72,8 +72,8 @@ async function createOrderInSanity(
     payment_intent,
     total_details,
   } = session;
-  const { orderNumber, customerName, customerEmail, clerkUserId, address } =
-    metadata as unknown as Metadata & { address: string };
+  const { orderNumber, customerName, customerEmail, clerkUserId, address, themeName } =
+    metadata as unknown as Metadata & { address: string; themeName?: string };
   const parsedAddress = address ? JSON.parse(address) : null;
 
   const lineItemsWithProduct = await stripe.checkout.sessions.listLineItems(
@@ -84,11 +84,31 @@ async function createOrderInSanity(
   // Create Sanity product references and prepare stock updates
   const sanityProducts = [];
   const stockUpdates = [];
+  const productsForEmail = [];
+  
   for (const item of lineItemsWithProduct.data) {
     const productId = (item.price?.product as Stripe.Product)?.metadata?.id;
     const quantity = item?.quantity || 0;
+    const productName = (item.price?.product as Stripe.Product)?.name || "Product";
+    const price = item.price?.unit_amount ? item.price.unit_amount / 100 : 0;
 
     if (!productId) continue;
+
+    // Get product image from Sanity
+    let productImage = "";
+    try {
+      const sanityProduct = await backendClient.fetch(
+        `*[_id == "${productId}"][0]{ image }`
+      );
+      if (sanityProduct?.image) {
+        productImage = `https://cdn.sanity.io/images/${process.env.NEXT_PUBLIC_SANITY_PROJECT_ID}/${process.env.NEXT_PUBLIC_SANITY_DATASET}/${sanityProduct.image.asset._ref.replace(
+          /^image-/,
+          ""
+        ).replace(/-[a-z]+$/, "")}.jpg?w=300&h=300&fit=crop`;
+      }
+    } catch (error) {
+      console.warn(`Could not fetch image for product ${productId}:`, error);
+    }
 
     sanityProducts.push({
       _key: crypto.randomUUID(),
@@ -99,6 +119,12 @@ async function createOrderInSanity(
       quantity,
     });
     stockUpdates.push({ productId, quantity });
+    productsForEmail.push({
+      name: productName,
+      quantity,
+      price,
+      image: productImage,
+    });
   }
   //   Create order in Sanity
 
@@ -120,6 +146,7 @@ async function createOrderInSanity(
     totalPrice: amount_total ? amount_total / 100 : 0,
     status: "paid",
     orderDate: new Date().toISOString(),
+    themeName: themeName || "emerald",
     invoice: invoice
       ? {
           id: invoice.id,
@@ -139,8 +166,24 @@ async function createOrderInSanity(
   });
 
   // Update stock levels in Sanity
-
   await updateStockLevels(stockUpdates);
+
+  // Send confirmation email
+  try {
+    await sendOrderConfirmationEmail(
+      customerEmail,
+      customerName,
+      orderNumber,
+      amount_total ? amount_total / 100 : 0,
+      productsForEmail,
+      invoice?.hosted_invoice_url || undefined,
+      themeName
+    );
+  } catch (error) {
+    console.error(`❌ Error sending confirmation email:`, error);
+    // Don't fail the webhook if email fails
+  }
+
   return order;
 }
 

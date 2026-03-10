@@ -22,6 +22,33 @@ const OrdersComponent = ({ orders }: { orders: MY_ORDERS_QUERYResult }) => {
   const [selectedOrder, setSelectedOrder] = useState<
     MY_ORDERS_QUERYResult[number] | null
   >(null);
+  
+  const getStatusColor = (status: string) => {
+    const colors: Record<string, string> = {
+      pending: "bg-gray-100 text-gray-800",
+      paid: "bg-blue-100 text-blue-800",
+      processing: "bg-yellow-100 text-yellow-800",
+      shipped: "bg-purple-100 text-purple-800",
+      out_for_delivery: "bg-orange-100 text-orange-800",
+      delivered: "bg-green-100 text-green-800",
+      cancelled: "bg-red-100 text-red-800",
+    };
+    return colors[status] || "bg-gray-100 text-gray-800";
+  };
+
+  const getStatusLabel = (status: string): string => {
+    const statusLabels: Record<string, string> = {
+      pending: t(locale, "ordersPending"),
+      paid: t(locale, "ordersPaid"),
+      processing: t(locale, "ordersProcessing"),
+      shipped: t(locale, "ordersShipped"),
+      out_for_delivery: t(locale, "ordersOutForDelivery"),
+      delivered: t(locale, "ordersDelivered"),
+      cancelled: t(locale, "ordersCancelled"),
+    };
+    return statusLabels[status] || t(locale, "ordersPending");
+  };
+  
   const handleDelete = () => {
     toast.error(t(locale, "ordersActionNotAvailable"));
   };
@@ -56,15 +83,9 @@ const OrdersComponent = ({ orders }: { orders: MY_ORDERS_QUERYResult }) => {
                   <TableCell>
                     {order?.status && (
                       <span
-                        className={`px-2 py-1 rounded-full text-xs font-semibold ${
-                          order.status === "paid"
-                            ? "bg-green-100 text-green-800"
-                            : "bg-yellow-100 text-yellow-800"
-                        }`}
+                        className={`px-2 py-1 rounded-full text-xs font-semibold ${getStatusColor(order.status)}`}
                       >
-                        {order.status === "paid"
-                          ? t(locale, "ordersPaid")
-                          : t(locale, "ordersPending")}
+                        {getStatusLabel(order.status)}
                       </span>
                     )}
                   </TableCell>

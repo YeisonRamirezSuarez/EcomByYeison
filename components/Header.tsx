@@ -10,15 +10,19 @@ import MobileMenu from "./MobileMenu";
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { ClerkLoaded, UserButton } from "@clerk/nextjs";
 import Link from "next/link";
-import { ClipboardList, Truck, ShieldCheck, HeadphonesIcon } from "lucide-react";
+import { ClipboardList, Truck, ShieldCheck, HeadphonesIcon, BarChart3 } from "lucide-react";
 import { getMyOrders } from "@/sanity/queries";
 import { getServerLocale } from "@/lib/locale";
 import { t } from "@/lib/i18n";
+import { isAdminEmail } from "@/lib/admin";
 
 const Header = async () => {
   const locale = await getServerLocale();
   const user = await currentUser();
   const { userId } = await auth();
+  const userEmail = user?.primaryEmailAddress?.emailAddress;
+  const isAdmin = isAdminEmail(userEmail);
+  
   let orders = null;
   if (userId) {
     orders = await getMyOrders(userId);
@@ -70,6 +74,15 @@ const Header = async () => {
                   <span className="absolute -top-1.5 -right-1.5 bg-shop_btn_dark_green text-white h-4 w-4 rounded-full text-[10px] font-bold flex items-center justify-center shadow">
                     {orders?.length ?? 0}
                   </span>
+                </Link>
+              )}
+              {isAdmin && (
+                <Link
+                  href={"/admin/orders"}
+                  className="group relative hover:text-shop_light_green hoverEffect"
+                  title="Admin Panel"
+                >
+                  <BarChart3 size={20} />
                 </Link>
               )}
               <ClerkLoaded>
