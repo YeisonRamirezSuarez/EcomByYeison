@@ -12,40 +12,45 @@ import Image from "next/image";
 import { urlFor } from "@/sanity/lib/image";
 import PriceFormatter from "./PriceFormatter";
 import AddToCartButton from "./AddToCartButton";
+import { t } from "@/lib/i18n";
 
 const WishListProducts = () => {
   const [visibleProducts, setVisibleProducts] = useState(7);
-  const { favoriteProduct, removeFromFavorite, resetFavorite } = useStore();
+  const { favoriteProduct, removeFromFavorite, resetFavorite, locale } = useStore();
   const loadMore = () => {
     setVisibleProducts((prev) => Math.min(prev + 5, favoriteProduct.length));
   };
 
   const handleResetWishlist = () => {
     const confirmReset = window.confirm(
-      "Are you sure you want to reset your wishlist?"
+      t(locale, "wishlistConfirmReset")
     );
     if (confirmReset) {
       resetFavorite();
-      toast.success("Wishlist reset successfully");
+      toast.success(t(locale, "wishlistResetSuccess"));
     }
   };
 
   return (
-    <Container>
-      {favoriteProduct?.length > 0 ? (
-        <>
-          <div className="overflow-x-auto">
+    <div className="border-t">
+      <Container className="mt-5">
+        {favoriteProduct?.length > 0 ? (
+          <>
+            <div className="sticky top-0 z-10 mb-6 bg-white">
+              <h1 className="text-3xl font-bold text-darkColor">{t(locale, "wishlistTitle")}</h1>
+            </div>
+            <div className="overflow-x-auto rounded-lg border border-gray-200 shadow-sm">
             <table className="w-full border-collapse">
               <thead className="border-b">
                 <tr className="bg-black/5">
-                  <th className="p-2 text-left">Image</th>
+                  <th className="p-2 text-left">{t(locale, "wishlistTableImage")}</th>
                   <th className="p-2 text-left hidden md:table-cell">
-                    Category
+                    {t(locale, "wishlistTableCategory")}
                   </th>
-                  <th className="p-2 text-left hidden md:table-cell">Type</th>
-                  <th className="p-2 text-left hidden md:table-cell">Status</th>
-                  <th className="p-2 text-left">Price</th>
-                  <th className="p-2 text-center md:text-left">Action</th>
+                  <th className="p-2 text-left hidden md:table-cell">{t(locale, "wishlistTableType")}</th>
+                  <th className="p-2 text-left hidden md:table-cell">{t(locale, "wishlistTableStatus")}</th>
+                  <th className="p-2 text-left">{t(locale, "wishlistTablePrice")}</th>
+                  <th className="p-2 text-center md:text-left">{t(locale, "wishlistTableAction")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -57,7 +62,7 @@ const WishListProducts = () => {
                         <X
                           onClick={() => {
                             removeFromFavorite(product?._id);
-                            toast.success("Product removed from wishlist");
+                            toast.success(t(locale, "wishlistRemoveSuccess"));
                           }}
                           size={18}
                           className="hover:text-red-600 hover:cursor-pointer hoverEffect"
@@ -96,8 +101,8 @@ const WishListProducts = () => {
                         } font-medium text-sm hidden md:table-cell`}
                       >
                         {(product?.stock as number) > 0
-                          ? "In Stock"
-                          : "Out of Stock"}
+                          ? t(locale, "wishlistInStock")
+                          : t(locale, "wishlistOutOfStock")}
                       </td>
                       <td className="p-2">
                         <PriceFormatter amount={product?.price} />
@@ -110,59 +115,56 @@ const WishListProducts = () => {
               </tbody>
             </table>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3 mt-6">
             {visibleProducts < favoriteProduct?.length && (
-              <div className="my-5">
-                <Button variant="outline" onClick={loadMore}>
-                  Load More
-                </Button>
-              </div>
+              <Button variant="outline" onClick={loadMore}>
+                {t(locale, "wishlistLoadMore")}
+              </Button>
             )}
             {visibleProducts > 10 && (
-              <div className="my-5">
-                <Button
-                  onClick={() => setVisibleProducts(10)}
-                  variant="outline"
-                >
-                  Load Less
-                </Button>
-              </div>
+              <Button
+                onClick={() => setVisibleProducts(10)}
+                variant="outline"
+              >
+                {t(locale, "wishlistLoadLess")}
+              </Button>
             )}
           </div>
           {favoriteProduct?.length > 0 && (
             <Button
               onClick={handleResetWishlist}
-              className="mb-5 font-semibold"
+              className="mb-5 font-semibold mt-6"
               variant="destructive"
               size="lg"
             >
-              Reset Wishlist
+              {t(locale, "wishlistReset")}
             </Button>
           )}
         </>
       ) : (
-        <div className="flex min-h-[400px] flex-col items-center justify-center space-y-6 px-4 text-center">
+        <div className="flex min-h-[500px] flex-col items-center justify-center space-y-6 px-4 text-center">
           <div className="relative mb-4">
-            <div className="absolute -top-1 -right-1 h-4 w-4 animate-ping rounded-full bg-muted-foreground/20" />
+            <div className="absolute -top-1 -right-1 h-5 w-5 animate-ping rounded-full bg-amber-400/30" />
             <Heart
-              className="h-12 w-12 text-muted-foreground"
-              strokeWidth={1.5}
+              className="h-16 w-16 text-gray-300"
+              strokeWidth={1.2}
             />
           </div>
-          <div className="space-y-2">
-            <h2 className="text-2xl font-semibold tracking-tight">
-              Your wishlist is empty
+          <div className="space-y-3">
+            <h2 className="text-3xl font-bold tracking-tight text-darkColor">
+              {t(locale, "wishlistEmpty")}
             </h2>
-            <p className="text-sm text-muted-foreground">
-              Items added to your wishlist will appear here
+            <p className="text-sm text-muted-foreground max-w-sm">
+              {t(locale, "wishlistEmptyDesc")}
             </p>
           </div>
           <Button asChild>
-            <Link href="/shop">Continue Shopping</Link>
+            <Link href="/shop">{t(locale, "wishlistContinueShopping")}</Link>
           </Button>
         </div>
       )}
-    </Container>
+      </Container>
+    </div>
   );
 };
 

@@ -14,13 +14,16 @@ import { X } from "lucide-react";
 import { useState } from "react";
 import OrderDetailDialog from "./OrderDetailDialog";
 import toast from "react-hot-toast";
+import useStore from "@/store";
+import { t } from "@/lib/i18n";
 
 const OrdersComponent = ({ orders }: { orders: MY_ORDERS_QUERYResult }) => {
+  const { locale } = useStore();
   const [selectedOrder, setSelectedOrder] = useState<
     MY_ORDERS_QUERYResult[number] | null
   >(null);
   const handleDelete = () => {
-    toast.error("Delete method applied for Admin");
+    toast.error(t(locale, "ordersActionNotAvailable"));
   };
   return (
     <>
@@ -30,7 +33,7 @@ const OrdersComponent = ({ orders }: { orders: MY_ORDERS_QUERYResult }) => {
             <Tooltip key={order?.orderNumber}>
               <TooltipTrigger asChild>
                 <TableRow
-                  className="cursor-pointer hover:bg-gray-100 h-12"
+                  className="h-14 cursor-pointer hover:bg-gray-100/70"
                   onClick={() => setSelectedOrder(order)}
                 >
                   <TableCell className="font-medium">
@@ -59,8 +62,9 @@ const OrdersComponent = ({ orders }: { orders: MY_ORDERS_QUERYResult }) => {
                             : "bg-yellow-100 text-yellow-800"
                         }`}
                       >
-                        {order?.status.charAt(0).toUpperCase() +
-                          order?.status.slice(1)}
+                        {order.status === "paid"
+                          ? t(locale, "ordersPaid")
+                          : t(locale, "ordersPending")}
                       </span>
                     )}
                   </TableCell>
@@ -81,13 +85,13 @@ const OrdersComponent = ({ orders }: { orders: MY_ORDERS_QUERYResult }) => {
                   >
                     <X
                       size={20}
-                      className="group-hover:text-shop_dark_green hoverEffect"
+                      className="text-gray-500 group-hover:text-shop_dark_green hoverEffect"
                     />
                   </TableCell>
                 </TableRow>
               </TooltipTrigger>
               <TooltipContent>
-                <p>Click to see order details</p>
+                <p>{t(locale, "ordersViewDetails")}</p>
               </TooltipContent>
             </Tooltip>
           ))}

@@ -2,6 +2,7 @@ import "./globals.css";
 import { Toaster } from "react-hot-toast";
 import { Poppins } from "next/font/google";
 import ThemeInitializer from "@/components/ThemeInitializer";
+import { getServerLocale } from "@/lib/locale";
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -10,9 +11,105 @@ const poppins = Poppins({
   display: "swap",
 });
 
-const RootLayout = ({ children }: { children: React.ReactNode }) => {
+const RootLayout = async ({ children }: { children: React.ReactNode }) => {
+  const locale = await getServerLocale();
+  const themeBootScript = `
+    (() => {
+      try {
+        const raw = window.localStorage.getItem('cart-store');
+        const parsed = raw ? JSON.parse(raw) : null;
+        const themeName = parsed?.state?.themeName || 'emerald';
+        const locale = parsed?.state?.locale || 'es';
+        document.documentElement.lang = locale === 'en' ? 'en' : 'es';
+
+        const themes = {
+          emerald: {
+            primary: '#063c28', primaryBtn: '#063d29', light: '#3b9c3c', accent: '#fb6c08',
+            accentLight: '#fca99b', bg: '#fcf0e4', bgAlt: '#f6f6f6', dealBg: '#f1f3f8'
+          },
+          ocean: {
+            primary: '#0c2d57', primaryBtn: '#0c2d57', light: '#1d6fb8', accent: '#0ea5e9',
+            accentLight: '#bae6fd', bg: '#eff6ff', bgAlt: '#f0f9ff', dealBg: '#e0f2fe'
+          },
+          violet: {
+            primary: '#3b0764', primaryBtn: '#3b0764', light: '#7c3aed', accent: '#a855f7',
+            accentLight: '#e9d5ff', bg: '#faf5ff', bgAlt: '#f5f3ff', dealBg: '#ede9fe'
+          },
+          crimson: {
+            primary: '#7f1d1d', primaryBtn: '#7f1d1d', light: '#c53030', accent: '#ea580c',
+            accentLight: '#fed7aa', bg: '#fff7ed', bgAlt: '#fef3c7', dealBg: '#ffedd5'
+          },
+          rose: {
+            primary: '#881337', primaryBtn: '#881337', light: '#e11d48', accent: '#fb923c',
+            accentLight: '#fecaca', bg: '#fff1f2', bgAlt: '#fdf2f8', dealBg: '#ffe4e6'
+          },
+          slate: {
+            primary: '#1e293b', primaryBtn: '#1e293b', light: '#475569', accent: '#64748b',
+            accentLight: '#cbd5e1', bg: '#f8fafc', bgAlt: '#f1f5f9', dealBg: '#e2e8f0'
+          },
+          amber: {
+            primary: '#78350f', primaryBtn: '#78350f', light: '#f59e0b', accent: '#d97706',
+            accentLight: '#fde68a', bg: '#fffbeb', bgAlt: '#fef3c7', dealBg: '#fde68a'
+          },
+          mint: {
+            primary: '#064e3b', primaryBtn: '#064e3b', light: '#10b981', accent: '#14b8a6',
+            accentLight: '#99f6e4', bg: '#ecfdf5', bgAlt: '#f0fdfa', dealBg: '#ccfbf1'
+          },
+          sunset: {
+            primary: '#7c2d12', primaryBtn: '#7c2d12', light: '#ea580c', accent: '#f43f5e',
+            accentLight: '#fecdd3', bg: '#fff7ed', bgAlt: '#fff1f2', dealBg: '#ffe4e6'
+          },
+          indigo: {
+            primary: '#312e81', primaryBtn: '#312e81', light: '#6366f1', accent: '#22d3ee',
+            accentLight: '#bae6fd', bg: '#eef2ff', bgAlt: '#f5f3ff', dealBg: '#e0e7ff'
+          },
+          cobalt: {
+            primary: '#172554', primaryBtn: '#172554', light: '#2563eb', accent: '#38bdf8',
+            accentLight: '#bae6fd', bg: '#eff6ff', bgAlt: '#dbeafe', dealBg: '#bfdbfe'
+          },
+          forest: {
+            primary: '#14532d', primaryBtn: '#14532d', light: '#22c55e', accent: '#84cc16',
+            accentLight: '#d9f99d', bg: '#f0fdf4', bgAlt: '#dcfce7', dealBg: '#bbf7d0'
+          },
+          lavender: {
+            primary: '#4c1d95', primaryBtn: '#4c1d95', light: '#8b5cf6', accent: '#c084fc',
+            accentLight: '#f3e8ff', bg: '#faf5ff', bgAlt: '#f3e8ff', dealBg: '#e9d5ff'
+          },
+          coral: {
+            primary: '#9a3412', primaryBtn: '#9a3412', light: '#fb7185', accent: '#f97316',
+            accentLight: '#fed7aa', bg: '#fff7ed', bgAlt: '#ffedd5', dealBg: '#fed7aa'
+          },
+          midnight: {
+            primary: '#0f172a', primaryBtn: '#0f172a', light: '#334155', accent: '#0ea5e9',
+            accentLight: '#bae6fd', bg: '#f8fafc', bgAlt: '#e2e8f0', dealBg: '#cbd5e1'
+          },
+          sand: {
+            primary: '#713f12', primaryBtn: '#713f12', light: '#a16207', accent: '#d97706',
+            accentLight: '#fde68a', bg: '#fffbeb', bgAlt: '#fef3c7', dealBg: '#fde68a'
+          }
+        };
+
+        const theme = themes[themeName] || themes.emerald;
+        const root = document.documentElement;
+        root.style.setProperty('--color-shop_dark_green', theme.primary);
+        root.style.setProperty('--color-shop_btn_dark_green', theme.primaryBtn);
+        root.style.setProperty('--color-shop_light_green', theme.light);
+        root.style.setProperty('--color-shop_orange', theme.accent);
+        root.style.setProperty('--color-lightOrange', theme.accentLight);
+        root.style.setProperty('--color-shop_light_pink', theme.bg);
+        root.style.setProperty('--color-shop_light_bg', theme.bgAlt);
+        root.style.setProperty('--color-deal-bg', theme.dealBg);
+      } catch (e) {
+        // no-op: keep default theme
+      }
+    })();
+  `;
+
   return (
-    <html lang="es" className={poppins.variable}>
+    <html lang={locale} className={poppins.variable}>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeBootScript }} />
+      </head>
       <body className="font-poppins antialiased overflow-x-hidden">
         <ThemeInitializer />
         {children}

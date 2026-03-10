@@ -8,12 +8,15 @@ import FavoriteButton from "./FavoriteButton";
 import SignIn from "./SignIn";
 import MobileMenu from "./MobileMenu";
 import { auth, currentUser } from "@clerk/nextjs/server";
-import { ClerkLoaded, SignedIn, UserButton } from "@clerk/nextjs";
+import { ClerkLoaded, UserButton } from "@clerk/nextjs";
 import Link from "next/link";
 import { ClipboardList, Truck, ShieldCheck, HeadphonesIcon } from "lucide-react";
 import { getMyOrders } from "@/sanity/queries";
+import { getServerLocale } from "@/lib/locale";
+import { t } from "@/lib/i18n";
 
 const Header = async () => {
+  const locale = await getServerLocale();
   const user = await currentUser();
   const { userId } = await auth();
   let orders = null;
@@ -29,18 +32,18 @@ const Header = async () => {
           <div className="flex items-center gap-6">
             <span className="flex items-center gap-1.5">
               <Truck size={12} />
-              Envío gratis en pedidos superiores a $99
+              {t(locale, "headerFreeShipping")}
             </span>
             <span className="flex items-center gap-1.5">
               <ShieldCheck size={12} />
-              Compra 100% segura
+              {t(locale, "headerSecurePurchase")}
             </span>
             <span className="flex items-center gap-1.5">
               <HeadphonesIcon size={12} />
-              Soporte 24/7
+              {t(locale, "headerSupport")}
             </span>
           </div>
-          <span className="font-semibold tracking-wide">Bienvenido a Ecom by Yeison</span>
+          <span className="font-semibold tracking-wide">{t(locale, "headerWelcome")}</span>
         </div>
       </div>
 
@@ -61,7 +64,7 @@ const Header = async () => {
                 <Link
                   href={"/orders"}
                   className="group relative hover:text-shop_light_green hoverEffect"
-                  title="Mis pedidos"
+                  title={t(locale, "headerMyOrders")}
                 >
                   <ClipboardList size={20} />
                   <span className="absolute -top-1.5 -right-1.5 bg-shop_btn_dark_green text-white h-4 w-4 rounded-full text-[10px] font-bold flex items-center justify-center shadow">
@@ -70,10 +73,7 @@ const Header = async () => {
                 </Link>
               )}
               <ClerkLoaded>
-                <SignedIn>
-                  <UserButton />
-                </SignedIn>
-                {!user && <SignIn />}
+                {user ? <UserButton /> : <SignIn />}
               </ClerkLoaded>
             </div>
           </div>

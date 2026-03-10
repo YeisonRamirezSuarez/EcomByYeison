@@ -26,6 +26,7 @@ import { Address } from "@/sanity.types";
 import { client } from "@/sanity/lib/client";
 import { urlFor } from "@/sanity/lib/image";
 import useStore from "@/store";
+import { t } from "@/lib/i18n";
 import { useAuth, useUser } from "@clerk/nextjs";
 import { ShoppingBag, Trash } from "lucide-react";
 import Image from "next/image";
@@ -40,6 +41,7 @@ const CartPage = () => {
     getItemCount,
     getSubTotalPrice,
     resetCart,
+    locale,
   } = useStore();
   const [loading, setLoading] = useState(false);
   const groupedItems = useStore((state) => state.getGroupedItems());
@@ -70,12 +72,10 @@ const CartPage = () => {
     fetchAddresses();
   }, []);
   const handleResetCart = () => {
-    const confirmed = window.confirm(
-      "Are you sure you want to reset your cart?"
-    );
+    const confirmed = window.confirm(t(locale, "cartConfirmReset"));
     if (confirmed) {
       resetCart();
-      toast.success("Cart reset successfully!");
+      toast.success(t(locale, "cartResetSuccess"));
     }
   };
 
@@ -88,6 +88,7 @@ const CartPage = () => {
         customerEmail: user?.emailAddresses[0]?.emailAddress ?? "Unknown",
         clerkUserId: user?.id,
         address: selectedAddress,
+        locale,
       };
       const checkoutUrl = await createCheckoutSession(groupedItems, metadata);
       if (checkoutUrl) {
@@ -107,7 +108,7 @@ const CartPage = () => {
             <>
               <div className="flex items-center gap-2 py-5">
                 <ShoppingBag className="text-darkColor" />
-                <Title>Shopping Cart</Title>
+                <Title>{t(locale, "cartTitle")}</Title>
               </div>
               <div className="grid lg:grid-cols-3 md:gap-8">
                 <div className="lg:col-span-2 rounded-lg">
@@ -142,13 +143,13 @@ const CartPage = () => {
                                   {product?.name}
                                 </h2>
                                 <p className="text-sm capitalize">
-                                  Variant:{" "}
+                                  {t(locale, "cartVariant")}:{" "}
                                   <span className="font-semibold">
                                     {product?.variant}
                                   </span>
                                 </p>
                                 <p className="text-sm capitalize">
-                                  Status:{" "}
+                                  {t(locale, "cartStatus")}: {" "}
                                   <span className="font-semibold">
                                     {product?.status}
                                   </span>
@@ -164,7 +165,7 @@ const CartPage = () => {
                                       />
                                     </TooltipTrigger>
                                     <TooltipContent className="font-bold">
-                                      Add to Favorite
+                                      {t(locale, "cartAddToFavorite")}
                                     </TooltipContent>
                                   </Tooltip>
                                   <Tooltip>
@@ -173,14 +174,14 @@ const CartPage = () => {
                                         onClick={() => {
                                           deleteCartProduct(product?._id);
                                           toast.success(
-                                            "Product deleted successfully!"
+                                            t(locale, "cartDeleteSuccess")
                                           );
                                         }}
                                         className="w-4 h-4 md:w-5 md:h-5 mr-1 text-gray-500 hover:text-red-600 hoverEffect"
                                       />
                                     </TooltipTrigger>
                                     <TooltipContent className="font-bold bg-red-600">
-                                      Delete product
+                                      {t(locale, "cartDeleteProduct")}
                                     </TooltipContent>
                                   </Tooltip>
                                 </TooltipProvider>
@@ -202,7 +203,7 @@ const CartPage = () => {
                       className="m-5 font-semibold"
                       variant="destructive"
                     >
-                      Reset Cart
+                      {t(locale, "cartResetButton")}
                     </Button>
                   </div>
                 </div>
@@ -210,22 +211,22 @@ const CartPage = () => {
                   <div className="lg:col-span-1">
                     <div className="hidden md:inline-block w-full bg-white p-6 rounded-lg border">
                       <h2 className="text-xl font-semibold mb-4">
-                        Order Summary
+                        {t(locale, "cartOrderSummary")}
                       </h2>
                       <div className="space-y-4">
                         <div className="flex items-center justify-between">
-                          <span>SubTotal</span>
+                          <span>{t(locale, "cartSubtotal")}</span>
                           <PriceFormatter amount={getSubTotalPrice()} />
                         </div>
                         <div className="flex items-center justify-between">
-                          <span>Discount</span>
+                          <span>{t(locale, "cartDiscount")}</span>
                           <PriceFormatter
                             amount={getSubTotalPrice() - getTotalPrice()}
                           />
                         </div>
                         <Separator />
                         <div className="flex items-center justify-between font-semibold text-lg">
-                          <span>Total</span>
+                          <span>{t(locale, "cartTotal")}</span>
                           <PriceFormatter
                             amount={getTotalPrice()}
                             className="text-lg font-bold text-black"
@@ -237,7 +238,7 @@ const CartPage = () => {
                           disabled={loading}
                           onClick={handleCheckout}
                         >
-                          {loading ? "Please wait..." : "Proceed to Checkout"}
+                          {loading ? t(locale, "cartPleaseWait") : t(locale, "cartProceedCheckout")}
                         </Button>
                       </div>
                     </div>
@@ -245,7 +246,7 @@ const CartPage = () => {
                       <div className="bg-white rounded-md mt-5">
                         <Card>
                           <CardHeader>
-                            <CardTitle>Delivery Address</CardTitle>
+                            <CardTitle>{t(locale, "cartDeliveryAddress")}</CardTitle>
                           </CardHeader>
                           <CardContent>
                             <RadioGroup
@@ -278,7 +279,7 @@ const CartPage = () => {
                               ))}
                             </RadioGroup>
                             <Button variant="outline" className="w-full mt-4">
-                              Add New Address
+                              {t(locale, "cartAddNewAddress")}
                             </Button>
                           </CardContent>
                         </Card>
@@ -289,21 +290,21 @@ const CartPage = () => {
                 {/* Order summary for mobile view */}
                 <div className="md:hidden fixed bottom-0 left-0 w-full bg-white pt-2">
                   <div className="bg-white p-4 rounded-lg border mx-4">
-                    <h2>Order Summary</h2>
+                    <h2>{t(locale, "cartOrderSummary")}</h2>
                     <div className="space-y-4">
                       <div className="flex items-center justify-between">
-                        <span>SubTotal</span>
+                        <span>{t(locale, "cartSubtotal")}</span>
                         <PriceFormatter amount={getSubTotalPrice()} />
                       </div>
                       <div className="flex items-center justify-between">
-                        <span>Discount</span>
+                        <span>{t(locale, "cartDiscount")}</span>
                         <PriceFormatter
                           amount={getSubTotalPrice() - getTotalPrice()}
                         />
                       </div>
                       <Separator />
                       <div className="flex items-center justify-between font-semibold text-lg">
-                        <span>Total</span>
+                        <span>{t(locale, "cartTotal")}</span>
                         <PriceFormatter
                           amount={getTotalPrice()}
                           className="text-lg font-bold text-black"
@@ -315,7 +316,7 @@ const CartPage = () => {
                         disabled={loading}
                         onClick={handleCheckout}
                       >
-                        {loading ? "Please wait..." : "Proceed to Checkout"}
+                        {loading ? t(locale, "cartPleaseWait") : t(locale, "cartProceedCheckout")}
                       </Button>
                     </div>
                   </div>

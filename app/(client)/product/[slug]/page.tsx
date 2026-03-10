@@ -12,12 +12,15 @@ import { FaRegQuestionCircle } from "react-icons/fa";
 import { FiShare2 } from "react-icons/fi";
 import { RxBorderSplit } from "react-icons/rx";
 import { TbTruckDelivery } from "react-icons/tb";
+import { getServerLocale } from "@/lib/locale";
+import { t } from "@/lib/i18n";
 
 const SingleProductPage = async ({
   params,
 }: {
   params: Promise<{ slug: string }>;
 }) => {
+  const locale = await getServerLocale();
   const { slug } = await params;
   const product = await getProductBySlug(slug);
   if (!product) {
@@ -55,7 +58,7 @@ const SingleProductPage = async ({
           <p
             className={`px-4 py-1.5 text-sm text-center inline-block font-semibold rounded-lg ${product?.stock === 0 ? "bg-red-100 text-red-600" : "text-green-600 bg-green-100"}`}
           >
-            {(product?.stock as number) > 0 ? "In Stock" : "Out of Stock"}
+            {(product?.stock as number) > 0 ? t(locale, "productInStock") : t(locale, "productOutOfStock")}
           </p>
         </div>
         <div className="flex items-center gap-2.5 lg:gap-3">
@@ -66,19 +69,19 @@ const SingleProductPage = async ({
         <div className="flex flex-wrap items-center justify-between gap-2.5 border-b border-b-gray-200 py-5 -mt-2">
           <div className="flex items-center gap-2 text-sm text-black hover:text-red-600 hoverEffect">
             <RxBorderSplit className="text-lg" />
-            <p>Compare color</p>
+            <p>{t(locale, "productCompareColor")}</p>
           </div>
           <div className="flex items-center gap-2 text-sm text-black hover:text-red-600 hoverEffect">
             <FaRegQuestionCircle className="text-lg" />
-            <p>Ask a question</p>
+            <p>{t(locale, "productAskQuestion")}</p>
           </div>
           <div className="flex items-center gap-2 text-sm text-black hover:text-red-600 hoverEffect">
             <TbTruckDelivery className="text-lg" />
-            <p>Delivery & Return</p>
+            <p>{t(locale, "productDeliveryReturn")}</p>
           </div>
           <div className="flex items-center gap-2 text-sm text-black hover:text-red-600 hoverEffect">
             <FiShare2 className="text-lg" />
-            <p>Share</p>
+            <p>{t(locale, "productShare")}</p>
           </div>
         </div>
         <div className="flex flex-col">
@@ -86,10 +89,10 @@ const SingleProductPage = async ({
             <Truck size={30} className="text-shop_orange" />
             <div>
               <p className="text-base font-semibold text-black">
-                Free Delivery
+                {t(locale, "productFreeDelivery")}
               </p>
               <p className="text-sm text-gray-500 underline underline-offset-2">
-                Enter your Postal code for Delivey Availability.
+                {t(locale, "productPostalCode")}
               </p>
             </div>
           </div>
@@ -97,11 +100,11 @@ const SingleProductPage = async ({
             <CornerDownLeft size={30} className="text-shop_orange" />
             <div>
               <p className="text-base font-semibold text-black">
-                Return Delivery
+                {t(locale, "productReturnDelivery")}
               </p>
               <p className="text-sm text-gray-500 ">
-                Free 30days Delivery Returns.{" "}
-                <span className="underline underline-offset-2">Details</span>
+                {t(locale, "productReturnPolicy")} {" "}
+                <span className="underline underline-offset-2">{t(locale, "productDetails")}</span>
               </p>
             </div>
           </div>

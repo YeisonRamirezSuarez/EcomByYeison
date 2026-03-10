@@ -148,6 +148,91 @@ body {
   font-family: var(--font-poppins);
 }
 
+@keyframes shrink {
+  from {
+    transform: scaleX(1);
+  }
+  to {
+    transform: scaleX(0);
+  }
+}
+
+@keyframes successPop {
+  0% {
+    transform: scale(0.75);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.08);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes sweep {
+  0% {
+    transform: translateX(-130%);
+  }
+  100% {
+    transform: translateX(130%);
+  }
+}
+
+@keyframes brandGlow {
+  0%,
+  100% {
+    filter: saturate(1) brightness(1);
+  }
+  50% {
+    filter: saturate(1.25) brightness(1.1);
+  }
+}
+
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
+}
+
+/* Clerk native modal mobile fixes */
+.cl-modalContent,
+.cl-modalContent * {
+  box-sizing: border-box;
+}
+
+@media (max-width: 640px) {
+  .cl-modalBackdrop {
+    padding: 12px !important;
+  }
+
+  .cl-modalContent {
+    width: 100% !important;
+    max-width: min(96vw, 30rem) !important;
+    max-height: 92dvh !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    border-radius: 16px !important;
+  }
+
+  .cl-rootBox,
+  .cl-cardBox,
+  .cl-card {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  .cl-card {
+    box-shadow: none !important;
+  }
+
+  .cl-formButtonPrimary,
+  .cl-socialButtonsBlockButton {
+    min-height: 44px !important;
+  }
+
+  .cl-otpCodeFieldInput {
+    width: 2.3rem !important;
+    height: 2.8rem !important;
+  }
 }

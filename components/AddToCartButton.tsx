@@ -7,6 +7,7 @@ import useStore from "@/store";
 import toast from "react-hot-toast";
 import PriceFormatter from "./PriceFormatter";
 import QuantityButtons from "./QuantityButtons";
+import { t } from "@/lib/i18n";
 
 interface Props {
   product: Product;
@@ -14,18 +15,16 @@ interface Props {
 }
 
 const AddToCartButton = ({ product, className }: Props) => {
-  const { addItem, getItemCount } = useStore();
+  const { addItem, getItemCount, locale } = useStore();
   const itemCount = getItemCount(product?._id);
   const isOutOfStock = product?.stock === 0;
 
   const handleAddToCart = () => {
     if ((product?.stock as number) > itemCount) {
       addItem(product);
-      toast.success(
-        `${product?.name?.substring(0, 12)}... added successfully!`
-      );
+      toast.success(`${product?.name?.substring(0, 12)}... ${t(locale, "addToCartAdded")}!`);
     } else {
-      toast.error("Can not add more than available stock");
+      toast.error(t(locale, "addToCartCannotMore"));
     }
   };
   return (
@@ -33,11 +32,11 @@ const AddToCartButton = ({ product, className }: Props) => {
       {itemCount ? (
         <div className="text-sm w-full">
           <div className="flex items-center justify-between">
-            <span className="text-xs text-darkColor/80">Quantity</span>
+            <span className="text-xs text-darkColor/80">{t(locale, "addToCartQuantity")}</span>
             <QuantityButtons product={product} />
           </div>
           <div className="flex items-center justify-between border-t pt-1">
-            <span className="text-xs font-semibold">Subtotal</span>
+            <span className="text-xs font-semibold">{t(locale, "addToCartSubtotal")}</span>
             <PriceFormatter
               amount={product?.price ? product?.price * itemCount : 0}
             />
@@ -52,7 +51,7 @@ const AddToCartButton = ({ product, className }: Props) => {
             className
           )}
         >
-          <ShoppingBag /> {isOutOfStock ? "Out of Stock" : "Add to Cart"}
+          <ShoppingBag /> {isOutOfStock ? t(locale, "addToCartOutOfStock") : t(locale, "addToCartButton")}
         </Button>
       )}
     </div>
