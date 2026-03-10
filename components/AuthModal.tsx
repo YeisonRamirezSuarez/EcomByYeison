@@ -61,9 +61,9 @@ export const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
   const clerkAppearance = {
     layout: "socialButtonsBlockButton",
     elements: {
-      rootBox: "w-full",
+      rootBox: "w-full max-w-full",
       card: "border-0 shadow-none bg-transparent",
-      formContainer: "w-full",
+      formContainer: "w-full max-w-full",
       socialButtonsBlockButton: "w-full h-12 text-base font-medium",
       socialButtonsBlockButton__google:
         "bg-white border-2 border-gray-300 hover:border-shop_dark_green hover:bg-gray-50 text-gray-900",
@@ -87,7 +87,7 @@ export const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
   } as const;
 
   const modalContent = (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-0">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-4">
       {/* Overlay */}
       <div
         className="absolute inset-0 bg-black/50 backdrop-blur-sm"
@@ -95,7 +95,7 @@ export const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
       />
 
       {/* Modal Content */}
-      <div className="relative bg-white rounded-2xl shadow-2xl w-[min(94vw,30rem)] overflow-hidden animate-in fade-in zoom-in-95">
+      <div className="relative bg-white rounded-2xl shadow-2xl w-[min(96vw,30rem)] max-h-[92dvh] overflow-x-hidden overflow-y-auto scrollbar-hide overscroll-contain animate-in fade-in zoom-in-95">
         {/* Close Button */}
         <button
           onClick={onClose}
@@ -106,8 +106,8 @@ export const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
         </button>
 
         {/* Content */}
-        <div className="p-8 pt-12">
-          <div className="text-center mb-8">
+        <div className="p-5 pt-12 sm:p-8 sm:pt-12">
+          <div className="text-center mb-6 sm:mb-8">
             <h2 className="text-2xl font-bold text-gray-900 mb-2">
               {authView === "signIn" ? "Inicia sesion" : "Registrate"}
             </h2>

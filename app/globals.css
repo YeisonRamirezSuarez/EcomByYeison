@@ -194,3 +194,45 @@ body {
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
+
+/* Clerk native modal mobile fixes */
+.cl-modalContent,
+.cl-modalContent * {
+  box-sizing: border-box;
+}
+
+@media (max-width: 640px) {
+  .cl-modalBackdrop {
+    padding: 12px !important;
+  }
+
+  .cl-modalContent {
+    width: 100% !important;
+    max-width: min(96vw, 30rem) !important;
+    max-height: 92dvh !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    border-radius: 16px !important;
+  }
+
+  .cl-rootBox,
+  .cl-cardBox,
+  .cl-card {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  .cl-card {
+    box-shadow: none !important;
+  }
+
+  .cl-formButtonPrimary,
+  .cl-socialButtonsBlockButton {
+    min-height: 44px !important;
+  }
+
+  .cl-otpCodeFieldInput {
+    width: 2.3rem !important;
+    height: 2.8rem !important;
+  }
+}
