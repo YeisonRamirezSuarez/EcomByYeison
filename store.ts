@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { Product } from "./sanity.types";
+import { Locale } from "@/lib/i18n";
 
 export interface CartItem {
   product: Product;
@@ -25,6 +26,8 @@ interface StoreState {
   // theme
   themeName: string;
   setThemeName: (name: string) => void;
+  locale: Locale;
+  setLocale: (value: Locale) => void;
   hasHydrated: boolean;
   setHasHydrated: (value: boolean) => void;
 }
@@ -120,6 +123,8 @@ const useStore = create<StoreState>()(
       // theme
       themeName: "emerald",
       setThemeName: (name: string) => set({ themeName: name }),
+      locale: "es",
+      setLocale: (value: Locale) => set({ locale: value }),
       hasHydrated: false,
       setHasHydrated: (value: boolean) => set({ hasHydrated: value }),
     }),

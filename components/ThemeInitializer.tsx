@@ -9,12 +9,13 @@ import { applyTheme } from "./ThemePanel";
  * Must be rendered in the root layout to ensure it runs on every page.
  */
 const ThemeInitializer = () => {
-  const { themeName, hasHydrated } = useStore();
+  const { themeName, locale, hasHydrated } = useStore();
 
   useEffect(() => {
     if (!hasHydrated) return;
     applyTheme(themeName);
-  }, [themeName, hasHydrated]);
+    document.documentElement.lang = locale;
+  }, [themeName, locale, hasHydrated]);
 
   return null;
 };

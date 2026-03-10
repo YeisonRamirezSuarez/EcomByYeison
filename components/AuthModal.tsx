@@ -6,6 +6,8 @@ import { useAuth } from "@clerk/nextjs";
 import { CheckCircle2, X } from "lucide-react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
+import useStore from "@/store";
+import { t } from "@/lib/i18n";
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -14,6 +16,7 @@ interface AuthModalProps {
 
 export const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
   const { isSignedIn } = useAuth();
+  const { locale } = useStore();
   const [mounted, setMounted] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [authView, setAuthView] = useState<"signIn" | "signUp">("signIn");
@@ -109,12 +112,14 @@ export const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
         <div className="p-5 pt-12 sm:p-8 sm:pt-12">
           <div className="text-center mb-6 sm:mb-8">
             <h2 className="text-2xl font-bold text-gray-900 mb-2">
-              {authView === "signIn" ? "Inicia sesion" : "Registrate"}
+              {authView === "signIn"
+                ? t(locale, "authSignInTitle")
+                : t(locale, "authSignUpTitle")}
             </h2>
             <p className="text-gray-600 text-sm">
               {authView === "signIn"
-                ? "Accede a tu cuenta de Ecom by Yeison"
-                : "Crea tu cuenta en Ecom by Yeison"}
+                ? t(locale, "authSignInSubtitle")
+                : t(locale, "authSignUpSubtitle")}
             </p>
           </div>
 
@@ -125,9 +130,11 @@ export const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
               <div className="relative mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-shop_light_green/15 ring-2 ring-shop_light_green/25 animate-[successPop_650ms_cubic-bezier(.22,1,.36,1)]">
                 <CheckCircle2 className="text-shop_dark_green" size={32} />
               </div>
-              <h3 className="text-xl font-semibold tracking-tight text-shop_dark_green">Inicio exitoso</h3>
+              <h3 className="text-xl font-semibold tracking-tight text-shop_dark_green">
+                {t(locale, "authSuccessTitle")}
+              </h3>
               <p className="mt-1 text-sm text-lightColor">
-                Bienvenido de nuevo. Estamos actualizando tu sesion...
+                {t(locale, "authSuccessBody")}
               </p>
               <div className="mt-5 h-2 w-full overflow-hidden rounded-full bg-shop_light_green/20">
                 <div className="h-full w-full origin-left rounded-full bg-gradient-to-r from-shop_dark_green via-shop_light_green to-shop_orange animate-[shrink_3s_linear_forwards]" />
@@ -164,24 +171,24 @@ export const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
               <div className="mt-4 text-center text-sm text-lightColor">
                 {authView === "signIn" ? (
                   <>
-                    No tienes cuenta?{" "}
+                    {t(locale, "authNoAccount")}{" "}
                     <button
                       type="button"
                       onClick={() => setAuthView("signUp")}
                       className="font-semibold text-shop_dark_green hover:text-shop_light_green hoverEffect"
                     >
-                      Registrate
+                      {t(locale, "authRegister")}
                     </button>
                   </>
                 ) : (
                   <>
-                    Ya tienes cuenta?{" "}
+                    {t(locale, "authHaveAccount")}{" "}
                     <button
                       type="button"
                       onClick={() => setAuthView("signIn")}
                       className="font-semibold text-shop_dark_green hover:text-shop_light_green hoverEffect"
                     >
-                      Inicia sesion
+                      {t(locale, "authLogin")}
                     </button>
                   </>
                 )}

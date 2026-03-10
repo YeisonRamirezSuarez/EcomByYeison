@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import useStore from "@/store";
 import { Palette, X, Check } from "lucide-react";
+import { t } from "@/lib/i18n";
 
 export const THEMES: Record<
   string,
@@ -84,6 +85,116 @@ export const THEMES: Record<
     bgAlt: "#f1f5f9",
     dealBg: "#e2e8f0",
   },
+  amber: {
+    name: "Ambar",
+    primary: "#78350f",
+    primaryBtn: "#78350f",
+    light: "#f59e0b",
+    accent: "#d97706",
+    accentLight: "#fde68a",
+    bg: "#fffbeb",
+    bgAlt: "#fef3c7",
+    dealBg: "#fde68a",
+  },
+  mint: {
+    name: "Menta",
+    primary: "#064e3b",
+    primaryBtn: "#064e3b",
+    light: "#10b981",
+    accent: "#14b8a6",
+    accentLight: "#99f6e4",
+    bg: "#ecfdf5",
+    bgAlt: "#f0fdfa",
+    dealBg: "#ccfbf1",
+  },
+  sunset: {
+    name: "Atardecer",
+    primary: "#7c2d12",
+    primaryBtn: "#7c2d12",
+    light: "#ea580c",
+    accent: "#f43f5e",
+    accentLight: "#fecdd3",
+    bg: "#fff7ed",
+    bgAlt: "#fff1f2",
+    dealBg: "#ffe4e6",
+  },
+  indigo: {
+    name: "Indigo",
+    primary: "#312e81",
+    primaryBtn: "#312e81",
+    light: "#6366f1",
+    accent: "#22d3ee",
+    accentLight: "#bae6fd",
+    bg: "#eef2ff",
+    bgAlt: "#f5f3ff",
+    dealBg: "#e0e7ff",
+  },
+  cobalt: {
+    name: "Cobalto",
+    primary: "#172554",
+    primaryBtn: "#172554",
+    light: "#2563eb",
+    accent: "#38bdf8",
+    accentLight: "#bae6fd",
+    bg: "#eff6ff",
+    bgAlt: "#dbeafe",
+    dealBg: "#bfdbfe",
+  },
+  forest: {
+    name: "Bosque",
+    primary: "#14532d",
+    primaryBtn: "#14532d",
+    light: "#22c55e",
+    accent: "#84cc16",
+    accentLight: "#d9f99d",
+    bg: "#f0fdf4",
+    bgAlt: "#dcfce7",
+    dealBg: "#bbf7d0",
+  },
+  lavender: {
+    name: "Lavanda",
+    primary: "#4c1d95",
+    primaryBtn: "#4c1d95",
+    light: "#8b5cf6",
+    accent: "#c084fc",
+    accentLight: "#f3e8ff",
+    bg: "#faf5ff",
+    bgAlt: "#f3e8ff",
+    dealBg: "#e9d5ff",
+  },
+  coral: {
+    name: "Coral",
+    primary: "#9a3412",
+    primaryBtn: "#9a3412",
+    light: "#fb7185",
+    accent: "#f97316",
+    accentLight: "#fed7aa",
+    bg: "#fff7ed",
+    bgAlt: "#ffedd5",
+    dealBg: "#fed7aa",
+  },
+  midnight: {
+    name: "Medianoche",
+    primary: "#0f172a",
+    primaryBtn: "#0f172a",
+    light: "#334155",
+    accent: "#0ea5e9",
+    accentLight: "#bae6fd",
+    bg: "#f8fafc",
+    bgAlt: "#e2e8f0",
+    dealBg: "#cbd5e1",
+  },
+  sand: {
+    name: "Arena",
+    primary: "#713f12",
+    primaryBtn: "#713f12",
+    light: "#a16207",
+    accent: "#d97706",
+    accentLight: "#fde68a",
+    bg: "#fffbeb",
+    bgAlt: "#fef3c7",
+    dealBg: "#fde68a",
+  },
 };
 
 export function applyTheme(themeName: string) {
@@ -102,7 +213,7 @@ export function applyTheme(themeName: string) {
 
 const ThemePanel = () => {
   const [open, setOpen] = useState(false);
-  const { themeName, setThemeName } = useStore();
+  const { themeName, setThemeName, locale, setLocale } = useStore();
 
   useEffect(() => {
     applyTheme(themeName);
@@ -119,11 +230,11 @@ const ThemePanel = () => {
   return (
     <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3">
       {open && (
-        <div className="bg-white rounded-2xl shadow-2xl border border-gray-100 p-5 w-72 animate-in slide-in-from-bottom-4 duration-200">
+        <div className="bg-white rounded-2xl shadow-2xl border border-gray-100 p-5 w-80 animate-in slide-in-from-bottom-4 duration-200">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h3 className="font-bold text-gray-900 text-sm">Personalizar tema</h3>
-              <p className="text-xs text-gray-400 mt-0.5">Selecciona tu color favorito</p>
+              <h3 className="font-bold text-gray-900 text-[1rem] leading-none">{t(locale, "themePanelTitle")}</h3>
+              <p className="text-sm text-gray-500 mt-1">{t(locale, "themePanelSubtitle")}</p>
             </div>
             <button
               onClick={() => setOpen(false)}
@@ -131,6 +242,36 @@ const ThemePanel = () => {
             >
               <X size={14} />
             </button>
+          </div>
+
+          <div className="mb-4 rounded-xl border border-gray-100 bg-gray-50 p-2.5">
+            <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-600">
+              {t(locale, "languageLabel")}
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => setLocale("es")}
+                className={`rounded-lg px-3 py-2 text-sm font-semibold transition-colors ${
+                  locale === "es"
+                    ? "bg-shop_dark_green text-white"
+                    : "bg-white text-gray-700 hover:bg-gray-100"
+                }`}
+              >
+                Español
+              </button>
+              <button
+                type="button"
+                onClick={() => setLocale("en")}
+                className={`rounded-lg px-3 py-2 text-sm font-semibold transition-colors ${
+                  locale === "en"
+                    ? "bg-shop_dark_green text-white"
+                    : "bg-white text-gray-700 hover:bg-gray-100"
+                }`}
+              >
+                English
+              </button>
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-2">
@@ -141,9 +282,9 @@ const ThemePanel = () => {
                   key={key}
                   onClick={() => handleSelect(key)}
                   title={theme.name}
-                  className={`relative flex items-center gap-3 p-3 rounded-xl transition-all border ${
+                  className={`grid grid-cols-[auto_1fr_auto] items-center gap-2.5 px-2.5 py-2.5 rounded-xl transition-all border ${
                     isActive
-                      ? "border-2 bg-gray-50 shadow-sm"
+                      ? "bg-gray-50 shadow-sm"
                       : "border-gray-100 hover:border-gray-200 hover:bg-gray-50"
                   }`}
                   style={{ borderColor: isActive ? theme.primary : undefined }}
@@ -162,10 +303,12 @@ const ThemePanel = () => {
                       style={{ backgroundColor: theme.accent }}
                     />
                   </div>
-                  <span className="text-xs font-semibold text-gray-700">{theme.name}</span>
+                  <span className="min-w-0 truncate text-left text-sm font-semibold text-gray-700">
+                    {theme.name}
+                  </span>
                   {isActive && (
                     <div
-                      className="absolute top-2 right-2 w-4 h-4 rounded-full flex items-center justify-center"
+                      className="w-4 h-4 rounded-full flex items-center justify-center"
                       style={{ backgroundColor: theme.primary }}
                     >
                       <Check size={9} className="text-white" />
@@ -178,7 +321,7 @@ const ThemePanel = () => {
 
           <div className="mt-4 pt-3 border-t border-gray-100">
             <p className="text-xs text-gray-400 text-center">
-              Tu preferencia se guarda automáticamente
+              {t(locale, "themePanelAutosave")}
             </p>
           </div>
         </div>
