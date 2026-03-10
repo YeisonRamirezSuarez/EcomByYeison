@@ -150,6 +150,18 @@ type Messages = {
   wishlistTableAction: string;
   wishlistInStock: string;
   wishlistOutOfStock: string;
+  ordersTitle: string;
+  ordersOrderNumber: string;
+  ordersDate: string;
+  ordersCustomer: string;
+  ordersEmail: string;
+  ordersTotal: string;
+  ordersStatus: string;
+  ordersInvoice: string;
+  ordersAction: string;
+  ordersNotFound: string;
+  ordersNotFoundDesc: string;
+  ordersBrowseProducts: string;
 };
 
 export const MESSAGES: Record<Locale, Messages> = {
@@ -303,6 +315,18 @@ export const MESSAGES: Record<Locale, Messages> = {
     wishlistTableAction: "Acción",
     wishlistInStock: "En stock",
     wishlistOutOfStock: "Agotado",
+    ordersTitle: "Mis órdenes",
+    ordersOrderNumber: "Número de orden",
+    ordersDate: "Fecha",
+    ordersCustomer: "Cliente",
+    ordersEmail: "Correo",
+    ordersTotal: "Total",
+    ordersStatus: "Estado",
+    ordersInvoice: "Número de factura",
+    ordersAction: "Acción",
+    ordersNotFound: "No hay órdenes",
+    ordersNotFoundDesc: "Parece que aún no has realizado ninguna compra. ¡Comienza a comprar para ver tus órdenes aquí!",
+    ordersBrowseProducts: "Ver productos",
   },
   en: {
     themePanelTitle: "Customize theme",
@@ -454,6 +478,18 @@ export const MESSAGES: Record<Locale, Messages> = {
     wishlistTableAction: "Action",
     wishlistInStock: "In Stock",
     wishlistOutOfStock: "Out of Stock",
+    ordersTitle: "My Orders",
+    ordersOrderNumber: "Order Number",
+    ordersDate: "Date",
+    ordersCustomer: "Customer",
+    ordersEmail: "Email",
+    ordersTotal: "Total",
+    ordersStatus: "Status",
+    ordersInvoice: "Invoice Number",
+    ordersAction: "Action",
+    ordersNotFound: "No orders found",
+    ordersNotFoundDesc: "It looks like you haven't placed any orders yet. Start shopping to see your orders here!",
+    ordersBrowseProducts: "Browse Products",
   },
 };
 
