@@ -132,6 +132,24 @@ type Messages = {
   footerPrivacy: string;
   footerTerms: string;
   footerHelpCenter: string;
+  wishlistTitle: string;
+  wishlistEmpty: string;
+  wishlistEmptyDesc: string;
+  wishlistContinueShopping: string;
+  wishlistLoadMore: string;
+  wishlistLoadLess: string;
+  wishlistReset: string;
+  wishlistConfirmReset: string;
+  wishlistResetSuccess: string;
+  wishlistRemoveSuccess: string;
+  wishlistTableImage: string;
+  wishlistTableCategory: string;
+  wishlistTableType: string;
+  wishlistTableStatus: string;
+  wishlistTablePrice: string;
+  wishlistTableAction: string;
+  wishlistInStock: string;
+  wishlistOutOfStock: string;
 };
 
 export const MESSAGES: Record<Locale, Messages> = {
@@ -267,6 +285,24 @@ export const MESSAGES: Record<Locale, Messages> = {
     footerPrivacy: "Privacidad",
     footerTerms: "Términos",
     footerHelpCenter: "Centro de ayuda",
+    wishlistTitle: "Mi lista de deseos",
+    wishlistEmpty: "Tu lista de deseos está vacía",
+    wishlistEmptyDesc: "Los productos que agregues a tu lista de deseos aparecerán aquí",
+    wishlistContinueShopping: "Seguir comprando",
+    wishlistLoadMore: "Cargar más",
+    wishlistLoadLess: "Cargar menos",
+    wishlistReset: "Vaciar lista",
+    wishlistConfirmReset: "¿Seguro que deseas vaciar tu lista de deseos?",
+    wishlistResetSuccess: "¡Lista de deseos vaciada!",
+    wishlistRemoveSuccess: "¡Producto removido de la lista!",
+    wishlistTableImage: "Imagen",
+    wishlistTableCategory: "Categoría",
+    wishlistTableType: "Tipo",
+    wishlistTableStatus: "Estado",
+    wishlistTablePrice: "Precio",
+    wishlistTableAction: "Acción",
+    wishlistInStock: "En stock",
+    wishlistOutOfStock: "Agotado",
   },
   en: {
     themePanelTitle: "Customize theme",
@@ -400,6 +436,24 @@ export const MESSAGES: Record<Locale, Messages> = {
     footerPrivacy: "Privacy",
     footerTerms: "Terms",
     footerHelpCenter: "Help Center",
+    wishlistTitle: "My Wishlist",
+    wishlistEmpty: "Your wishlist is empty",
+    wishlistEmptyDesc: "Items added to your wishlist will appear here",
+    wishlistContinueShopping: "Continue Shopping",
+    wishlistLoadMore: "Load More",
+    wishlistLoadLess: "Load Less",
+    wishlistReset: "Clear Wishlist",
+    wishlistConfirmReset: "Are you sure you want to clear your wishlist?",
+    wishlistResetSuccess: "Wishlist cleared successfully!",
+    wishlistRemoveSuccess: "Product removed from wishlist!",
+    wishlistTableImage: "Image",
+    wishlistTableCategory: "Category",
+    wishlistTableType: "Type",
+    wishlistTableStatus: "Status",
+    wishlistTablePrice: "Price",
+    wishlistTableAction: "Action",
+    wishlistInStock: "In Stock",
+    wishlistOutOfStock: "Out of Stock",
   },
 };
 
