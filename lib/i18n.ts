@@ -127,6 +127,11 @@ type Messages = {
   shopPriceOver500: string;
   dealWeekTitle: string;
   categoryProductsBy: string;
+  footerBrandDescription: string;
+  footerNewsletterNote: string;
+  footerPrivacy: string;
+  footerTerms: string;
+  footerHelpCenter: string;
 };
 
 export const MESSAGES: Record<Locale, Messages> = {
@@ -158,7 +163,7 @@ export const MESSAGES: Record<Locale, Messages> = {
     footerCopyright: "Todos los derechos reservados.",
     footerVisitUs: "Visítanos",
     footerCallUs: "Llámanos",
-    footerSchedule: "Horario",
+    footerSchedule: "Horario de atencion",
     footerWriteUs: "Escríbenos",
     footerScheduleValue: "Lun - Sáb: 9:00 AM - 7:00 PM",
     categoryMobiles: "Móviles",
@@ -257,6 +262,11 @@ export const MESSAGES: Record<Locale, Messages> = {
     shopPriceOver500: "Más de $500",
     dealWeekTitle: "Ofertas de la semana",
     categoryProductsBy: "Productos por categoría",
+    footerBrandDescription: "Ecom by Yeison es tu destino de tecnología premium. Descubre gadgets, electrónica y accesorios seleccionados con calidad y buen precio.",
+    footerNewsletterNote: "Sin spam. Solo lanzamientos, ofertas y novedades relevantes.",
+    footerPrivacy: "Privacidad",
+    footerTerms: "Términos",
+    footerHelpCenter: "Centro de ayuda",
   },
   en: {
     themePanelTitle: "Customize theme",
@@ -286,7 +296,7 @@ export const MESSAGES: Record<Locale, Messages> = {
     footerCopyright: "All rights reserved.",
     footerVisitUs: "Visit us",
     footerCallUs: "Call us",
-    footerSchedule: "Schedule",
+    footerSchedule: "Business hours",
     footerWriteUs: "Write to us",
     footerScheduleValue: "Mon - Sat: 9:00 AM - 7:00 PM",
     categoryMobiles: "Mobiles",
@@ -385,6 +395,11 @@ export const MESSAGES: Record<Locale, Messages> = {
     shopPriceOver500: "Over $500",
     dealWeekTitle: "Hot Deals of the Week",
     categoryProductsBy: "Products by Category",
+    footerBrandDescription: "Ecom by Yeison is your premium technology destination. Discover curated gadgets, electronics, and accessories at fair prices.",
+    footerNewsletterNote: "No spam. Only launches, offers, and relevant updates.",
+    footerPrivacy: "Privacy",
+    footerTerms: "Terms",
+    footerHelpCenter: "Help Center",
   },
 };
 
