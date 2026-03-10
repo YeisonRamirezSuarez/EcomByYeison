@@ -162,6 +162,17 @@ type Messages = {
   ordersNotFound: string;
   ordersNotFoundDesc: string;
   ordersBrowseProducts: string;
+  ordersPaid: string;
+  ordersPending: string;
+  ordersViewDetails: string;
+  ordersActionNotAvailable: string;
+  ordersDetailsTitle: string;
+  ordersDownloadInvoice: string;
+  ordersProduct: string;
+  ordersQuantity: string;
+  ordersPrice: string;
+  ordersDiscount: string;
+  ordersSubtotal: string;
 };
 
 export const MESSAGES: Record<Locale, Messages> = {
@@ -327,6 +338,17 @@ export const MESSAGES: Record<Locale, Messages> = {
     ordersNotFound: "No hay órdenes",
     ordersNotFoundDesc: "Parece que aún no has realizado ninguna compra. ¡Comienza a comprar para ver tus órdenes aquí!",
     ordersBrowseProducts: "Ver productos",
+    ordersPaid: "Pagado",
+    ordersPending: "Pendiente",
+    ordersViewDetails: "Haz clic para ver los detalles de la orden",
+    ordersActionNotAvailable: "Acción disponible solo para administradores",
+    ordersDetailsTitle: "Detalles de la orden",
+    ordersDownloadInvoice: "Descargar factura",
+    ordersProduct: "Producto",
+    ordersQuantity: "Cantidad",
+    ordersPrice: "Precio",
+    ordersDiscount: "Descuento",
+    ordersSubtotal: "Subtotal",
   },
   en: {
     themePanelTitle: "Customize theme",
@@ -490,6 +512,17 @@ export const MESSAGES: Record<Locale, Messages> = {
     ordersNotFound: "No orders found",
     ordersNotFoundDesc: "It looks like you haven't placed any orders yet. Start shopping to see your orders here!",
     ordersBrowseProducts: "Browse Products",
+    ordersPaid: "Paid",
+    ordersPending: "Pending",
+    ordersViewDetails: "Click to see order details",
+    ordersActionNotAvailable: "Action available for admins only",
+    ordersDetailsTitle: "Order Details",
+    ordersDownloadInvoice: "Download Invoice",
+    ordersProduct: "Product",
+    ordersQuantity: "Quantity",
+    ordersPrice: "Price",
+    ordersDiscount: "Discount",
+    ordersSubtotal: "Subtotal",
   },
 };
 

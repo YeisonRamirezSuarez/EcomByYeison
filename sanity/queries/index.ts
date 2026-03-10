@@ -92,10 +92,12 @@ const getBrand = async (slug: string) => {
 };
 const getMyOrders = async (userId: string) => {
   try {
+    console.log("🔍 Fetching orders for userId:", userId);
     const orders = await sanityFetch({
       query: MY_ORDERS_QUERY,
       params: { userId },
     });
+    console.log("📦 Orders found:", orders?.data?.length ?? 0);
     return orders?.data || null;
   } catch (error) {
     console.error("Error fetching product by ID:", error);

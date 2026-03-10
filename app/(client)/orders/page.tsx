@@ -23,18 +23,20 @@ const OrdersPage = async () => {
   const orders = await getMyOrders(userId);
 
   return (
-    <div>
-      <Container className="py-10">
+    <div className="border-t bg-gray-50/40">
+      <Container className="py-8 md:py-10">
         {orders?.length ? (
-          <Card className="w-full">
-            <CardHeader>
-              <CardTitle>{t(locale, "ordersTitle")}</CardTitle>
+          <Card className="w-full rounded-2xl border border-gray-200/80 shadow-sm">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-3xl font-bold text-darkColor">
+                {t(locale, "ordersTitle")}
+              </CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="pt-0">
               <ScrollArea>
                 <Table>
                   <TableHeader>
-                    <TableRow>
+                    <TableRow className="bg-black/[0.02] hover:bg-black/[0.02]">
                       <TableHead className="w-[100px] md:w-auto">
                         {t(locale, "ordersOrderNumber")}
                       </TableHead>
