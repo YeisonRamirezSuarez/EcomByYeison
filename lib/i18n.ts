@@ -199,6 +199,21 @@ type Messages = {
   adminSelectNewStatus: string;
   adminClose: string;
   adminUpdateError: string;
+  searchPlaceholder: string;
+  searchResultsFor: string;
+  searchNoResults: string;
+  searchPrompt: string;
+  addrFormTitle: string;
+  addrName: string;
+  addrStreet: string;
+  addrCity: string;
+  addrState: string;
+  addrZip: string;
+  addrDefault: string;
+  addrSave: string;
+  addrSaving: string;
+  addrCancel: string;
+  addrError: string;
 };
 
 export const MESSAGES: Record<Locale, Messages> = {
@@ -401,6 +416,21 @@ export const MESSAGES: Record<Locale, Messages> = {
     adminSelectNewStatus: "Selecciona el nuevo estado",
     adminClose: "Cerrar",
     adminUpdateError: "Error al actualizar el estado de la orden",
+    searchPlaceholder: "Buscar productos…",
+    searchResultsFor: "Resultados para",
+    searchNoResults: "No encontramos productos para tu búsqueda.",
+    searchPrompt: "Escribe arriba para buscar productos.",
+    addrFormTitle: "Nueva dirección",
+    addrName: "Nombre (ej. Casa, Trabajo)",
+    addrStreet: "Dirección",
+    addrCity: "Ciudad",
+    addrState: "Departamento",
+    addrZip: "Código postal (opcional)",
+    addrDefault: "Usar como dirección predeterminada",
+    addrSave: "Guardar dirección",
+    addrSaving: "Guardando…",
+    addrCancel: "Cancelar",
+    addrError: "No se pudo guardar la dirección. Inténtalo de nuevo.",
   },
   en: {
     themePanelTitle: "Customize theme",
@@ -601,6 +631,21 @@ export const MESSAGES: Record<Locale, Messages> = {
     adminSelectNewStatus: "Select New Status",
     adminClose: "Close",
     adminUpdateError: "Failed to update order status",
+    searchPlaceholder: "Search products…",
+    searchResultsFor: "Results for",
+    searchNoResults: "We couldn't find any products for your search.",
+    searchPrompt: "Type above to search for products.",
+    addrFormTitle: "New address",
+    addrName: "Name (e.g. Home, Work)",
+    addrStreet: "Street address",
+    addrCity: "City",
+    addrState: "State / Region",
+    addrZip: "ZIP / Postal code (optional)",
+    addrDefault: "Use as default address",
+    addrSave: "Save address",
+    addrSaving: "Saving…",
+    addrCancel: "Cancel",
+    addrError: "Could not save the address. Please try again.",
   },
 };
 

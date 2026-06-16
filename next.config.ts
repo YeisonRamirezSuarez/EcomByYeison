@@ -1,9 +1,8 @@
 import type { NextConfig } from "next";
 
-// Security headers applied to every response. Note: a Content-Security-Policy
-// is intentionally omitted for now — the app injects an inline theme-boot script
-// (app/layout.tsx) and loads Clerk/Stripe/Sanity, so a strict CSP needs a nonce
-// strategy and careful testing before it can be enabled without breaking the UI.
+// Static security headers applied to every response. The Content-Security-Policy
+// is NOT here — it needs a per-request nonce (for the inline theme-boot script
+// in app/layout.tsx and for Clerk), so it's built in proxy.ts (middleware).
 const securityHeaders = [
   // Don't let browsers MIME-sniff responses away from the declared content-type.
   { key: "X-Content-Type-Options", value: "nosniff" },

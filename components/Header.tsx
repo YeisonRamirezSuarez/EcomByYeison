@@ -60,7 +60,7 @@ const Header = async () => {
           </div>
           <HeaderMenu />
           <div className="w-auto md:w-1/3 flex items-center justify-end gap-4">
-            <SearchBar />
+            <SearchBar placeholder={t(locale, "searchPlaceholder")} />
             <div className="flex items-center gap-3">
               <CartIcon />
               <FavoriteButton />

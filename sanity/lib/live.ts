@@ -9,10 +9,12 @@ if (!token) {
   throw new Error("SANITY_API_READ_TOKEN is not set");
 }
 
+// Only a serverToken is configured: live queries run server-side. We do NOT
+// pass a browserToken — that ships the read token to the client (where it could
+// read drafts/unpublished content), and <SanityLive /> isn't mounted anyway.
 export const { sanityFetch, SanityLive } = defineLive({
   client,
   serverToken: token,
-  browserToken: token,
   fetchOptions: {
     revalidate: 60,
   },

@@ -23,7 +23,8 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Address } from "@/sanity.types";
-import { client } from "@/sanity/lib/client";
+import { getUserAddresses } from "@/actions/getUserAddresses";
+import AddAddressDialog from "@/components/AddAddressDialog";
 import { urlFor } from "@/sanity/lib/image";
 import useStore from "@/store";
 import { t } from "@/lib/i18n";
@@ -54,8 +55,9 @@ const CartPage = () => {
   const fetchAddresses = async () => {
     setLoading(true);
     try {
-      const query = `*[_type=="address"] | order(publishedAt desc)`;
-      const data = await client.fetch(query);
+      // Scoped to the signed-in user on the server (see getUserAddresses) so we
+      // never pull the whole address dataset into the browser.
+      const data = await getUserAddresses();
       setAddresses(data);
       const defaultAddress = data.find((addr: Address) => addr.default);
       if (defaultAddress) {
@@ -289,9 +291,12 @@ const CartPage = () => {
                                 </div>
                               ))}
                             </RadioGroup>
-                            <Button variant="outline" className="w-full mt-4">
-                              {t(locale, "cartAddNewAddress")}
-                            </Button>
+                            <AddAddressDialog
+                              onCreated={(addr) => {
+                                setAddresses((prev) => [addr, ...(prev ?? [])]);
+                                setSelectedAddress(addr);
+                              }}
+                            />
                           </CardContent>
                         </Card>
                       </div>

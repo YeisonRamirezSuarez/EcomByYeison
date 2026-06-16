@@ -8,6 +8,15 @@ export const addressType = defineType({
   icon: HomeIcon,
   fields: [
     defineField({
+      name: "clerkUserId",
+      title: "Owner (Clerk user id)",
+      type: "string",
+      description:
+        "Clerk id of the user who owns this address. Set programmatically; "
+        + "used to scope addresses so a user only ever sees their own.",
+      readOnly: true,
+    }),
+    defineField({
       name: "name",
       title: "Address Name",
       type: "string",
