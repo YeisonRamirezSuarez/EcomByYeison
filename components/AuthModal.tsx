@@ -161,7 +161,12 @@ export const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
               </ClerkLoading>
 
               <ClerkLoaded>
-                <div className={authView === "signIn" ? "block" : "hidden"}>
+                {/* Render only the ACTIVE component. Two hash-routed Clerk
+                    widgets mounted at once fight over window.location.hash,
+                    which bounced the multi-step flow (password / email code)
+                    back to the email step on mobile. With a single mounted
+                    widget, hash routing has no rival and the steps hold. */}
+                {authView === "signIn" ? (
                   <SignIn
                     routing="hash"
                     oauthFlow="popup"
@@ -170,9 +175,7 @@ export const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
                     fallbackRedirectUrl="/"
                     appearance={clerkAppearance}
                   />
-                </div>
-
-                <div className={authView === "signUp" ? "block" : "hidden"}>
+                ) : (
                   <SignUp
                     routing="hash"
                     oauthFlow="popup"
@@ -180,7 +183,7 @@ export const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
                     fallbackRedirectUrl="/"
                     appearance={clerkAppearance}
                   />
-                </div>
+                )}
 
                 <div className="mt-4 text-center text-sm text-lightColor">
                 {authView === "signIn" ? (
