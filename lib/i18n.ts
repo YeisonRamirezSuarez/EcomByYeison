@@ -125,6 +125,9 @@ type Messages = {
   shopPrice200To300: string;
   shopPrice300To500: string;
   shopPriceOver500: string;
+  shopFilters: string;
+  shopResults: string;
+  shopProductsCount: string;
   dealWeekTitle: string;
   categoryProductsBy: string;
   footerBrandDescription: string;
@@ -324,6 +327,9 @@ export const MESSAGES: Record<Locale, Messages> = {
     shopPrice200To300: "$200 - $300",
     shopPrice300To500: "$300 - $500",
     shopPriceOver500: "Más de $500",
+    shopFilters: "Filtros",
+    shopResults: "Ver resultados",
+    shopProductsCount: "productos",
     dealWeekTitle: "Ofertas de la semana",
     categoryProductsBy: "Productos por categoría",
     footerBrandDescription: "Ecom by Yeison es tu destino de tecnología premium. Descubre gadgets, electrónica y accesorios seleccionados con calidad y buen precio.",
@@ -521,6 +527,9 @@ export const MESSAGES: Record<Locale, Messages> = {
     shopPrice200To300: "$200 - $300",
     shopPrice300To500: "$300 - $500",
     shopPriceOver500: "Over $500",
+    shopFilters: "Filters",
+    shopResults: "Show results",
+    shopProductsCount: "products",
     dealWeekTitle: "Hot Deals of the Week",
     categoryProductsBy: "Products by Category",
     footerBrandDescription: "Ecom by Yeison is your premium technology destination. Discover curated gadgets, electronics, and accessories at fair prices.",

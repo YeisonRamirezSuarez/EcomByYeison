@@ -210,6 +210,16 @@ export function applyTheme(themeName: string) {
   root.style.setProperty("--color-shop_light_pink", theme.bg);
   root.style.setProperty("--color-shop_light_bg", theme.bgAlt);
   root.style.setProperty("--color-deal-bg", theme.dealBg);
+
+  const metaThemeColor = document.querySelector('meta[name="theme-color"]');
+  if (metaThemeColor) {
+    metaThemeColor.setAttribute('content', theme.primary);
+  } else {
+    const meta = document.createElement('meta');
+    meta.name = "theme-color";
+    meta.content = theme.primary;
+    document.head.appendChild(meta);
+  }
 }
 
 const ThemePanel = () => {

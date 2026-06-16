@@ -30,11 +30,10 @@ export async function POST(req: NextRequest) {
   try {
     event = stripe.webhooks.constructEvent(body, sig, webhookSecret);
   } catch (error) {
+    // Log full detail server-side; return a generic message to the caller.
     console.error("Webhook signature verification failed:", error);
     return NextResponse.json(
-      {
-        error: `Webhook Error: ${error}`,
-      },
+      { error: "Webhook signature verification failed" },
       { status: 400 }
     );
   }
@@ -50,9 +49,7 @@ export async function POST(req: NextRequest) {
     } catch (error) {
       console.error("Error creating order in sanity:", error);
       return NextResponse.json(
-        {
-          error: `Error creating order: ${error}`,
-        },
+        { error: "Error processing order" },
         { status: 400 }
       );
     }
@@ -98,7 +95,8 @@ async function createOrderInSanity(
     let productImage = "";
     try {
       const sanityProduct = await backendClient.fetch(
-        `*[_id == "${productId}"][0]{ image }`
+        `*[_id == $productId][0]{ image }`,
+        { productId }
       );
       if (sanityProduct?.image) {
         productImage = `https://cdn.sanity.io/images/${process.env.NEXT_PUBLIC_SANITY_PROJECT_ID}/${process.env.NEXT_PUBLIC_SANITY_DATASET}/${sanityProduct.image.asset._ref.replace(

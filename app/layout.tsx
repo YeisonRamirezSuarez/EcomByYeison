@@ -1,7 +1,9 @@
 import "./globals.css";
+import type { Metadata, Viewport } from "next";
 import { Toaster } from "react-hot-toast";
 import { Poppins } from "next/font/google";
 import ThemeInitializer from "@/components/ThemeInitializer";
+import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 import { getServerLocale } from "@/lib/locale";
 
 const poppins = Poppins({
@@ -10,6 +12,40 @@ const poppins = Poppins({
   variable: "--font-poppins",
   display: "swap",
 });
+
+export const metadata: Metadata = {
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"
+  ),
+  title: {
+    default: "Ecom by Yeison",
+    template: "%s | Ecom by Yeison",
+  },
+  description:
+    "Tienda de tecnología con productos de Samsung, Apple, Sony, LG y Dell.",
+  applicationName: "Ecom by Yeison",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Ecom",
+  },
+  formatDetection: { telephone: false },
+  // Explicit icons from /public (always served, no route ambiguity). Defining
+  // metadata.icons suppresses the app/icon.png file convention, so the browser
+  // favicon must be listed here. PWA install icons live in manifest.ts.
+  icons: {
+    icon: [{ url: "/favicon.png", type: "image/png", sizes: "96x96" }],
+    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180" }],
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#063c28",
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+  viewportFit: "cover",
+};
 
 const RootLayout = async ({ children }: { children: React.ReactNode }) => {
   const locale = await getServerLocale();
@@ -99,6 +135,11 @@ const RootLayout = async ({ children }: { children: React.ReactNode }) => {
         root.style.setProperty('--color-shop_light_pink', theme.bg);
         root.style.setProperty('--color-shop_light_bg', theme.bgAlt);
         root.style.setProperty('--color-deal-bg', theme.dealBg);
+
+        const metaThemeColor = document.querySelector('meta[name="theme-color"]');
+        if (metaThemeColor) {
+          metaThemeColor.setAttribute('content', theme.primary);
+        }
       } catch (e) {
         // no-op: keep default theme
       }
@@ -112,6 +153,7 @@ const RootLayout = async ({ children }: { children: React.ReactNode }) => {
       </head>
       <body className="font-poppins antialiased overflow-x-hidden">
         <ThemeInitializer />
+        <ServiceWorkerRegister />
         {children}
         <Toaster
           position="bottom-right"

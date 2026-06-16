@@ -33,9 +33,9 @@ export default function EmptyCart() {
           <Image
             src={emptyCart}
             alt="Empty shopping cart"
-            layout="fill"
-            objectFit="contain"
-            className="drop-shadow-lg"
+            fill
+            sizes="192px"
+            className="object-contain drop-shadow-lg"
           />
           <motion.div
             animate={{

@@ -46,6 +46,7 @@ const ImageView = ({ images = [], isStock }: Props) => {
             width={700}
             height={700}
             priority
+            sizes="(max-width: 768px) 100vw, 50vw"
             className={`w-full h-96 max-h-[550px] min-h-[500px] object-contain group-hover:scale-110 hoverEffect rounded-md ${
               isStock === 0 ? "opacity-50" : ""
             }`}

@@ -58,7 +58,7 @@ const SideMenu: FC<SidebarProps> = ({ isOpen, onClose }) => {
               key={item?.title}
               onClick={onClose}
               className={`px-3 py-2.5 rounded-lg hover:bg-gray-100 hoverEffect ${
-                pathname === item?.href ? "text-shop_dark_green bg-green-50" : "text-darkColor"
+                pathname === item?.href ? "text-shop_dark_green bg-shop_dark_green/10" : "text-darkColor"
               }`}
             >
               {item?.title}

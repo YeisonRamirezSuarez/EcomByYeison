@@ -50,7 +50,7 @@ const FavoriteButton = ({
         >
           {existingProduct ? (
             <Heart
-              fill="#3b9c3c"
+              fill="currentColor"
               className="text-shop_light_green/80 group-hover:text-shop_light_green hoverEffect mt-.5 w-5 h-5"
             />
           ) : (

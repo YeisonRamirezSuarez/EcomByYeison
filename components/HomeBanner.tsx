@@ -82,6 +82,7 @@ const HomeBanner = () => {
           <Image
             src={banner_1}
             alt="Featured product"
+            sizes="(min-width: 1280px) 384px, (min-width: 1024px) 320px, 256px"
             className="w-64 lg:w-80 xl:w-96 relative z-10 drop-shadow-2xl hover:scale-105 transition-transform duration-500"
           />
         </div>

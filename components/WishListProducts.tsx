@@ -96,7 +96,7 @@ const WishListProducts = () => {
                       <td
                         className={`p-2 w-24 ${
                           (product?.stock as number) > 0
-                            ? "text-green-600"
+                            ? "text-shop_dark_green"
                             : "text-red-600"
                         } font-medium text-sm hidden md:table-cell`}
                       >
