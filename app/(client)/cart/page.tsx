@@ -72,6 +72,15 @@ const CartPage = () => {
   useEffect(() => {
     fetchAddresses();
   }, []);
+
+  // Flag the page while the cart is mounted so the (global) footer can reserve
+  // bottom space on mobile and never sit behind the fixed checkout bar. See the
+  // `html[data-cart-bar] #site-footer` rule in globals.css.
+  useEffect(() => {
+    const el = document.documentElement;
+    el.setAttribute("data-cart-bar", "");
+    return () => el.removeAttribute("data-cart-bar");
+  }, []);
   const handleResetCart = () => {
     const confirmed = window.confirm(t(locale, "cartConfirmReset"));
     if (confirmed) {
@@ -103,7 +112,7 @@ const CartPage = () => {
     }
   };
   return (
-    <div className="bg-gray-50 pb-52 md:pb-10">
+    <div className="bg-gray-50 pb-[calc(13rem+env(safe-area-inset-bottom))] md:pb-10">
       {isSignedIn ? (
         <Container>
           {groupedItems?.length ? (
@@ -289,38 +298,38 @@ const CartPage = () => {
                     )}
                   </div>
                 </div>
-                {/* Order summary for mobile view */}
-                <div className="md:hidden fixed bottom-0 left-0 w-full bg-white pt-2">
-                  <div className="bg-white p-4 rounded-lg border mx-4">
-                    <h2>{t(locale, "cartOrderSummary")}</h2>
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <span>{t(locale, "cartSubtotal")}</span>
-                        <PriceFormatter amount={getSubTotalPrice()} />
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span>{t(locale, "cartDiscount")}</span>
-                        <PriceFormatter
-                          amount={getSubTotalPrice() - getTotalPrice()}
-                        />
-                      </div>
-                      <Separator />
-                      <div className="flex items-center justify-between font-semibold text-lg">
-                        <span>{t(locale, "cartTotal")}</span>
-                        <PriceFormatter
-                          amount={getTotalPrice()}
-                          className="text-lg font-bold text-black"
-                        />
-                      </div>
-                      <Button
-                        className="w-full rounded-full font-semibold tracking-wide hoverEffect"
-                        size="lg"
-                        disabled={loading}
-                        onClick={handleCheckout}
-                      >
-                        {loading ? t(locale, "cartPleaseWait") : t(locale, "cartProceedCheckout")}
-                      </Button>
+                {/* Sticky checkout bar for mobile — always visible so the CTA
+                    is one tap away. Clears the device home indicator via the
+                    safe-area inset; the footer reserves space for it (see
+                    globals.css) so it never hides footer content. */}
+                <div className="md:hidden fixed bottom-0 left-0 w-full z-40 bg-white border-t border-gray-200 shadow-[0_-4px_16px_rgba(0,0,0,0.08)] pb-[env(safe-area-inset-bottom)]">
+                  <div className="px-4 pt-3 pb-3 space-y-2">
+                    <div className="flex items-center justify-between text-sm text-gray-600">
+                      <span>{t(locale, "cartSubtotal")}</span>
+                      <PriceFormatter amount={getSubTotalPrice()} />
                     </div>
+                    <div className="flex items-center justify-between text-sm text-gray-600">
+                      <span>{t(locale, "cartDiscount")}</span>
+                      <PriceFormatter
+                        amount={getSubTotalPrice() - getTotalPrice()}
+                      />
+                    </div>
+                    <Separator />
+                    <div className="flex items-center justify-between font-semibold">
+                      <span>{t(locale, "cartTotal")}</span>
+                      <PriceFormatter
+                        amount={getTotalPrice()}
+                        className="text-lg font-bold text-black"
+                      />
+                    </div>
+                    <Button
+                      className="w-full rounded-full font-semibold tracking-wide hoverEffect"
+                      size="lg"
+                      disabled={loading}
+                      onClick={handleCheckout}
+                    >
+                      {loading ? t(locale, "cartPleaseWait") : t(locale, "cartProceedCheckout")}
+                    </Button>
                   </div>
                 </div>
               </div>

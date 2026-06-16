@@ -9,11 +9,14 @@ export default function manifest(): MetadataRoute.Manifest {
     short_name: "Ecom",
     description:
       "Tienda de tecnología con productos de Samsung, Apple, Sony, LG y Dell.",
+    id: "/",
     start_url: "/",
+    scope: "/",
     display: "standalone",
     background_color: "#fcf0e4",
     theme_color: "#063c28",
-    orientation: "portrait",
+    // "any" so the installed app isn't locked to portrait on tablet/desktop.
+    orientation: "any",
     lang: "es",
     categories: ["shopping"],
     icons: [

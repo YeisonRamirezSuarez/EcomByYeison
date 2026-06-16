@@ -143,6 +143,13 @@ export const orderType = defineType({
       },
     }),
     defineField({
+      name: "themeName",
+      title: "Theme",
+      type: "string",
+      description: "Storefront theme used at checkout, for branded emails.",
+      readOnly: true,
+    }),
+    defineField({
       name: "orderDate",
       title: "Order Date",
       type: "datetime",

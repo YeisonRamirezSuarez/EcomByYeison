@@ -195,6 +195,15 @@ body {
   display: none;
 }
 
+/* On the cart route a fixed checkout bar overlays the bottom of the viewport on
+   mobile. Reserve space under the footer so its content (e.g. the newsletter
+   button) is never hidden behind it. Desktop has no bar, so scope to mobile. */
+@media (max-width: 767px) {
+  html[data-cart-bar] #site-footer {
+    padding-bottom: calc(13rem + env(safe-area-inset-bottom));
+  }
+}
+
 /* Clerk native modal mobile fixes */
 .cl-modalContent,
 .cl-modalContent * {

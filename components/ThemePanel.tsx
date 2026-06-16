@@ -244,7 +244,7 @@ const ThemePanel = () => {
   const currentTheme = THEMES[themeName] || THEMES.emerald;
 
   return (
-    <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3">
+    <div className="fixed bottom-[calc(1.5rem+env(safe-area-inset-bottom))] right-[calc(1.5rem+env(safe-area-inset-right))] z-50 flex flex-col items-end gap-3">
       {open && (
         <div className="bg-white rounded-2xl shadow-2xl border border-gray-100 p-5 w-80 animate-in slide-in-from-bottom-4 duration-200">
           <div className="flex items-center justify-between mb-4">

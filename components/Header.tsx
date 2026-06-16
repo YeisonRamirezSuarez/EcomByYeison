@@ -52,7 +52,7 @@ const Header = async () => {
       </div>
 
       {/* Main Header */}
-      <div className="bg-white/95 backdrop-blur-md border-b border-gray-100 shadow-sm">
+      <div className="bg-white/95 backdrop-blur-md border-b border-gray-100 shadow-sm pt-[env(safe-area-inset-top)] md:pt-0">
         <Container className="flex items-center justify-between py-4 text-lightColor">
           <div className="w-auto md:w-1/3 flex items-center gap-2.5 justify-start">
             <MobileMenu />

@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "icons": "node scripts/generate-icons.mjs",
+    "splash": "node scripts/generate-splash.mjs",
     "lint": "next lint",
     "typegen": "npx sanity@latest schema extract && npx sanity@latest typegen generate"
   },

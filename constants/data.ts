@@ -16,16 +16,6 @@ export const getQuickLinksData = (locale: Locale) => [
   { title: locale === "en" ? "Help" : "Ayuda", href: "/help" },
 ];
 
-export const getCategoriesData = (locale: Locale) => [
-  { title: t(locale, "categoryMobiles"), href: "mobiles" },
-  { title: t(locale, "categoryAppliances"), href: "appliances" },
-  { title: t(locale, "categorySmartphones"), href: "smartphones" },
-  { title: t(locale, "categoryAirConditioners"), href: "air-conditioners" },
-  { title: t(locale, "categoryWashingMachine"), href: "washing-machine" },
-  { title: t(locale, "categoryKitchenAppliances"), href: "kitchen-appliances" },
-  { title: t(locale, "categoryGadgetAccessories"), href: "gadget-accessories" },
-];
-
 export const getProductType = (locale: Locale) => [
   { title: t(locale, "typeGadget"), value: "gadget" },
   { title: t(locale, "categoryAppliances"), value: "appliances" },

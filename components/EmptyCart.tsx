@@ -36,6 +36,7 @@ export default function EmptyCart() {
             fill
             sizes="192px"
             className="object-contain drop-shadow-lg"
+            unoptimized
           />
           <motion.div
             animate={{
