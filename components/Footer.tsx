@@ -3,18 +3,26 @@ import Container from "./Container";
 import Logo from "./Logo";
 import SocialMedia from "./SocialMedia";
 import { SubText, SubTitle } from "./ui/text";
-import { getCategoriesData, getQuickLinksData } from "@/constants/data";
+import { getQuickLinksData } from "@/constants/data";
 import Link from "next/link";
 import { Input } from "./ui/input";
 import { Button } from "./ui/button";
 import { getServerLocale } from "@/lib/locale";
 import { t } from "@/lib/i18n";
 import { Clock, Mail, MapPin, Phone, ShieldCheck } from "lucide-react";
+import { getCategories } from "@/sanity/queries";
+import { Category } from "@/sanity.types";
 
 const Footer = async () => {
   const locale = await getServerLocale();
   const quickLinksData = getQuickLinksData(locale);
-  const categoriesData = getCategoriesData(locale);
+  // Real categories from Sanity, only those that actually have products so the
+  // footer never links to an empty category. getCategories adds productCount.
+  const allCategories: (Category & { productCount?: number })[] =
+    await getCategories();
+  const categoriesData = allCategories.filter(
+    (c) => (c.productCount ?? 0) > 0
+  );
   const contactItems = [
     {
       title: t(locale, "footerVisitUs"),
@@ -42,18 +50,23 @@ const Footer = async () => {
   ];
 
   return (
-    <footer className="border-t border-gray-200 bg-gradient-to-b from-white to-gray-50/70">
+    <footer
+      id="site-footer"
+      className="border-t border-gray-200 bg-gradient-to-b from-white to-gray-50/70"
+    >
       <Container className="py-6 md:py-8">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-7">
           <div className="space-y-3 lg:col-span-5">
             <Logo />
-            <SubText className="leading-6 text-[13px]">{t(locale, "footerBrandDescription")}</SubText>
+            {/* Marketing copy & contact details add a lot of height on phones;
+                keep the mobile footer minimal (logo + social + quick links). */}
+            <SubText className="hidden md:block leading-6 text-[13px]">{t(locale, "footerBrandDescription")}</SubText>
             <SocialMedia
               className="text-darkColor/60 gap-2.5"
               iconClassName="border-gray-300 hover:border-shop_light_green hover:text-shop_light_green p-1.5"
               tooltipClassName="bg-darkColor text-white"
             />
-            <ul className="space-y-1.5 pt-1">
+            <ul className="hidden md:block space-y-1.5 pt-1">
               {contactItems.map((item) => (
                 <li key={item.title} className="flex items-start gap-2 text-xs text-gray-600">
                   <span className="mt-0.5">{item.icon}</span>
@@ -88,12 +101,12 @@ const Footer = async () => {
             </ul>
           </div>
 
-          <div className="lg:col-span-2">
+          <div className="hidden md:block lg:col-span-2">
             <SubTitle className="text-sm uppercase tracking-wider text-gray-700">{t(locale, "footerCategories")}</SubTitle>
             <ul className="space-y-2 mt-3 text-sm">
               {categoriesData?.map((item) => (
-                <li key={item?.title}>
-                  <Link href={`/category/${item?.href}`} className="text-gray-600 hover:text-shop_light_green hoverEffect font-medium">
+                <li key={item?._id}>
+                  <Link href={`/category/${item?.slug?.current}`} className="text-gray-600 hover:text-shop_light_green hoverEffect font-medium capitalize">
                     {item?.title}
                   </Link>
                 </li>
@@ -101,7 +114,7 @@ const Footer = async () => {
             </ul>
           </div>
 
-          <div className="space-y-3 lg:col-span-3">
+          <div className="hidden md:block space-y-3 lg:col-span-3">
             <SubTitle className="text-sm uppercase tracking-wider text-gray-700">{t(locale, "footerNewsletter")}</SubTitle>
             <SubText className="leading-6 text-[13px]">{t(locale, "footerNewsletterDesc")}</SubText>
             <form className="space-y-2.5">

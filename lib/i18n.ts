@@ -125,6 +125,9 @@ type Messages = {
   shopPrice200To300: string;
   shopPrice300To500: string;
   shopPriceOver500: string;
+  shopFilters: string;
+  shopResults: string;
+  shopProductsCount: string;
   dealWeekTitle: string;
   categoryProductsBy: string;
   footerBrandDescription: string;
@@ -196,6 +199,26 @@ type Messages = {
   adminSelectNewStatus: string;
   adminClose: string;
   adminUpdateError: string;
+  searchPlaceholder: string;
+  searchResultsFor: string;
+  searchNoResults: string;
+  searchPrompt: string;
+  addrFormTitle: string;
+  addrName: string;
+  addrStreet: string;
+  addrCity: string;
+  addrState: string;
+  addrZip: string;
+  addrDefault: string;
+  addrSave: string;
+  addrSaving: string;
+  addrCancel: string;
+  addrError: string;
+  installTitle: string;
+  installBody: string;
+  installButton: string;
+  installIosHint: string;
+  installDismiss: string;
 };
 
 export const MESSAGES: Record<Locale, Messages> = {
@@ -324,6 +347,9 @@ export const MESSAGES: Record<Locale, Messages> = {
     shopPrice200To300: "$200 - $300",
     shopPrice300To500: "$300 - $500",
     shopPriceOver500: "Más de $500",
+    shopFilters: "Filtros",
+    shopResults: "Ver resultados",
+    shopProductsCount: "productos",
     dealWeekTitle: "Ofertas de la semana",
     categoryProductsBy: "Productos por categoría",
     footerBrandDescription: "Ecom by Yeison es tu destino de tecnología premium. Descubre gadgets, electrónica y accesorios seleccionados con calidad y buen precio.",
@@ -395,6 +421,26 @@ export const MESSAGES: Record<Locale, Messages> = {
     adminSelectNewStatus: "Selecciona el nuevo estado",
     adminClose: "Cerrar",
     adminUpdateError: "Error al actualizar el estado de la orden",
+    searchPlaceholder: "Buscar productos…",
+    searchResultsFor: "Resultados para",
+    searchNoResults: "No encontramos productos para tu búsqueda.",
+    searchPrompt: "Escribe arriba para buscar productos.",
+    addrFormTitle: "Nueva dirección",
+    addrName: "Nombre (ej. Casa, Trabajo)",
+    addrStreet: "Dirección",
+    addrCity: "Ciudad",
+    addrState: "Departamento",
+    addrZip: "Código postal (opcional)",
+    addrDefault: "Usar como dirección predeterminada",
+    addrSave: "Guardar dirección",
+    addrSaving: "Guardando…",
+    addrCancel: "Cancelar",
+    addrError: "No se pudo guardar la dirección. Inténtalo de nuevo.",
+    installTitle: "Instala Ecom by Yeison",
+    installBody: "Añádela a tu pantalla de inicio para una experiencia más rápida.",
+    installButton: "Instalar app",
+    installIosHint: "Toca Compartir y luego «Añadir a inicio».",
+    installDismiss: "Ahora no",
   },
   en: {
     themePanelTitle: "Customize theme",
@@ -521,6 +567,9 @@ export const MESSAGES: Record<Locale, Messages> = {
     shopPrice200To300: "$200 - $300",
     shopPrice300To500: "$300 - $500",
     shopPriceOver500: "Over $500",
+    shopFilters: "Filters",
+    shopResults: "Show results",
+    shopProductsCount: "products",
     dealWeekTitle: "Hot Deals of the Week",
     categoryProductsBy: "Products by Category",
     footerBrandDescription: "Ecom by Yeison is your premium technology destination. Discover curated gadgets, electronics, and accessories at fair prices.",
@@ -592,6 +641,26 @@ export const MESSAGES: Record<Locale, Messages> = {
     adminSelectNewStatus: "Select New Status",
     adminClose: "Close",
     adminUpdateError: "Failed to update order status",
+    searchPlaceholder: "Search products…",
+    searchResultsFor: "Results for",
+    searchNoResults: "We couldn't find any products for your search.",
+    searchPrompt: "Type above to search for products.",
+    addrFormTitle: "New address",
+    addrName: "Name (e.g. Home, Work)",
+    addrStreet: "Street address",
+    addrCity: "City",
+    addrState: "State / Region",
+    addrZip: "ZIP / Postal code (optional)",
+    addrDefault: "Use as default address",
+    addrSave: "Save address",
+    addrSaving: "Saving…",
+    addrCancel: "Cancel",
+    addrError: "Could not save the address. Please try again.",
+    installTitle: "Install Ecom by Yeison",
+    installBody: "Add it to your home screen for a faster experience.",
+    installButton: "Install app",
+    installIosHint: "Tap Share, then “Add to Home Screen”.",
+    installDismiss: "Not now",
   },
 };
 

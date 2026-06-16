@@ -43,7 +43,7 @@ const SingleProductPage = async ({
                 key={index}
                 size={12}
                 className="text-shop_light_green"
-                fill={"#3b9c3c"}
+                fill="currentColor"
               />
             ))}
             <p className="font-semibold">{`(120)`}</p>
@@ -56,7 +56,7 @@ const SingleProductPage = async ({
             className="text-lg font-bold"
           />
           <p
-            className={`px-4 py-1.5 text-sm text-center inline-block font-semibold rounded-lg ${product?.stock === 0 ? "bg-red-100 text-red-600" : "text-green-600 bg-green-100"}`}
+            className={`px-4 py-1.5 text-sm text-center inline-block font-semibold rounded-lg ${product?.stock === 0 ? "bg-red-100 text-red-600" : "text-shop_dark_green bg-shop_dark_green/10"}`}
           >
             {(product?.stock as number) > 0 ? t(locale, "productInStock") : t(locale, "productOutOfStock")}
           </p>

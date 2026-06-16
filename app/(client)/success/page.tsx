@@ -7,17 +7,23 @@ import { motion } from "motion/react";
 import { Check, Home, Package, ShoppingBag } from "lucide-react";
 import Link from "next/link";
 import { t } from "@/lib/i18n";
+import { ensureOrder } from "@/actions/ensureOrder";
 
 const SuccessPageContent = () => {
   const { resetCart, locale } = useStore();
   const searchParams = useSearchParams();
   const orderNumber = searchParams.get("orderNumber");
+  const sessionId = searchParams.get("session_id");
 
   useEffect(() => {
     if (orderNumber) {
       resetCart();
     }
-  }, [orderNumber, resetCart]);
+    // Safety net: make sure the order exists even if the webhook didn't fire.
+    if (sessionId) {
+      ensureOrder(sessionId);
+    }
+  }, [orderNumber, sessionId, resetCart]);
   return (
     <div className="py-5 bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center mx-4">
       <motion.div

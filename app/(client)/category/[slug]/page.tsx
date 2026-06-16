@@ -19,7 +19,7 @@ const CategoryPage = async ({
       <Container>
         <Title>
           {t(locale, "categoryProductsBy")}: {" "}
-          <span className="font-bold text-green-600 capitalize tracking-wide">
+          <span className="font-bold text-shop_dark_green capitalize tracking-wide">
             {slug && slug}
           </span>
         </Title>

@@ -26,7 +26,7 @@ const ProductCard = ({ product }: { product: Product }) => {
               alt={product?.name ?? "product"}
               width={500}
               height={500}
-              priority
+              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
               className={`w-full h-full object-contain p-4 transition-transform duration-500 ${
                 !isOutOfStock ? "group-hover:scale-110" : "opacity-60"
               }`}

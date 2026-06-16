@@ -58,7 +58,7 @@ const ShopByBrands = async () => {
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
         {brands?.map((brand) => {
           const slug = brand?.slug?.current ?? "";
-          const color = brandColors[slug] ?? { bg: "#063c28", text: "#fff", border: "#063c28" };
+          const color = brandColors[slug] ?? { bg: "var(--color-shop_dark_green)", text: "#fff", border: "var(--color-shop_dark_green)" };
           const initials = (brand?.title ?? "?")
             .split(" ")
             .map((w: string) => w[0])

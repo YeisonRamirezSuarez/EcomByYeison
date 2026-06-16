@@ -30,7 +30,7 @@ const OrdersComponent = ({ orders }: { orders: MY_ORDERS_QUERYResult }) => {
       processing: "bg-yellow-100 text-yellow-800",
       shipped: "bg-purple-100 text-purple-800",
       out_for_delivery: "bg-orange-100 text-orange-800",
-      delivered: "bg-green-100 text-green-800",
+      delivered: "bg-shop_dark_green/10 text-shop_dark_green",
       cancelled: "bg-red-100 text-red-800",
     };
     return colors[status] || "bg-gray-100 text-gray-800";

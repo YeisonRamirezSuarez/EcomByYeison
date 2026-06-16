@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { SignIn, SignUp } from "@clerk/nextjs";
+import { SignIn, SignUp, ClerkLoading, ClerkLoaded } from "@clerk/nextjs";
 import { useAuth } from "@clerk/nextjs";
 import { CheckCircle2, X } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import useStore from "@/store";
@@ -142,28 +143,46 @@ export const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
             </div>
           ) : (
             <div className="w-full auth-modal-clerk">
-              <div className={authView === "signIn" ? "block" : "hidden"}>
-                <SignIn
-                  routing="hash"
-                  oauthFlow="popup"
-                  transferable={true}
-                  forceRedirectUrl="/"
-                  fallbackRedirectUrl="/"
-                  appearance={clerkAppearance}
-                />
-              </div>
+              {/* While clerk-js loads (notably the dev-mode handshake on first
+                  open), show a skeleton that mirrors the form so the modal never
+                  flashes an empty body. <ClerkLoaded> swaps in the real form. */}
+              <ClerkLoading>
+                <div className="w-full space-y-4">
+                  <Skeleton className="h-12 w-full rounded-md" />
+                  <div className="flex items-center gap-3">
+                    <Skeleton className="h-px flex-1" />
+                    <Skeleton className="h-3 w-6 rounded" />
+                    <Skeleton className="h-px flex-1" />
+                  </div>
+                  <Skeleton className="h-4 w-32 rounded" />
+                  <Skeleton className="h-11 w-full rounded-md" />
+                  <Skeleton className="h-12 w-full rounded-md" />
+                </div>
+              </ClerkLoading>
 
-              <div className={authView === "signUp" ? "block" : "hidden"}>
-                <SignUp
-                  routing="hash"
-                  oauthFlow="popup"
-                  forceRedirectUrl="/"
-                  fallbackRedirectUrl="/"
-                  appearance={clerkAppearance}
-                />
-              </div>
+              <ClerkLoaded>
+                <div className={authView === "signIn" ? "block" : "hidden"}>
+                  <SignIn
+                    routing="hash"
+                    oauthFlow="popup"
+                    transferable={true}
+                    forceRedirectUrl="/"
+                    fallbackRedirectUrl="/"
+                    appearance={clerkAppearance}
+                  />
+                </div>
 
-              <div className="mt-4 text-center text-sm text-lightColor">
+                <div className={authView === "signUp" ? "block" : "hidden"}>
+                  <SignUp
+                    routing="hash"
+                    oauthFlow="popup"
+                    forceRedirectUrl="/"
+                    fallbackRedirectUrl="/"
+                    appearance={clerkAppearance}
+                  />
+                </div>
+
+                <div className="mt-4 text-center text-sm text-lightColor">
                 {authView === "signIn" ? (
                   <>
                     {t(locale, "authNoAccount")}{" "}
@@ -187,7 +206,8 @@ export const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
                     </button>
                   </>
                 )}
-              </div>
+                </div>
+              </ClerkLoaded>
 
               <style jsx global>{`
                 .auth-modal-clerk .cl-footerAction,

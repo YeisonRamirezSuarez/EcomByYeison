@@ -39,7 +39,7 @@ const SideMenu: FC<SidebarProps> = ({ isOpen, onClose }) => {
     >
       <div
         ref={sidebarRef}
-        className="min-w-72 max-w-96 bg-white h-screen p-6 sm:p-8 border-r border-gray-200 flex flex-col gap-6 overflow-y-auto"
+        className="min-w-72 max-w-96 bg-white h-screen px-6 sm:px-8 pt-[max(1.5rem,env(safe-area-inset-top))] pb-[max(1.5rem,env(safe-area-inset-bottom))] pl-[max(1.5rem,env(safe-area-inset-left))] border-r border-gray-200 flex flex-col gap-6 overflow-y-auto"
       >
         <div className="flex items-center justify-between gap-5 border-b border-gray-200 pb-4">
           <Logo />
@@ -58,7 +58,7 @@ const SideMenu: FC<SidebarProps> = ({ isOpen, onClose }) => {
               key={item?.title}
               onClick={onClose}
               className={`px-3 py-2.5 rounded-lg hover:bg-gray-100 hoverEffect ${
-                pathname === item?.href ? "text-shop_dark_green bg-green-50" : "text-darkColor"
+                pathname === item?.href ? "text-shop_dark_green bg-shop_dark_green/10" : "text-darkColor"
               }`}
             >
               {item?.title}

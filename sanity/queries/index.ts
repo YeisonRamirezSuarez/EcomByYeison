@@ -16,20 +16,34 @@ import {
 
 const getCategories = async (quantity?: number) => {
   try {
-    const query = quantity
-      ? `*[_type == 'category'] | order(title asc) [0...$quantity] {
-          ...,
-          "productCount": count(*[_type == "product" && references(^._id)])
-        }`
-      : `*[_type == 'category'] | order(title asc) {
-          ...,
-          "productCount": count(*[_type == "product" && references(^._id)])
-        }`;
+    // Single round-trip: fetch the categories plus a flat list of every
+    // product->category reference, then tally the counts in JS. This avoids the
+    // previous correlated `count(*[... references(^._id)])`, which ran one count
+    // subquery per category and scaled linearly with the number of categories.
+    const slice = quantity ? "[0...$quantity]" : "";
+    const query = `{
+      "categories": *[_type == 'category'] | order(title asc) ${slice}{ ... },
+      "refs": *[_type == "product" && defined(categories)].categories[]._ref
+    }`;
     const { data } = await sanityFetch({
       query,
       params: quantity ? { quantity } : {},
     });
-    return data;
+
+    const counts = (data?.refs ?? []).reduce(
+      (acc: Record<string, number>, id: string) => {
+        acc[id] = (acc[id] ?? 0) + 1;
+        return acc;
+      },
+      {} as Record<string, number>
+    );
+
+    return (data?.categories ?? []).map(
+      (category: { _id: string; [key: string]: unknown }) => ({
+        ...category,
+        productCount: counts[category._id] ?? 0,
+      })
+    );
   } catch (error) {
     console.log("Error fetching categories", error);
     return [];
@@ -164,6 +178,24 @@ const getOthersBlog = async (slug: string, quantity: number) => {
     return [];
   }
 };
+const searchProducts = async (searchTerm: string) => {
+  try {
+    // Parameterized: the term (incl. the wildcards) is a value, never spliced
+    // into the query structure, so this is injection-safe.
+    const query = `*[_type == "product" && name match $q] | order(name asc){
+      ..., "categories": categories[]->title
+    }`;
+    const { data } = await sanityFetch({
+      query,
+      params: { q: `*${searchTerm}*` },
+    });
+    return data ?? [];
+  } catch (error) {
+    console.log("Error searching products:", error);
+    return [];
+  }
+};
+
 const getProductsByVariant = async (variant: string) => {
   try {
     const query = `*[_type == "product" && variant == $variant] | order(name asc){
@@ -191,4 +223,5 @@ export {
   getSingleBlog,
   getBlogCategories,
   getOthersBlog,
+  searchProducts,
 };
