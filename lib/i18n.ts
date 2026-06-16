@@ -214,6 +214,11 @@ type Messages = {
   addrSaving: string;
   addrCancel: string;
   addrError: string;
+  installTitle: string;
+  installBody: string;
+  installButton: string;
+  installIosHint: string;
+  installDismiss: string;
 };
 
 export const MESSAGES: Record<Locale, Messages> = {
@@ -431,6 +436,11 @@ export const MESSAGES: Record<Locale, Messages> = {
     addrSaving: "Guardando…",
     addrCancel: "Cancelar",
     addrError: "No se pudo guardar la dirección. Inténtalo de nuevo.",
+    installTitle: "Instala Ecom by Yeison",
+    installBody: "Añádela a tu pantalla de inicio para una experiencia más rápida.",
+    installButton: "Instalar app",
+    installIosHint: "Toca Compartir y luego «Añadir a inicio».",
+    installDismiss: "Ahora no",
   },
   en: {
     themePanelTitle: "Customize theme",
@@ -646,6 +656,11 @@ export const MESSAGES: Record<Locale, Messages> = {
     addrSaving: "Saving…",
     addrCancel: "Cancel",
     addrError: "Could not save the address. Please try again.",
+    installTitle: "Install Ecom by Yeison",
+    installBody: "Add it to your home screen for a faster experience.",
+    installButton: "Install app",
+    installIosHint: "Tap Share, then “Add to Home Screen”.",
+    installDismiss: "Not now",
   },
 };
 

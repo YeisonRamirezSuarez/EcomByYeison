@@ -4,6 +4,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ClientClerkProvider from "@/components/ClientClerkProvider";
 import ThemePanel from "@/components/ThemePanel";
+import InstallPrompt from "@/components/InstallPrompt";
 
 export const metadata: Metadata = {
   title: {
@@ -30,6 +31,7 @@ export default async function RootLayout({
         <main className="flex-1">{children}</main>
         <Footer />
         <ThemePanel />
+        <InstallPrompt />
       </div>
     </ClientClerkProvider>
   );

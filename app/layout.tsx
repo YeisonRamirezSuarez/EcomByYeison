@@ -31,6 +31,11 @@ export const metadata: Metadata = {
     statusBarStyle: "default",
     title: "Ecom",
   },
+  // Next 16 only emits the standard `mobile-web-app-capable`; iOS still reads the
+  // legacy apple tag to launch full-screen standalone, so emit it explicitly.
+  other: {
+    "apple-mobile-web-app-capable": "yes",
+  },
   formatDetection: { telephone: false },
   // Explicit icons from /public (always served, no route ambiguity). Defining
   // metadata.icons suppresses the app/icon.png file convention, so the browser
