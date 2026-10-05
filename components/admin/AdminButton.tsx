@@ -1,10 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { Settings } from "lucide-react";
+import { Settings, X } from "lucide-react";
+import * as DialogPrimitive from "@radix-ui/react-dialog";
 import {
   Dialog,
-  DialogContent,
+  DialogOverlay,
+  DialogPortal,
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
@@ -32,35 +34,45 @@ const AdminButton = ({ tabs, theme }: { tabs: AdminTab[]; theme: ThemeKey }) => 
           <Settings size={20} />
         </button>
       </DialogTrigger>
-      <DialogContent
-        aria-describedby={undefined}
-        className="top-0 right-0 left-auto translate-x-0 translate-y-0 h-dvh w-full max-w-md sm:max-w-md rounded-none border-l p-0 gap-0 flex flex-col bg-white"
-      >
-        <div className="px-5 py-4 border-b">
-          <DialogTitle className="font-bold text-gray-900">Administración</DialogTitle>
-        </div>
-        <div className="flex gap-1 px-5 border-b" role="tablist">
-          {tabs.map((tab) => (
-            <button
-              key={tab}
-              role="tab"
-              aria-selected={active === tab}
-              onClick={() => setActive(tab)}
-              className={`px-3 py-2.5 text-sm font-semibold border-b-2 -mb-px transition-colors ${
-                active === tab
-                  ? "border-shop_dark_green text-shop_dark_green"
-                  : "border-transparent text-gray-500 hover:text-gray-800"
-              }`}
+      <DialogPortal>
+        {/* Light overlay so palette changes stay visible behind the panel. */}
+        <DialogOverlay className="bg-black/20" />
+        <DialogPrimitive.Content
+          aria-describedby={undefined}
+          className="fixed top-0 right-0 z-50 h-dvh w-full max-w-md flex flex-col bg-white border-l shadow-2xl"
+        >
+          <div className="flex items-center justify-between px-5 py-4 border-b">
+            <DialogTitle className="font-bold text-gray-900">Administración</DialogTitle>
+            <DialogPrimitive.Close
+              className="w-7 h-7 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 text-gray-500"
+              aria-label="Cerrar panel"
             >
-              {TAB_LABELS[tab]}
-            </button>
-          ))}
-        </div>
-        <div className="flex-1 overflow-y-auto p-5">
-          {active === "apariencia" && <AppearanceTab initialTheme={theme} />}
-          {active === "usuarios" && <UsersTab />}
-        </div>
-      </DialogContent>
+              <X size={14} />
+            </DialogPrimitive.Close>
+          </div>
+          <div className="flex gap-1 px-5 border-b" role="tablist">
+            {tabs.map((tab) => (
+              <button
+                key={tab}
+                role="tab"
+                aria-selected={active === tab}
+                onClick={() => setActive(tab)}
+                className={`px-3 py-2.5 text-sm font-semibold border-b-2 -mb-px transition-colors ${
+                  active === tab
+                    ? "border-shop_dark_green text-shop_dark_green"
+                    : "border-transparent text-gray-500 hover:text-gray-800"
+                }`}
+              >
+                {TAB_LABELS[tab]}
+              </button>
+            ))}
+          </div>
+          <div className="flex-1 overflow-y-auto p-5" role="tabpanel">
+            {active === "apariencia" && <AppearanceTab initialTheme={theme} />}
+            {active === "usuarios" && <UsersTab />}
+          </div>
+        </DialogPrimitive.Content>
+      </DialogPortal>
     </Dialog>
   );
 };
