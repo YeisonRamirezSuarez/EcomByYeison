@@ -12,6 +12,9 @@ import { ClerkLoaded, SignedIn, UserButton } from "@clerk/nextjs";
 import Link from "next/link";
 import { ClipboardList, Truck, ShieldCheck, HeadphonesIcon } from "lucide-react";
 import { getMyOrders } from "@/sanity/queries";
+import AdminButton from "./admin/AdminButton";
+import { adminTabs, roleFromMetadata } from "@/lib/permissions";
+import { getSiteSettings } from "@/sanity/queries/siteSettings";
 
 const Header = async () => {
   const user = await currentUser();
@@ -20,6 +23,8 @@ const Header = async () => {
   if (userId) {
     orders = await getMyOrders(userId);
   }
+  const tabs = user ? adminTabs(roleFromMetadata(user.publicMetadata)) : [];
+  const settings = tabs.length > 0 ? await getSiteSettings() : null;
 
   return (
     <header className="sticky top-0 z-50">
@@ -79,6 +84,7 @@ const Header = async () => {
           </div>
         </Container>
       </div>
+      {settings && <AdminButton tabs={tabs} theme={settings.theme} />}
     </header>
   );
 };
