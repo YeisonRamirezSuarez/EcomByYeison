@@ -22,9 +22,6 @@ interface StoreState {
   addToFavorite: (product: Product) => Promise<void>;
   removeFromFavorite: (productId: string) => void;
   resetFavorite: () => void;
-  // theme
-  themeName: string;
-  setThemeName: (name: string) => void;
 }
 
 const useStore = create<StoreState>()(
@@ -115,9 +112,6 @@ const useStore = create<StoreState>()(
       resetFavorite: () => {
         set({ favoriteProduct: [] });
       },
-      // theme
-      themeName: "emerald",
-      setThemeName: (name: string) => set({ themeName: name }),
     }),
     {
       name: "cart-store",

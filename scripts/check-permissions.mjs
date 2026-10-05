@@ -63,4 +63,14 @@ assert.deepEqual(adminTabs("admin"), ["apariencia", "usuarios"]);
 assert.deepEqual(adminTabs("empleado"), []);
 assert.deepEqual(adminTabs("cliente"), []);
 
+// Themes
+const { THEMES, isThemeKey, themeCssVars } = await import("../constants/themes.ts");
+assert.deepEqual(Object.keys(THEMES), ["emerald", "ocean", "violet", "crimson", "rose", "slate"]);
+assert.equal(isThemeKey("ocean"), true);
+assert.equal(isThemeKey("desconocido"), false);
+assert.equal(isThemeKey(undefined), false);
+assert.equal(themeCssVars("ocean")["--color-shop_dark_green"], "#0c2d57");
+assert.deepEqual(themeCssVars("desconocido"), themeCssVars("emerald"));
+assert.equal(Object.keys(themeCssVars("emerald")).length, 8);
+
 console.log("check-permissions: ok");
