@@ -151,3 +151,8 @@ body {
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
+
+/* Hide Clerk "Secured by" branding, keep sign-up/sign-in link */
+.cl-footer > :not(.cl-footerAction) {
+  display: none;
+}
