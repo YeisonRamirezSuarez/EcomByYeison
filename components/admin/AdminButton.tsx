@@ -12,15 +12,25 @@ import {
 } from "@/components/ui/dialog";
 import type { AdminTab } from "@/lib/permissions";
 import type { ThemeKey } from "@/constants/themes";
+import type { CurrencyCode } from "@/constants/currencies";
 import AppearanceTab from "./AppearanceTab";
+import CurrencySection from "./CurrencySection";
 import UsersTab from "./UsersTab";
 
 const TAB_LABELS: Record<AdminTab, string> = {
-  apariencia: "Apariencia",
+  tienda: "Tienda",
   usuarios: "Usuarios",
 };
 
-const AdminButton = ({ tabs, theme }: { tabs: AdminTab[]; theme: ThemeKey }) => {
+const AdminButton = ({
+  tabs,
+  theme,
+  currency,
+}: {
+  tabs: AdminTab[];
+  theme: ThemeKey;
+  currency: CurrencyCode;
+}) => {
   const [active, setActive] = useState<AdminTab>(tabs[0]);
 
   return (
@@ -68,7 +78,12 @@ const AdminButton = ({ tabs, theme }: { tabs: AdminTab[]; theme: ThemeKey }) => 
             ))}
           </div>
           <div className="flex-1 overflow-y-auto p-5" role="tabpanel">
-            {active === "apariencia" && <AppearanceTab initialTheme={theme} />}
+            {active === "tienda" && (
+              <div className="flex flex-col gap-6">
+                <AppearanceTab initialTheme={theme} />
+                <CurrencySection initialCurrency={currency} />
+              </div>
+            )}
             {active === "usuarios" && <UsersTab />}
           </div>
         </DialogPrimitive.Content>

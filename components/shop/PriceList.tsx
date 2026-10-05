@@ -2,23 +2,18 @@ import React from "react";
 import Title from "../Title";
 import { RadioGroup, RadioGroupItem } from "../ui/radio-group";
 import { Label } from "../ui/label";
-
-const priceArray = [
-  { title: "Under $100", value: "0-100" },
-  { title: "$100 - $200", value: "100-200" },
-  { title: "$200 - $300", value: "200-300" },
-  { title: "$300 - $500", value: "300-500" },
-  { title: "Over $500", value: "500-10000" },
-];
+import { priceRanges } from "@/constants/currencies";
+import { useCurrency } from "../StoreSettingsProvider";
 
 interface Props {
   selectedPrice?: string | null;
   setSelectedPrice: React.Dispatch<React.SetStateAction<string | null>>;
 }
 const PriceList = ({ selectedPrice, setSelectedPrice }: Props) => {
+  const priceArray = priceRanges(useCurrency());
   return (
     <div className="w-full bg-white p-5">
-      <Title className="text-base font-black">Price</Title>
+      <Title className="text-base font-black">Precio</Title>
       <RadioGroup className="mt-2 space-y-1" value={selectedPrice || ""}>
         {priceArray?.map((price, index) => (
           <div

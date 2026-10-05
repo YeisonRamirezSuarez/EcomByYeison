@@ -1,21 +1,23 @@
+"use client";
+
 import { twMerge } from "tailwind-merge";
+import { formatPrice } from "@/constants/currencies";
+import { useCurrency } from "./StoreSettingsProvider";
 
 interface Props {
   amount: number | undefined;
   className?: string;
+  // Currency stored on an order (e.g. "usd"); defaults to the store currency.
+  currency?: string;
 }
 
-const PriceFormatter = ({ amount, className }: Props) => {
-  const formattedPrice = new Number(amount).toLocaleString("en-US", {
-    currency: "USD",
-    style: "currency",
-    minimumFractionDigits: 2,
-  });
+const PriceFormatter = ({ amount, className, currency }: Props) => {
+  const storeCurrency = useCurrency();
   return (
     <span
       className={twMerge("text-sm font-semibold text-darkColor", className)}
     >
-      {formattedPrice}
+      {formatPrice(amount, currency?.toUpperCase() ?? storeCurrency)}
     </span>
   );
 };

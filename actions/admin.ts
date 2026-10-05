@@ -3,6 +3,7 @@
 import { clerkClient } from "@clerk/nextjs/server";
 import { revalidateTag } from "next/cache";
 import { isThemeKey } from "@/constants/themes";
+import { isCurrencyCode } from "@/constants/currencies";
 import {
   assignableRoles,
   canAssignRole,
@@ -44,16 +45,29 @@ async function run<T>(action: () => Promise<T>): Promise<ActionResult<T>> {
   }
 }
 
+async function saveSetting(field: "theme" | "currency", value: string) {
+  await backendClient.createIfNotExists({
+    _id: SITE_SETTINGS_ID,
+    _type: "siteSettings",
+  });
+  await backendClient.patch(SITE_SETTINGS_ID).set({ [field]: value }).commit();
+  revalidateTag(SITE_SETTINGS_TAG);
+}
+
 export async function saveTheme(theme: string): Promise<ActionResult<null>> {
   return run(async () => {
     await requirePermission("configurar");
     if (!isThemeKey(theme)) throw new Error("Tema inválido");
-    await backendClient.createIfNotExists({
-      _id: SITE_SETTINGS_ID,
-      _type: "siteSettings",
-    });
-    await backendClient.patch(SITE_SETTINGS_ID).set({ theme }).commit();
-    revalidateTag(SITE_SETTINGS_TAG);
+    await saveSetting("theme", theme);
+    return null;
+  });
+}
+
+export async function saveCurrency(currency: string): Promise<ActionResult<null>> {
+  return run(async () => {
+    await requirePermission("configurar");
+    if (!isCurrencyCode(currency)) throw new Error("Moneda inválida");
+    await saveSetting("currency", currency);
     return null;
   });
 }

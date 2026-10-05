@@ -47,6 +47,7 @@ const OrdersComponent = ({ orders }: { orders: MY_ORDERS_QUERYResult }) => {
                   <TableCell>
                     <PriceFormatter
                       amount={order?.totalPrice}
+                      currency={order?.currency}
                       className="text-black font-medium"
                     />
                   </TableCell>

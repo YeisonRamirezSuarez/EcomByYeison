@@ -14,7 +14,7 @@ export type Permission =
 
 export type RoleHolder = { id: string; role: Role };
 
-export type AdminTab = "apariencia" | "usuarios";
+export type AdminTab = "tienda" | "usuarios";
 
 export const ROLE_LABELS: Record<Role, string> = {
   superadmin: "Superadmin",
@@ -46,7 +46,7 @@ const PERMISSIONS: Record<Role, readonly Permission[]> = {
 };
 
 const TAB_PERMISSION: Record<AdminTab, Permission> = {
-  apariencia: "configurar",
+  tienda: "configurar",
   usuarios: "asignarEmpleado",
 };
 

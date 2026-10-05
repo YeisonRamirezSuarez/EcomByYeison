@@ -91,6 +91,7 @@ const OrderDetailDialog: React.FC<OrderDetailsDialogProps> = ({
                 <TableCell>
                   <PriceFormatter
                     amount={product?.product?.price}
+                    currency={order?.currency}
                     className="text-black font-medium"
                   />
                 </TableCell>
@@ -104,6 +105,7 @@ const OrderDetailDialog: React.FC<OrderDetailsDialogProps> = ({
               <div className="w-full flex items-center justify-between">
                 <strong>Discount: </strong>
                 <PriceFormatter
+                  currency={order?.currency}
                   amount={order?.amountDiscount}
                   className="text-black font-bold"
                 />
@@ -113,6 +115,7 @@ const OrderDetailDialog: React.FC<OrderDetailsDialogProps> = ({
               <div className="w-full flex items-center justify-between">
                 <strong>Subtotal: </strong>
                 <PriceFormatter
+                  currency={order?.currency}
                   amount={
                     (order?.totalPrice as number) +
                     (order?.amountDiscount as number)
@@ -125,6 +128,7 @@ const OrderDetailDialog: React.FC<OrderDetailsDialogProps> = ({
               <strong>Total: </strong>
               <PriceFormatter
                 amount={order?.totalPrice}
+                currency={order?.currency}
                 className="text-black font-bold"
               />
             </div>

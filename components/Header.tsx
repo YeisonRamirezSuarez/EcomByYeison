@@ -15,6 +15,7 @@ import { getMyOrders } from "@/sanity/queries";
 import AdminButton from "./admin/AdminButton";
 import { adminTabs, roleFromMetadata } from "@/lib/permissions";
 import { getSiteSettings } from "@/sanity/queries/siteSettings";
+import { CURRENCIES, formatPrice } from "@/constants/currencies";
 
 const Header = async () => {
   const user = await currentUser();
@@ -24,7 +25,12 @@ const Header = async () => {
     orders = await getMyOrders(userId);
   }
   const tabs = user ? adminTabs(roleFromMetadata(user.publicMetadata)) : [];
-  const settings = tabs.length > 0 ? await getSiteSettings() : null;
+  const settings = await getSiteSettings();
+  const freeShippingFrom = formatPrice(
+    CURRENCIES[settings.currency].freeShippingFrom,
+    settings.currency,
+    0
+  );
 
   return (
     <header className="sticky top-0 z-50">
@@ -34,7 +40,7 @@ const Header = async () => {
           <div className="flex items-center gap-6">
             <span className="flex items-center gap-1.5">
               <Truck size={12} />
-              Envío gratis en pedidos superiores a $99
+              Envío gratis en pedidos superiores a {freeShippingFrom}
             </span>
             <span className="flex items-center gap-1.5">
               <ShieldCheck size={12} />
@@ -84,7 +90,9 @@ const Header = async () => {
           </div>
         </Container>
       </div>
-      {settings && <AdminButton tabs={tabs} theme={settings.theme} />}
+      {tabs.length > 0 && (
+        <AdminButton tabs={tabs} theme={settings.theme} currency={settings.currency} />
+      )}
     </header>
   );
 };

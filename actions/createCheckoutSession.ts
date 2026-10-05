@@ -5,6 +5,7 @@ import { Address } from "@/sanity.types";
 import { urlFor } from "@/sanity/lib/image";
 import { CartItem } from "@/store";
 import Stripe from "stripe";
+import { getSiteSettings } from "@/sanity/queries/siteSettings";
 
 export interface Metadata {
   orderNumber: string;
@@ -30,6 +31,8 @@ export async function createCheckoutSession(
       limit: 1,
     });
     const customerId = customers?.data?.length > 0 ? customers.data[0].id : "";
+    // Store currency comes from the server, never from the browser.
+    const { currency } = await getSiteSettings();
 
     const sessionPayload: Stripe.Checkout.SessionCreateParams = {
       metadata: {
@@ -51,7 +54,7 @@ export async function createCheckoutSession(
       cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/cart`,
       line_items: items?.map((item) => ({
         price_data: {
-          currency: "USD",
+          currency: currency.toLowerCase(),
           unit_amount: Math.round(item?.product?.price! * 100),
           product_data: {
             name: item?.product?.name || "Unknown Product",

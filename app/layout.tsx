@@ -3,6 +3,7 @@ import { Toaster } from "react-hot-toast";
 import { Poppins } from "next/font/google";
 import { themeCssVars } from "@/constants/themes";
 import { getSiteSettings } from "@/sanity/queries/siteSettings";
+import StoreSettingsProvider from "@/components/StoreSettingsProvider";
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -12,7 +13,7 @@ const poppins = Poppins({
 });
 
 const RootLayout = async ({ children }: { children: React.ReactNode }) => {
-  const { theme } = await getSiteSettings();
+  const { theme, currency } = await getSiteSettings();
   return (
     <html
       lang="es"
@@ -20,7 +21,7 @@ const RootLayout = async ({ children }: { children: React.ReactNode }) => {
       style={themeCssVars(theme) as React.CSSProperties}
     >
       <body className="font-poppins antialiased overflow-x-hidden">
-        {children}
+        <StoreSettingsProvider currency={currency}>{children}</StoreSettingsProvider>
         <Toaster
           position="bottom-right"
           toastOptions={{
