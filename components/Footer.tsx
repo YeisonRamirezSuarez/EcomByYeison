@@ -6,8 +6,7 @@ import SocialMedia from "./SocialMedia";
 import { SubText, SubTitle } from "./ui/text";
 import { categoriesData, quickLinksData } from "@/constants/data";
 import Link from "next/link";
-import { Input } from "./ui/input";
-import { Button } from "./ui/button";
+import NewsletterForm from "./NewsletterForm";
 import { getSiteSettings } from "@/sanity/queries/siteSettings";
 
 const Footer = async () => {
@@ -62,10 +61,7 @@ const Footer = async () => {
             <SubText>
               Suscríbete y recibe ofertas exclusivas y las últimas novedades
             </SubText>
-            <form className="space-y-3">
-              <Input placeholder="Tu correo electrónico" type="email" required />
-              <Button className="w-full bg-shop_dark_green hover:bg-shop_dark_green/90 text-white">Suscribirme</Button>
-            </form>
+            <NewsletterForm storeName={storeName} />
           </div>
         </div>
         <div className="py-6 border-t text-center text-sm text-gray-500">
