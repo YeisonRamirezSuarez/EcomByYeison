@@ -207,11 +207,26 @@ function write(fields: Record<string, unknown>): SanityWrite {
   return { set, unset };
 }
 
-export function productWrite(p: ProductInput): SanityWrite {
+type ImageExtras = Record<string, { hotspot?: unknown; crop?: unknown }>;
+
+// Hotspot and crop (set in Studio) of the images a document already has, by asset id. The
+// panel never edits them, so saves copy them from the stored document, not from the browser.
+export function imageExtras(images: unknown): ImageExtras {
+  const extras: ImageExtras = {};
+  for (const image of Array.isArray(images) ? images : []) {
+    const v = asObject(image);
+    const assetId = asObject(v.asset)._ref;
+    if (typeof assetId !== "string" || (!v.hotspot && !v.crop)) continue;
+    extras[assetId] = { ...(v.hotspot ? { hotspot: v.hotspot } : {}), ...(v.crop ? { crop: v.crop } : {}) };
+  }
+  return extras;
+}
+
+export function productWrite(p: ProductInput, extras: ImageExtras = {}): SanityWrite {
   return write({
     name: p.name,
     slug: { _type: "slug", current: p.slug },
-    images: p.images.map((image, i) => ({ _key: `img${i}`, ...imageRef(image) })),
+    images: p.images.map((image, i) => ({ _key: `img${i}`, ...imageRef(image), ...extras[image.assetId] })),
     description: p.description,
     price: p.price,
     discount: p.discount,
@@ -272,6 +287,22 @@ export function publishMutations(id: string, write: SanityWrite, stock: number, 
     { patch: { id, ifRevisionID: published._rev, set: { ...write.set, stock }, unset: [...write.unset, "stockBase"] } },
     draft,
   ];
+}
+
+export const usesLabel = (n: number) => (n === 1 ? "La usa 1 producto" : `La usan ${n} productos`);
+
+// Products using each category/brand id. A product and its draft count once.
+export function countUses(docs: { _id: string; refs: (string | null)[] | null }[]): Record<string, number> {
+  const seen = new Map<string, Set<string>>();
+  for (const doc of docs) {
+    const product = doc._id.replace(/^drafts\./, "");
+    for (const ref of doc.refs ?? []) {
+      if (!ref) continue;
+      if (!seen.has(ref)) seen.set(ref, new Set());
+      seen.get(ref)!.add(product);
+    }
+  }
+  return Object.fromEntries([...seen].map(([ref, products]) => [ref, products.size]));
 }
 
 export type ProductState = "publicado" | "borrador" | "por-publicar" | "archivado";

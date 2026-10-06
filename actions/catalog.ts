@@ -9,11 +9,14 @@ import {
   SLUG_TAKEN,
   brandWrite,
   categoryWrite,
+  countUses,
+  imageExtras,
   isDocId,
   productWrite,
   publishMutations,
   publishedStock,
   stockBaseFor,
+  usesLabel,
   validateBrand,
   validateCategory,
   validateProduct,
@@ -74,7 +77,7 @@ export async function saveProductDraft(id: string | null, data: unknown): Promis
     }
     const stockBase = stockBaseFor(draft, published);
     tx.patch(draftOf(productId), (patch) =>
-      applyWrite(productWrite(r.value))(stockBase === undefined ? patch : patch.setIfMissing({ stockBase }))
+      applyWrite(productWrite(r.value, imageExtras((draft ?? published)?.images)))(stockBase === undefined ? patch : patch.setIfMissing({ stockBase }))
     );
     await tx.commit();
     return { id: productId };
@@ -110,7 +113,7 @@ export async function publishProduct(id: string): Promise<ActionResult<null>> {
 
   const stock = publishedStock(r.value.stock, draft.stockBase, published?.stock);
   try {
-    await backendClient.mutate(publishMutations(id, productWrite(r.value), stock, published as { _rev: string } | null) as Mutation[]);
+    await backendClient.mutate(publishMutations(id, productWrite(r.value, imageExtras(draft.images)), stock, published as { _rev: string } | null) as Mutation[]);
   } catch (error) {
     if (isConflictError(error)) return fail("Hubo una venta mientras publicabas; inténtalo de nuevo");
     console.log("Admin action failed", error);
@@ -198,8 +201,9 @@ async function deleteTaxonomy(kind: Kind, id: string): Promise<ActionResult<null
   const type = await backendClient.fetch<string | null>(`*[_id == $id][0]._type`, { id }, RAW);
   if (type !== kind) return fail(INVALID_FORM);
   // Raw perspective: product drafts count too.
-  const uses = await backendClient.fetch<number>(`count(*[_type == "product" && references($id)])`, { id }, RAW);
-  if (uses > 0) return fail(`La usan ${uses} productos`);
+  const ids = await backendClient.fetch<string[]>(`*[_type == "product" && references($id)]._id`, { id }, RAW);
+  const uses = countUses(ids.map((_id) => ({ _id, refs: [id] })))[id] ?? 0;
+  if (uses > 0) return fail(usesLabel(uses));
   return run(async () => {
     await backendClient.transaction().delete(id).delete(draftOf(id)).commit();
     return null;

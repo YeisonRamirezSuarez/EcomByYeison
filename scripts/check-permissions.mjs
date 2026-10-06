@@ -562,4 +562,40 @@ assert.deepEqual(cat.filterProducts(rows, "por-publicar", "").map((r) => r.id), 
 assert.deepEqual(cat.filterProducts(rows, "archivados", "").map((r) => r.id), ["b"]);
 assert.deepEqual(cat.filterProducts(rows, "activos", "  NUEVO ").map((r) => r.id), ["a"]);
 
+// A product with a draft counts once; singular when it is one.
+assert.equal(cat.usesLabel(1), "La usa 1 producto");
+assert.equal(cat.usesLabel(3), "La usan 3 productos");
+assert.deepEqual(
+  cat.countUses([
+    { _id: "p1", refs: ["c1", "b1"] },
+    { _id: "drafts.p1", refs: ["c1", "c2"] },
+    { _id: "p2", refs: ["c1", null] },
+  ]),
+  { c1: 2, b1: 1, c2: 1 }
+);
+
+// Hotspot/crop set in Studio survive a save from the panel.
+const HOT = { _type: "sanity.imageHotspot", x: 0.3, y: 0.4, height: 0.5, width: 0.5 };
+const CROP = { _type: "sanity.imageCrop", top: 0.1, bottom: 0, left: 0, right: 0 };
+const extras = cat.imageExtras([
+  { _key: "k", _type: "image", asset: { _ref: IMG.assetId }, hotspot: HOT, crop: CROP },
+  { _type: "image", asset: { _ref: "image-other-10x10-png" } },
+  null,
+]);
+assert.deepEqual(extras, { [IMG.assetId]: { hotspot: HOT, crop: CROP } });
+assert.deepEqual(cat.imageExtras(undefined), {});
+assert.deepEqual(cat.productWrite(vp.value, extras).set.images, [
+  { _key: "img0", _type: "image", asset: { _type: "reference", _ref: IMG.assetId }, hotspot: HOT, crop: CROP },
+]);
+
+// Checkout charges what Sanity says, never what the browser sends.
+const ck = await import("../lib/checkout.ts");
+const SERVER = [{ _id: "p1", name: "Parlante", price: 10, description: "x", images: [] }];
+assert.deepEqual(ck.checkoutLines([{ id: "p1", quantity: 2 }], SERVER), { ok: true, lines: [{ product: SERVER[0], quantity: 2 }] });
+assert.deepEqual(ck.checkoutLines([{ id: "p1", quantity: 1 }, { id: "gone", quantity: 1 }], SERVER), { ok: false, missing: ["gone"] });
+assert.equal(ck.checkoutLines([{ id: "p1", quantity: 0 }], SERVER).ok, false);
+assert.equal(ck.checkoutLines([{ id: "p1", quantity: 1.5 }], SERVER).ok, false);
+assert.equal(ck.checkoutLines([], SERVER).ok, false);
+assert.equal(ck.checkoutLines([{ id: "p1", quantity: 1 }], [{ ...SERVER[0], price: null }]).ok, false);
+
 console.log("check-permissions: ok");

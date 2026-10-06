@@ -17,18 +17,20 @@ const ProductImages = ({
   error,
 }: {
   value: ImageValue[];
-  onChange: (images: ImageValue[]) => void;
+  // Takes an updater, not a value: an upload finishing late must not undo changes made meanwhile.
+  onChange: (change: (images: ImageValue[]) => ImageValue[]) => void;
   error?: string;
 }) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const [pending, startTransition] = useTransition();
 
-  const move = (from: number, to: number) => {
-    const next = [...value];
-    const [item] = next.splice(from, 1);
-    next.splice(to, 0, item);
-    onChange(next);
-  };
+  const move = (from: number, to: number) =>
+    onChange((images) => {
+      const next = [...images];
+      const [item] = next.splice(from, 1);
+      next.splice(to, 0, item);
+      return next;
+    });
 
   const upload = (files: File[]) => {
     const room = MAX_PRODUCT_IMAGES - value.length;
@@ -48,7 +50,13 @@ const ProductImages = ({
         if (result.ok) uploaded.push(result.data);
         else toast.error(result.error);
       }
-      if (uploaded.length) onChange([...value, ...uploaded]);
+      // The same file uploaded twice is the same Sanity asset: keep it once.
+      if (uploaded.length)
+        onChange((images) =>
+          uploaded
+            .reduce((list, image) => (list.some((i) => i.assetId === image.assetId) ? list : [...list, image]), images)
+            .slice(0, MAX_PRODUCT_IMAGES)
+        );
     });
   };
 
@@ -63,7 +71,7 @@ const ProductImages = ({
               <button type="button" aria-label="Mover a la izquierda" disabled={i === 0} onClick={() => move(i, i - 1)} className={ICON_BUTTON}>
                 <ChevronLeft size={14} />
               </button>
-              <button type="button" aria-label="Quitar foto" onClick={() => onChange(value.filter((_, j) => j !== i))} className={ICON_BUTTON}>
+              <button type="button" aria-label="Quitar foto" onClick={() => onChange((images) => images.filter((other) => other.assetId !== image.assetId))} className={ICON_BUTTON}>
                 <X size={14} />
               </button>
               <button type="button" aria-label="Mover a la derecha" disabled={i === value.length - 1} onClick={() => move(i, i + 1)} className={ICON_BUTTON}>

@@ -195,7 +195,7 @@ const ProductEditor = ({
             onChange={(name) => update(slugTouched ? { name } : { name, slug: slugify(name) })} />
           <TextField label="Slug (dirección del producto)" value={form.slug} max={96} error={errors.slug}
             onChange={(slug) => { setSlugTouched(true); update({ slug }); }} />
-          <ProductImages value={form.images} onChange={(images) => update({ images })} error={errors.images} />
+          <ProductImages value={form.images} onChange={(change) => setForm((f) => ({ ...f, images: change(f.images) }))} error={errors.images} />
           <TextField label="Descripción" value={form.description} max={2000} multiline error={errors.description}
             onChange={(description) => update({ description })} />
           <div className="grid grid-cols-3 gap-3">

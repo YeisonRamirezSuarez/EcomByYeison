@@ -94,7 +94,7 @@ const TaxonomyManager = ({ kind, rows }: { kind: TaxonomyKind; rows: TaxonomyRow
                   <div className="h-10 w-10 rounded-lg bg-gray-100" />
                 )}
                 <span className="flex-1 text-sm font-medium text-gray-900">{row.title || "Sin título"}</span>
-                <span className="text-xs text-gray-500">{row.uses} productos</span>
+                <span className="text-xs text-gray-500">{row.uses === 1 ? "1 producto" : `${row.uses} productos`}</span>
               </button>
             </li>
           ))}

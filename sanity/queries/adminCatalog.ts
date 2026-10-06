@@ -1,6 +1,6 @@
 import "server-only";
 import type { ImageValue } from "@/lib/brand";
-import { isDocId, mergeProductRows, type ProductDocRow, type ProductRow } from "@/lib/catalog";
+import { countUses, isDocId, mergeProductRows, type ProductDocRow, type ProductRow } from "@/lib/catalog";
 import { backendClient } from "../lib/backendClient";
 
 // Panel reads see drafts and fresh data.
@@ -42,7 +42,7 @@ export const EMPTY_PRODUCT: ProductForm = {
 const FORM_PROJECTION = `{
   name, "slug": slug.current, description, price, discount, stock, status, variant, isFeatured, archived,
   "images": images[defined(asset)]{ "assetId": asset._ref, "url": asset->url },
-  "categories": categories[]._ref, "brand": brand._ref
+  "categories": categories[defined(@->_id)]._ref, "brand": select(defined(brand->_id) => brand._ref, null)
 }`;
 
 type FormDoc = {
@@ -134,17 +134,26 @@ export type TaxonomyRow = {
 };
 
 export async function getTaxonomy(kind: TaxonomyKind): Promise<TaxonomyRow[]> {
-  const rows = await backendClient.fetch<
-    (Omit<TaxonomyRow, "range" | "image"> & { range: number | null; image: ImageValue | null })[]
-  >(
-    `*[_type == $kind] | order(title asc){
-      _id, "title": coalesce(title, ""), "slug": coalesce(slug.current, ""), "description": coalesce(description, ""),
-      range, "featured": featured == true,
-      "image": select(defined(image.asset) => { "assetId": image.asset._ref, "url": image.asset->url }, null),
-      "uses": count(*[_type == "product" && references(^._id)])
+  // Raw perspective so product drafts count, like the delete check; one pass instead of a count per row.
+  const { rows, products } = await backendClient.fetch<{
+    rows: (Omit<TaxonomyRow, "range" | "image" | "uses"> & { range: number | null; image: ImageValue | null })[];
+    products: { _id: string; refs: (string | null)[] | null }[];
+  }>(
+    `{
+      "rows": *[_type == $kind && !(_id in path("drafts.**")) && ${NOT_VERSIONS}] | order(title asc){
+        _id, "title": coalesce(title, ""), "slug": coalesce(slug.current, ""), "description": coalesce(description, ""),
+        range, "featured": featured == true,
+        "image": select(defined(image.asset) => { "assetId": image.asset._ref, "url": image.asset->url }, null)
+      },
+      "products": *[_type == "product" && ${NOT_VERSIONS}]{ _id, "refs": [...coalesce(categories[]._ref, []), brand._ref] }
     }`,
     { kind },
-    FRESH
+    RAW
   );
-  return rows.map((row) => ({ ...row, range: typeof row.range === "number" ? String(row.range) : "" }));
+  const uses = countUses(products);
+  return rows.map((row) => ({
+    ...row,
+    range: typeof row.range === "number" ? String(row.range) : "",
+    uses: uses[row._id] ?? 0,
+  }));
 }
