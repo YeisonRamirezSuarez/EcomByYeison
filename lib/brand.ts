@@ -86,3 +86,35 @@ function merge<T>(raw: unknown, defaults: T): T {
 }
 
 export const withDefaults = (raw: unknown, defaults: Brand): Brand => merge(raw, defaults);
+
+// Fields the appearance editor drafts and publishes. Never currency or pages:
+// those are saved directly and must survive publishing an older draft.
+export const APPEARANCE_FIELDS = [
+  "theme",
+  "storeName",
+  "tagline",
+  "description",
+  "logoType",
+  "logoText",
+  "logoSubtext",
+  "logoImage",
+  "favicon",
+  "banner",
+  "contact",
+  "social",
+] as const;
+
+export function pickAppearance(doc: Record<string, unknown>): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  for (const key of APPEARANCE_FIELDS) if (doc[key] !== undefined) out[key] = doc[key];
+  return out;
+}
+
+// Patch for the published document: fields missing in the draft (e.g. a removed favicon) are unset.
+export function appearancePatch(draft: Record<string, unknown>): {
+  set: Record<string, unknown>;
+  unset: string[];
+} {
+  const set = pickAppearance(draft);
+  return { set, unset: APPEARANCE_FIELDS.filter((key) => !(key in set)) };
+}

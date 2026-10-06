@@ -16,6 +16,17 @@ export type RoleHolder = { id: string; role: Role };
 
 export type AdminTab = "tienda" | "marca" | "paginas" | "pedidos" | "usuarios";
 
+export type AdminSection =
+  | "inicio"
+  | "pedidos"
+  | "productos"
+  | "categorias"
+  | "marcas"
+  | "apariencia"
+  | "paginas"
+  | "usuarios"
+  | "ajustes";
+
 export const ROLE_LABELS: Record<Role, string> = {
   superadmin: "Superadmin",
   admin: "Administrador",
@@ -86,5 +97,24 @@ export function canAssignRole(
 export function adminTabs(role: Role): AdminTab[] {
   return (Object.keys(TAB_PERMISSION) as AdminTab[]).filter((tab) =>
     can(role, TAB_PERMISSION[tab])
+  );
+}
+
+// Menu order of the /admin dashboard; each section needs one permission.
+const SECTION_PERMISSION: Record<AdminSection, Permission> = {
+  inicio: "pedidos",
+  pedidos: "pedidos",
+  productos: "productos",
+  categorias: "catalogo",
+  marcas: "catalogo",
+  apariencia: "configurar",
+  paginas: "configurar",
+  usuarios: "asignarEmpleado",
+  ajustes: "configurar",
+};
+
+export function adminSections(role: Role): AdminSection[] {
+  return (Object.keys(SECTION_PERMISSION) as AdminSection[]).filter((section) =>
+    can(role, SECTION_PERMISSION[section])
   );
 }

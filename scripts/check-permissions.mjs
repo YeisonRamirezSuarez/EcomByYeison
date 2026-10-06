@@ -348,4 +348,76 @@ assert.deepEqual(priceRanges("USD", { under: "Under", over: "Over" }).map((r) =>
 assert.equal(nbsp(formatPrice(1250000, "cop".toUpperCase())), "$ 1.250.000");
 assert.equal(formatPrice(1250000, "cop"), "$1,250,000.00"); // lowercase falls back to USD: callers must uppercase
 
+// Admin dashboard sections
+const perms = await import("../lib/permissions.ts");
+const ALL_SECTIONS = ["inicio", "pedidos", "productos", "categorias", "marcas", "apariencia", "paginas", "usuarios", "ajustes"];
+assert.deepEqual(perms.adminSections("superadmin"), ALL_SECTIONS);
+assert.deepEqual(perms.adminSections("admin"), ALL_SECTIONS);
+assert.deepEqual(perms.adminSections("empleado"), ["inicio", "pedidos", "productos"]);
+assert.deepEqual(perms.adminSections("cliente"), []);
+
+// Appearance publish: only appearance fields, removed images are unset
+const brandMod = await import("../lib/brand.ts");
+const rawDraft = {
+  _id: "drafts.siteSettings", _rev: "r1", _type: "siteSettings", _updatedAt: "2026-10-06",
+  theme: "sand", storeName: "Nike", banner: { title: "Hola" }, contact: { email: "a@b.co" },
+  social: { instagram: "" }, logoImage: { asset: { _ref: "image-1" } },
+  currency: "COP", pages: { about: { intro: "x" } },
+};
+assert.deepEqual(brandMod.pickAppearance(rawDraft), {
+  theme: "sand", storeName: "Nike", banner: { title: "Hola" }, contact: { email: "a@b.co" },
+  social: { instagram: "" }, logoImage: { asset: { _ref: "image-1" } },
+});
+assert.deepEqual(brandMod.pickAppearance({}), {});
+assert.equal(brandMod.APPEARANCE_FIELDS.includes("currency"), false);
+assert.equal(brandMod.APPEARANCE_FIELDS.includes("pages"), false);
+const patch = brandMod.appearancePatch(rawDraft);
+assert.equal("currency" in patch.set, false);
+assert.equal("pages" in patch.set, false);
+assert.ok(patch.unset.includes("favicon"));
+assert.ok(patch.unset.includes("tagline"));
+assert.equal(patch.unset.includes("logoImage"), false);
+assert.equal(patch.unset.includes("currency"), false);
+
+// Dashboard
+const dash = await import("../lib/dashboard.ts");
+assert.equal(
+  dash.monthSales(
+    [
+      { totalPrice: 100, currency: "usd" },
+      { totalPrice: 50, currency: "USD" },
+      { totalPrice: 999, currency: "cop" },
+      { totalPrice: null, currency: "usd" },
+      { currency: null },
+    ],
+    "USD"
+  ),
+  150
+);
+assert.equal(dash.monthSales([], "COP"), 0);
+assert.equal(dash.monthStart(new Date("2026-10-06T15:00:00Z")), "2026-10-01T00:00:00.000Z");
+assert.equal(dash.monthStart(new Date("2026-01-31T23:59:00Z")), "2026-01-01T00:00:00.000Z");
+
+// Order status and filters
+const os = await import("../lib/orderStatus.ts");
+assert.deepEqual([...os.ORDER_STATUSES], ["pending", "paid", "processing", "shipped", "out_for_delivery", "delivered", "cancelled"]);
+assert.equal(os.statusLabel("out_for_delivery"), "En reparto");
+assert.equal(os.statusLabel("raro"), "raro");
+assert.equal(os.statusLabel(undefined), "—");
+const orderRows = [
+  { _id: "1", orderNumber: "ABC-1", customerName: "Ana Torres", email: "ana@x.co", status: "paid" },
+  { _id: "2", orderNumber: "XYZ-2", customerName: "Luis", email: "LUIS@Y.CO", status: "delivered" },
+  { _id: "3", status: "paid" },
+];
+const ids = (list) => list.map((o) => o._id);
+assert.deepEqual(ids(os.filterOrders(orderRows, "all", "")), ["1", "2", "3"]);
+assert.deepEqual(ids(os.filterOrders(orderRows, "paid", "")), ["1", "3"]);
+assert.deepEqual(ids(os.filterOrders(orderRows, "all", "luis@y")), ["2"]);
+assert.deepEqual(ids(os.filterOrders(orderRows, "all", "  abc ")), ["1"]);
+assert.deepEqual(ids(os.filterOrders(orderRows, "all", "TORRES")), ["1"]);
+assert.deepEqual(ids(os.filterOrders(orderRows, "delivered", "ana")), []);
+assert.deepEqual(os.countByStatus(orderRows), {
+  all: 3, pending: 0, paid: 2, processing: 0, shipped: 0, out_for_delivery: 0, delivered: 1, cancelled: 0,
+});
+
 console.log("check-permissions: ok");
