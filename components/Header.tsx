@@ -8,15 +8,14 @@ import FavoriteButton from "./FavoriteButton";
 import SignIn from "./SignIn";
 import MobileMenu from "./MobileMenu";
 import LanguageToggle from "./LanguageToggle";
-import AdminButton from "./admin/AdminButton";
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { ClerkLoaded, UserButton } from "@clerk/nextjs";
 import Link from "next/link";
-import { ClipboardList, Truck, ShieldCheck, HeadphonesIcon } from "lucide-react";
+import { ClipboardList, Truck, ShieldCheck, HeadphonesIcon, LayoutDashboard } from "lucide-react";
 import { getMyOrders } from "@/sanity/queries";
 import { getServerLocale } from "@/lib/locale";
 import { t } from "@/lib/i18n";
-import { adminTabs, roleFromMetadata } from "@/lib/permissions";
+import { adminSections, roleFromMetadata } from "@/lib/permissions";
 import { getSiteSettings } from "@/sanity/queries/siteSettings";
 import { CURRENCIES, formatPrice } from "@/constants/currencies";
 
@@ -28,7 +27,7 @@ const Header = async () => {
   if (userId) {
     orders = await getMyOrders(userId);
   }
-  const tabs = user ? adminTabs(roleFromMetadata(user.publicMetadata)) : [];
+  const isStaff = user ? adminSections(roleFromMetadata(user.publicMetadata)).length > 0 : false;
   const settings = await getSiteSettings();
   const freeShippingFrom = formatPrice(
     CURRENCIES[settings.currency].freeShippingFrom,
@@ -73,6 +72,11 @@ const Header = async () => {
             <SearchBar placeholder={t(locale, "searchPlaceholder")} />
             <div className="flex items-center gap-3">
               <LanguageToggle initialLocale={locale} />
+              {isStaff && (
+                <Link href="/admin" title="Administrar" aria-label="Administrar" className="hover:text-shop_light_green hoverEffect">
+                  <LayoutDashboard size={20} />
+                </Link>
+              )}
               <CartIcon />
               <FavoriteButton />
               {user && (
@@ -92,7 +96,6 @@ const Header = async () => {
           </div>
         </Container>
       </div>
-      {tabs.length > 0 && <AdminButton tabs={tabs} settings={settings} />}
     </header>
   );
 };

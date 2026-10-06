@@ -2,7 +2,6 @@
 
 import { clerkClient } from "@clerk/nextjs/server";
 import { updateTag } from "next/cache";
-import { isThemeKey } from "@/constants/themes";
 import { isCurrencyCode } from "@/constants/currencies";
 import {
   assignableRoles,
@@ -28,22 +27,13 @@ export type UserPage = { users: AdminUser[]; totalCount: number; pageSize: numbe
 
 const PAGE_SIZE = 20;
 
-async function saveSetting(field: "theme" | "currency", value: string) {
+async function saveSetting(field: "currency", value: string) {
   await backendClient.createIfNotExists({
     _id: SITE_SETTINGS_ID,
     _type: "siteSettings",
   });
   await backendClient.patch(SITE_SETTINGS_ID).set({ [field]: value }).commit();
   updateTag(SITE_SETTINGS_TAG);
-}
-
-export async function saveTheme(theme: string): Promise<ActionResult<null>> {
-  return run(async () => {
-    await requirePermission("configurar");
-    if (!isThemeKey(theme)) throw new Error("Tema inválido");
-    await saveSetting("theme", theme);
-    return null;
-  });
 }
 
 export async function saveCurrency(currency: string): Promise<ActionResult<null>> {

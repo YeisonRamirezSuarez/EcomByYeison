@@ -14,8 +14,6 @@ export type Permission =
 
 export type RoleHolder = { id: string; role: Role };
 
-export type AdminTab = "tienda" | "marca" | "paginas" | "pedidos" | "usuarios";
-
 export type AdminSection =
   | "inicio"
   | "pedidos"
@@ -56,14 +54,6 @@ const PERMISSIONS: Record<Role, readonly Permission[]> = {
   cliente: ["comprar"],
 };
 
-const TAB_PERMISSION: Record<AdminTab, Permission> = {
-  tienda: "configurar",
-  marca: "configurar",
-  paginas: "configurar",
-  pedidos: "pedidos",
-  usuarios: "asignarEmpleado",
-};
-
 export function isRole(value: unknown): value is Role {
   return ROLES.includes(value as Role);
 }
@@ -92,12 +82,6 @@ export function canAssignRole(
   newRole: Role
 ): boolean {
   return assignableRoles(actor, target).includes(newRole);
-}
-
-export function adminTabs(role: Role): AdminTab[] {
-  return (Object.keys(TAB_PERMISSION) as AdminTab[]).filter((tab) =>
-    can(role, TAB_PERMISSION[tab])
-  );
 }
 
 // Menu order of the /admin dashboard; each section needs one permission.

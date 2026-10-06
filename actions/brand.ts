@@ -11,30 +11,11 @@ import {
   validateImageFile,
   validatePage,
 } from "@/lib/validation";
-import { assertImagesExist, planSection } from "@/lib/brandWrites";
 import { backendClient } from "@/sanity/lib/backendClient";
 import { SITE_SETTINGS_ID, SITE_SETTINGS_TAG } from "@/sanity/queries/siteSettings";
 
 async function ensureSettings() {
   await backendClient.createIfNotExists({ _id: SITE_SETTINGS_ID, _type: "siteSettings" });
-}
-
-export async function saveBrandSection(
-  section: string,
-  data: unknown
-): Promise<ActionResult<null>> {
-  const planned = planSection(section, data);
-  if (!planned.ok) return { ok: false, error: INVALID_FORM, errors: planned.errors };
-  return run(async () => {
-    await requirePermission("configurar");
-    await assertImagesExist(planned.write.images);
-    await ensureSettings();
-    let patch = backendClient.patch(SITE_SETTINGS_ID).set(planned.write.set);
-    if (planned.write.unset.length > 0) patch = patch.unset(planned.write.unset);
-    await patch.commit();
-    updateTag(SITE_SETTINGS_TAG);
-    return null;
-  });
 }
 
 export async function savePage(pageKey: string, data: unknown): Promise<ActionResult<null>> {

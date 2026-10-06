@@ -1,7 +1,6 @@
 // Run: npm run check:permissions
 import assert from "node:assert/strict";
 import {
-  adminTabs,
   assignableRoles,
   can,
   canAssignRole,
@@ -56,12 +55,6 @@ assert.equal(canAssignRole(admin, cliente, "superadmin"), false);
 assert.equal(canAssignRole(superadmin, cliente, "admin"), true);
 assert.equal(canAssignRole(superadmin, cliente, "superadmin"), false);
 assert.equal(canAssignRole(admin, admin, "cliente"), false);
-
-// Admin tabs
-assert.deepEqual(adminTabs("superadmin"), ["tienda", "marca", "paginas", "pedidos", "usuarios"]);
-assert.deepEqual(adminTabs("admin"), ["tienda", "marca", "paginas", "pedidos", "usuarios"]);
-assert.deepEqual(adminTabs("empleado"), ["pedidos"]);
-assert.deepEqual(adminTabs("cliente"), []);
 
 // Themes
 const { THEMES, isThemeKey, themeCssVars } = await import("../constants/themes.ts");
@@ -419,5 +412,7 @@ assert.deepEqual(ids(os.filterOrders(orderRows, "delivered", "ana")), []);
 assert.deepEqual(os.countByStatus(orderRows), {
   all: 3, pending: 0, paid: 2, processing: 0, shipped: 0, out_for_delivery: 0, delivered: 1, cancelled: 0,
 });
+
+assert.equal("adminTabs" in perms, false);
 
 console.log("check-permissions: ok");
