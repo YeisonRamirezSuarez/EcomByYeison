@@ -598,4 +598,133 @@ assert.equal(ck.checkoutLines([{ id: "p1", quantity: 1.5 }], SERVER).ok, false);
 assert.equal(ck.checkoutLines([], SERVER).ok, false);
 assert.equal(ck.checkoutLines([{ id: "p1", quantity: 1 }], [{ ...SERVER[0], price: null }]).ok, false);
 
+// Home sections (Apariencia → Inicio)
+{
+  const hs = await import("../lib/homeSections.ts");
+  const IMG = { assetId: "image-abc123-800x600-jpg", url: "https://cdn.sanity.io/images/p/d/abc123-800x600.jpg" };
+  const DEF = hs.DEFAULT_HOME_SECTIONS;
+
+  // Defaults: today's 5 sections, today's order and titles
+  assert.deepEqual(DEF.map((s) => s.kind), ["banner", "productTabs", "categories", "brands", "blog"]);
+  assert.equal(DEF[2].title, "Categorías populares");
+  assert.equal(DEF[2].count, 6);
+  assert.equal(DEF[3].title, "Compra por marca");
+  assert.equal(DEF[4].title, "Últimas entradas");
+  assert.equal(DEF[4].count, null);
+  assert.ok(hs.validateHomeSections(DEF).ok);
+
+  // Built-ins: never removed, never repeated
+  assert.ok(hs.validateHomeSections(DEF.slice(1)).errors.sections);
+  assert.ok(hs.validateHomeSections([...DEF, { ...DEF[0], _key: "otro" }]).errors["sections.5.kind"]);
+  // Keys and kinds
+  assert.ok(hs.validateHomeSections([...DEF, hs.newSection("richText", "banner")]).errors["sections.5._key"]);
+  assert.ok(hs.validateHomeSections([...DEF, { _key: "x", kind: "html" }]).errors["sections.5.kind"]);
+  assert.ok(hs.validateHomeSections("nope").errors.sections);
+  // Limit
+  const many = [...DEF, ...Array.from({ length: 16 }, (_, i) => hs.newSection("newsletter", `n${i}`))];
+  assert.equal(many.length, 21);
+  assert.ok(hs.validateHomeSections(many).errors.sections);
+
+  const withSection = (s) => hs.validateHomeSections([...DEF, s]);
+  const it = { ...hs.newSection("imageText", "it1"), image: IMG, title: "Nueva", text: "Hola", button: { label: "Ver", href: "/shop" }, imageSide: "right" };
+  const okIt = withSection(it);
+  assert.ok(okIt.ok);
+  assert.deepEqual(okIt.value[5], it);
+  assert.ok(withSection({ ...it, title: "x".repeat(81) }).errors["sections.5.title"]);
+  assert.ok(withSection({ ...it, button: { label: "Ver", href: "" } }).errors["sections.5.button.href"]);
+  for (const bad of ["//evil.com", "javascript:alert(1)", "http://a.co"]) {
+    assert.ok(withSection({ ...it, button: { label: "Ver", href: bad } }).errors["sections.5.button.href"], bad);
+  }
+  assert.ok(withSection({ ...it, imageSide: "top" }).errors["sections.5.imageSide"]);
+  assert.ok(withSection({ ...it, image: { assetId: "x", url: "https://a.co" } }).errors["sections.5.image"]);
+  // Same href rule as lib/validation.ts
+  for (const href of ["/shop", "//x", "/\\x", "https://a.co/x", "http://a.co", "javascript:x", "ftp://a"]) {
+    assert.equal(hs.isValidHref(href), v.isValidHref(href), href);
+  }
+
+  // Counts
+  assert.ok(hs.validateHomeSections(DEF.map((s) => (s.kind === "categories" ? { ...s, count: 13 } : s))).errors["sections.2.count"]);
+  assert.ok(hs.validateHomeSections(DEF.map((s) => (s.kind === "blog" ? { ...s, count: 7 } : s))).errors["sections.4.count"]);
+  assert.equal(hs.validateHomeSections(DEF.map((s) => (s.kind === "blog" ? { ...s, count: 3 } : s))).value[4].count, 3);
+
+  // Products: category required for source "category", ids only, counts 4/8/12
+  const prod = { ...hs.newSection("products", "p1"), source: "category", category: "" };
+  assert.ok(withSection(prod).errors["sections.5.category"]);
+  assert.ok(withSection({ ...prod, category: "drafts.x" }).errors["sections.5.category"]);
+  assert.ok(withSection({ ...prod, category: "cat1", count: 5 }).errors["sections.5.count"]);
+  assert.ok(withSection({ ...prod, category: "cat1" }).ok);
+  assert.equal(withSection({ ...prod, source: "featured", category: "cat1" }).value[5].category, "");
+  assert.ok(withSection({ ...prod, source: "todo" }).errors["sections.5.source"]);
+
+  // Testimonials
+  const tm = { ...hs.newSection("testimonials", "t1"), items: [{ _key: "a", name: "Ana", text: "Excelente", rating: 5, photo: null }] };
+  assert.ok(withSection(tm).ok);
+  assert.ok(withSection({ ...tm, items: Array.from({ length: 7 }, (_, i) => ({ ...tm.items[0], _key: `a${i}` })) }).errors["sections.5.items"]);
+  assert.ok(withSection({ ...tm, items: [{ ...tm.items[0], rating: 6 }] }).errors["sections.5.items.0.rating"]);
+  assert.ok(withSection({ ...tm, items: [{ ...tm.items[0], name: "" }] }).errors["sections.5.items.0.name"]);
+  assert.ok(withSection({ ...tm, items: [{ ...tm.items[0], text: "x".repeat(301) }] }).errors["sections.5.items.0.text"]);
+
+  // Promo / rich text / newsletter limits
+  assert.ok(withSection({ ...hs.newSection("promo", "pr"), title: "Oferta", background: "rojo" }).errors["sections.5.background"]);
+  assert.ok(withSection({ ...hs.newSection("richText", "rt"), text: "x".repeat(2001) }).errors["sections.5.text"]);
+  assert.ok(withSection({ ...hs.newSection("newsletter", "nl"), text: "x".repeat(301) }).errors["sections.5.text"]);
+
+  // Complete = shown in the store
+  assert.equal(hs.isSectionComplete(hs.newSection("imageText", "a")), false);
+  assert.equal(hs.isSectionComplete(it), true);
+  assert.equal(hs.isSectionComplete(hs.newSection("promo", "a")), false);
+  assert.equal(hs.isSectionComplete({ ...hs.newSection("promo", "a"), title: "Oferta" }), true);
+  assert.equal(hs.isSectionComplete(hs.newSection("richText", "a")), false);
+  assert.equal(hs.isSectionComplete({ ...hs.newSection("richText", "a"), text: "Hola" }), true);
+  assert.equal(hs.isSectionComplete(hs.newSection("testimonials", "a")), false);
+  assert.equal(hs.isSectionComplete(tm), true);
+  assert.equal(hs.isSectionComplete(hs.newSection("products", "a")), true);
+  assert.equal(hs.isSectionComplete({ ...hs.newSection("products", "a"), source: "category" }), false);
+  assert.equal(hs.isSectionComplete(hs.newSection("newsletter", "a")), true);
+  for (const s of DEF) assert.equal(hs.isSectionComplete(s), true, s.kind);
+
+  // Lenient read of what Sanity has (Studio edits skip validation)
+  assert.equal(hs.readHomeSections(undefined), null);
+  assert.equal(hs.readHomeSections(null), null);
+  const stored = [
+    { _key: "banner", kind: "banner", hidden: null, title: null, items: null, button: null },
+    { _key: "x1", kind: "html" },
+    { _key: "x2", kind: "imageText", image: IMG, button: { label: "Ver", href: "javascript:alert(1)" } },
+    { _key: "banner", kind: "richText", text: "clave repetida" },
+    { _key: "b2", kind: "banner" },
+    { _key: "rt", kind: "richText", text: "Hola", align: null, title: null, count: null },
+  ];
+  const read = hs.readHomeSections(stored);
+  assert.deepEqual(read.map((s) => s._key), ["banner", "rt"]);
+  assert.equal(read[0].hidden, false);
+  assert.equal(read[1].align, "left");
+  // Missing built-ins come back hidden in the editor, so the list validates
+  const restored = hs.withBuiltIns(read);
+  assert.deepEqual(restored.map((s) => s.kind), ["banner", "richText", "productTabs", "categories", "brands", "blog"]);
+  assert.ok(restored.slice(2).every((s) => s.hidden));
+  assert.ok(hs.validateHomeSections(restored).ok);
+  assert.deepEqual(hs.withBuiltIns(DEF), DEF);
+
+  // Sanity write: weak category refs, images collected, empty optional fields skipped
+  const w = hs.homeSectionsWrite([it, { ...prod, category: "cat1" }, tm, DEF[4], DEF[0]]);
+  assert.deepEqual(w.homeSections[0], {
+    _key: "it1", _type: "homeSection", kind: "imageText", hidden: false,
+    image: { _type: "image", asset: { _type: "reference", _ref: IMG.assetId } },
+    title: "Nueva", text: "Hola", button: { label: "Ver", href: "/shop" }, imageSide: "right",
+  });
+  assert.deepEqual(w.homeSections[1].category, { _type: "reference", _ref: "cat1", _weak: true });
+  assert.equal(w.homeSections[2].items[0]._type, "testimonial");
+  assert.equal("photo" in w.homeSections[2].items[0], false);
+  assert.equal("count" in w.homeSections[3], false);
+  assert.deepEqual(w.homeSections[4], { _key: "banner", _type: "homeSection", kind: "banner", hidden: false });
+  assert.deepEqual(w.images, [IMG]);
+  assert.deepEqual(w.categories, ["cat1"]);
+
+  // Deleted category → error on that section's field
+  assert.deepEqual(hs.categoryErrors([DEF[0], { ...prod, category: "gone" }, { ...prod, _key: "p2", category: "cat1" }], ["gone"]), {
+    "sections.1.category": "Esa categoría ya no existe",
+  });
+  assert.deepEqual(hs.categoryErrors("nope", ["gone"]), {});
+}
+
 console.log("check-permissions: ok");
