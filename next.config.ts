@@ -13,6 +13,10 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
+  experimental: {
+    // Brand images up to 4 MB plus form overhead.
+    serverActions: { bodySizeLimit: "5mb" },
+  },
 };
 
 export default nextConfig;
