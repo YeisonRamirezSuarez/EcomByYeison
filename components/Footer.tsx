@@ -8,8 +8,11 @@ import { categoriesData, quickLinksData } from "@/constants/data";
 import Link from "next/link";
 import { Input } from "./ui/input";
 import { Button } from "./ui/button";
+import { getSiteSettings } from "@/sanity/queries/siteSettings";
 
-const Footer = () => {
+const Footer = async () => {
+  const { storeName, description } = await getSiteSettings();
+
   return (
     <footer className="bg-white border-t">
       <Container>
@@ -17,11 +20,7 @@ const Footer = () => {
         <div className="py-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           <div className="space-y-4">
             <Logo />
-            <SubText>
-              Ecom by Yeison es tu destino de tecnología premium. Exploramos lo
-              más nuevo en gadgets, electrónica y accesorios con los mejores
-              precios del mercado.
-            </SubText>
+            {description && <SubText>{description}</SubText>}
             <SocialMedia
               className="text-darkColor/60"
               iconClassName="border-darkColor/60 hover:border-shop_light_green hover:text-shop_light_green"
@@ -29,7 +28,7 @@ const Footer = () => {
             />
           </div>
           <div>
-            <SubTitle>Quick Links</SubTitle>
+            <SubTitle>Enlaces rápidos</SubTitle>
             <ul className="space-y-3 mt-4">
               {quickLinksData?.map((item) => (
                 <li key={item?.title}>
@@ -44,7 +43,7 @@ const Footer = () => {
             </ul>
           </div>
           <div>
-            <SubTitle>Categories</SubTitle>
+            <SubTitle>Categorías</SubTitle>
             <ul className="space-y-3 mt-4">
               {categoriesData?.map((item) => (
                 <li key={item?.title}>
@@ -59,7 +58,7 @@ const Footer = () => {
             </ul>
           </div>
           <div className="space-y-4">
-            <SubTitle>Newsletter</SubTitle>
+            <SubTitle>Boletín</SubTitle>
             <SubText>
               Suscríbete y recibe ofertas exclusivas y las últimas novedades
             </SubText>
@@ -71,7 +70,7 @@ const Footer = () => {
         </div>
         <div className="py-6 border-t text-center text-sm text-gray-500">
           <div>
-            © {new Date().getFullYear()} <strong>Ecom by Yeison</strong>. Todos
+            © {new Date().getFullYear()} <strong>{storeName}</strong>. Todos
             los derechos reservados.
           </div>
         </div>

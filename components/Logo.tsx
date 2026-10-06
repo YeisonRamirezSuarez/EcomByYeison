@@ -1,6 +1,9 @@
+"use client";
+
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import React from "react";
+import { useBrand } from "./StoreSettingsProvider";
 
 const Logo = ({
   className,
@@ -9,6 +12,17 @@ const Logo = ({
   className?: string;
   spanDesign?: string;
 }) => {
+  const { storeName, logoType, logoText, logoSubtext, logoImage } = useBrand();
+
+  if (logoType === "image" && logoImage) {
+    return (
+      <Link href={"/"} className="inline-flex items-center group">
+        {/* eslint-disable-next-line @next/next/no-img-element -- store logos can be SVG */}
+        <img src={logoImage.url} alt={storeName} className="h-10 w-auto max-w-44 object-contain" />
+      </Link>
+    );
+  }
+
   return (
     <Link href={"/"} className="inline-flex items-baseline gap-1 group">
       <h2
@@ -17,16 +31,18 @@ const Logo = ({
           className
         )}
       >
-        Ecom
+        {logoText}
       </h2>
-      <span
-        className={cn(
-          "text-xs font-semibold text-shop_light_green group-hover:text-shop_dark_green hoverEffect tracking-widest uppercase",
-          spanDesign
-        )}
-      >
-        by Yeison
-      </span>
+      {logoSubtext && (
+        <span
+          className={cn(
+            "text-xs font-semibold text-shop_light_green group-hover:text-shop_dark_green hoverEffect tracking-widest uppercase",
+            spanDesign
+          )}
+        >
+          {logoSubtext}
+        </span>
+      )}
     </Link>
   );
 };

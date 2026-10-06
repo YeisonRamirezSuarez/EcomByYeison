@@ -51,7 +51,7 @@ const Header = async () => {
               Soporte 24/7
             </span>
           </div>
-          <span className="font-semibold tracking-wide">Bienvenido a Ecom by Yeison</span>
+          <span className="font-semibold tracking-wide">Bienvenido a {settings.storeName}</span>
         </div>
       </div>
 

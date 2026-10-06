@@ -1,26 +1,26 @@
 export const headerData = [
-  { title: "Home", href: "/" },
-  { title: "Shop", href: "/shop" },
+  { title: "Inicio", href: "/" },
+  { title: "Tienda", href: "/shop" },
   { title: "Blog", href: "/blog" },
-  { title: "Hot Deal", href: "/deal" },
-  //   { title: "Contact", href: "/contact" },
+  { title: "Ofertas", href: "/deal" },
+  //   { title: "Contáctanos", href: "/contact" },
 ];
 export const quickLinksData = [
-  { title: "About us", href: "/about" },
-  { title: "Contact us", href: "/contact" },
-  { title: "Terms & Conditions", href: "/terms" },
-  { title: "Privacy Policy", href: "/privacy" },
-  { title: "FAQs", href: "/faqs" },
-  { title: "Help", href: "/help" },
+  { title: "Nosotros", href: "/about" },
+  { title: "Contáctanos", href: "/contact" },
+  { title: "Términos y condiciones", href: "/terms" },
+  { title: "Política de privacidad", href: "/privacy" },
+  { title: "Preguntas frecuentes", href: "/faqs" },
+  { title: "Ayuda", href: "/help" },
 ];
 export const categoriesData = [
-  { title: "Mobiles", href: "mobiles" },
-  { title: "Appliances", href: "appliances" },
+  { title: "Móviles", href: "mobiles" },
+  { title: "Electrodomésticos", href: "appliances" },
   { title: "Smartphones", href: "smartphones" },
-  { title: "Air Conditioners", href: "air-conditioners" },
-  { title: "Washing Machine", href: "washing-machine" },
-  { title: "Kitchen Appliances", href: "kitchen-appliances" },
-  { title: "gadget accessories", href: "gadget-accessories" },
+  { title: "Aires acondicionados", href: "air-conditioners" },
+  { title: "Lavadoras", href: "washing-machine" },
+  { title: "Electrodomésticos de cocina", href: "kitchen-appliances" },
+  { title: "Accesorios", href: "gadget-accessories" },
 ];
 export const productType = [
   { title: "Gadget", value: "gadget" },
