@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { headers } from "next/headers";
 import { client } from "../lib/client";
 import { backendClient } from "../lib/backendClient";
@@ -56,7 +57,8 @@ async function canSeeDraft(draft: boolean): Promise<boolean> {
   return Boolean(actor && can(actor.role, "configurar"));
 }
 
-export async function getSiteSettings({ draft = false }: { draft?: boolean } = {}): Promise<SiteSettings> {
+// Once per request per mode. Keyed by a primitive because cache() compares arguments by identity.
+const loadSiteSettings = cache(async (draft: boolean): Promise<SiteSettings> => {
   try {
     const data = (await canSeeDraft(draft))
       ? await backendClient.fetch<Record<string, unknown> | null>(
@@ -74,7 +76,9 @@ export async function getSiteSettings({ draft = false }: { draft?: boolean } = {
     console.log("Error fetching site settings", error);
     return { ...BRAND_DEFAULTS, theme: DEFAULT_THEME, currency: DEFAULT_CURRENCY };
   }
-}
+});
+
+export const getSiteSettings = ({ draft = false }: { draft?: boolean } = {}) => loadSiteSettings(draft);
 
 export async function hasAppearanceDraft(): Promise<boolean> {
   return backendClient.fetch<boolean>(

@@ -117,6 +117,19 @@ const getMyOrders = async (userId: string) => {
   }
 };
 
+// Header badge: only the number, not every order with its products.
+const getMyOrderCount = async (userId: string): Promise<number> => {
+  try {
+    return await backendClient.fetch<number>(
+      `count(*[_type == "order" && clerkUserId == $userId])`,
+      { userId }
+    );
+  } catch (error) {
+    console.error("Error counting user orders:", error);
+    return 0;
+  }
+};
+
 const getAllOrders = async () => {
   try {
     const orders = await sanityFetch({
@@ -218,6 +231,7 @@ export {
   getProductBySlug,
   getBrand,
   getMyOrders,
+  getMyOrderCount,
   getAllOrders,
   getAllBlogs,
   getSingleBlog,

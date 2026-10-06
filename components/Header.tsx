@@ -8,27 +8,25 @@ import FavoriteButton from "./FavoriteButton";
 import SignIn from "./SignIn";
 import MobileMenu from "./MobileMenu";
 import LanguageToggle from "./LanguageToggle";
-import { auth, currentUser } from "@clerk/nextjs/server";
+import { auth } from "@clerk/nextjs/server";
 import { ClerkLoaded, UserButton } from "@clerk/nextjs";
 import Link from "next/link";
-import { ClipboardList, Truck, ShieldCheck, HeadphonesIcon, LayoutDashboard } from "lucide-react";
-import { getMyOrders } from "@/sanity/queries";
+import { ClipboardList, Truck, ShieldCheck, HeadphonesIcon } from "lucide-react";
+import { getMyOrderCount } from "@/sanity/queries";
 import { getServerLocale } from "@/lib/locale";
 import { t } from "@/lib/i18n";
-import { adminSections, roleFromMetadata } from "@/lib/permissions";
+import AdminLink from "./AdminLink";
 import { getSiteSettings } from "@/sanity/queries/siteSettings";
 import { CURRENCIES, formatPrice } from "@/constants/currencies";
 
 const Header = async () => {
-  const locale = await getServerLocale();
-  const user = await currentUser();
+  // auth() reads the session from the request (no network); the rest runs in parallel.
   const { userId } = await auth();
-  let orders = null;
-  if (userId) {
-    orders = await getMyOrders(userId);
-  }
-  const isStaff = user ? adminSections(roleFromMetadata(user.publicMetadata)).length > 0 : false;
-  const settings = await getSiteSettings();
+  const [locale, orderCount, settings] = await Promise.all([
+    getServerLocale(),
+    userId ? getMyOrderCount(userId) : Promise.resolve(0),
+    getSiteSettings(),
+  ]);
   const freeShippingFrom = formatPrice(
     CURRENCIES[settings.currency].freeShippingFrom,
     settings.currency,
@@ -72,14 +70,10 @@ const Header = async () => {
             <SearchBar placeholder={t(locale, "searchPlaceholder")} />
             <div className="flex items-center gap-3">
               <LanguageToggle initialLocale={locale} />
-              {isStaff && (
-                <Link href="/admin" title="Administrar" aria-label="Administrar" className="hover:text-shop_light_green hoverEffect">
-                  <LayoutDashboard size={20} />
-                </Link>
-              )}
+              <AdminLink />
               <CartIcon />
               <FavoriteButton />
-              {user && (
+              {userId && (
                 <Link
                   href={"/orders"}
                   className="group relative hover:text-shop_light_green hoverEffect"
@@ -87,11 +81,11 @@ const Header = async () => {
                 >
                   <ClipboardList size={20} />
                   <span className="absolute -top-1.5 -right-1.5 bg-shop_btn_dark_green text-white h-4 w-4 rounded-full text-[10px] font-bold flex items-center justify-center shadow">
-                    {orders?.length ?? 0}
+                    {orderCount}
                   </span>
                 </Link>
               )}
-              <ClerkLoaded>{user ? <UserButton /> : <SignIn />}</ClerkLoaded>
+              <ClerkLoaded>{userId ? <UserButton /> : <SignIn />}</ClerkLoaded>
             </div>
           </div>
         </Container>
