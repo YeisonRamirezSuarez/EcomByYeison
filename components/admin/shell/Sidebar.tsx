@@ -1,12 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { UserButton } from "@clerk/nextjs";
 import { ExternalLink } from "lucide-react";
 import type { AdminSection } from "@/lib/permissions";
-import { useBrand } from "@/components/StoreSettingsProvider";
+import PanelBrand from "./PanelBrand";
 import { NAV_GROUPS, SECTION_PATHS } from "./nav";
 
 const isActive = (pathname: string, href: string) =>
@@ -22,7 +21,6 @@ const Sidebar = ({
   onNavigate: () => void;
 }) => {
   const pathname = usePathname();
-  const { storeName, logoType, logoImage } = useBrand();
 
   return (
     <aside
@@ -30,15 +28,8 @@ const Sidebar = ({
         open ? "translate-x-0" : "-translate-x-full"
       }`}
     >
-      <div className="flex items-center gap-2.5 px-5 h-16 border-b border-white/10">
-        {logoType === "image" && logoImage ? (
-          <Image src={logoImage.url} alt={storeName} width={28} height={28} className="rounded-md bg-white object-contain" unoptimized />
-        ) : (
-          <span className="w-7 h-7 rounded-md bg-shop_orange flex items-center justify-center text-white font-black text-sm">
-            {storeName.charAt(0).toUpperCase()}
-          </span>
-        )}
-        <span className="font-bold text-white truncate">{storeName}</span>
+      <div className="flex items-center px-5 h-16 border-b border-white/10">
+        <PanelBrand />
       </div>
 
       <nav className="flex-1 overflow-y-auto px-3 py-4 flex flex-col gap-5" aria-label="Administración">

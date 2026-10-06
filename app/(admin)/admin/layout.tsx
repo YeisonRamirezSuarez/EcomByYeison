@@ -6,7 +6,12 @@ import AdminShell from "@/components/admin/shell/AdminShell";
 import { getActor } from "@/lib/roles";
 import { adminSections } from "@/lib/permissions";
 
-export const metadata: Metadata = { title: "Administración", robots: { index: false } };
+// The panel carries our brand (tab title and icon); the store keeps each client's.
+export const metadata: Metadata = {
+  title: { absolute: "Administración | Ecom by Yeison" },
+  icons: { icon: [{ url: "/ecom-by-yeison.svg", type: "image/svg+xml" }] },
+  robots: { index: false },
+};
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const actor = await getActor();
