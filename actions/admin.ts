@@ -1,7 +1,7 @@
 "use server";
 
 import { clerkClient } from "@clerk/nextjs/server";
-import { revalidateTag } from "next/cache";
+import { updateTag } from "next/cache";
 import { isThemeKey } from "@/constants/themes";
 import { isCurrencyCode } from "@/constants/currencies";
 import {
@@ -34,7 +34,7 @@ async function saveSetting(field: "theme" | "currency", value: string) {
     _type: "siteSettings",
   });
   await backendClient.patch(SITE_SETTINGS_ID).set({ [field]: value }).commit();
-  revalidateTag(SITE_SETTINGS_TAG);
+  updateTag(SITE_SETTINGS_TAG);
 }
 
 export async function saveTheme(theme: string): Promise<ActionResult<null>> {

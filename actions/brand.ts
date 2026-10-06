@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidateTag } from "next/cache";
+import { updateTag } from "next/cache";
 import { requirePermission } from "@/lib/roles";
 import { run, type ActionResult } from "@/lib/actionResult";
 import type { ImageValue } from "@/lib/brand";
@@ -103,7 +103,7 @@ export async function saveBrandSection(
     let patch = backendClient.patch(SITE_SETTINGS_ID).set(planned.write.set);
     if (planned.write.unset.length > 0) patch = patch.unset(planned.write.unset);
     await patch.commit();
-    revalidateTag(SITE_SETTINGS_TAG);
+    updateTag(SITE_SETTINGS_TAG);
     return null;
   });
 }
@@ -126,7 +126,7 @@ export async function savePage(pageKey: string, data: unknown): Promise<ActionRe
       .setIfMissing({ pages: {} })
       .set({ [`pages.${pageKey}`]: page })
       .commit();
-    revalidateTag(SITE_SETTINGS_TAG);
+    updateTag(SITE_SETTINGS_TAG);
     return null;
   });
 }

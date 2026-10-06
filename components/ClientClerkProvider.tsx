@@ -24,6 +24,7 @@ const ClientClerkProvider = ({
       signInUrl="/sign-in"
       signUpUrl="/sign-up"
       nonce={nonce}
+      appearance={{ layout: { unsafe_disableDevelopmentModeWarnings: true } }}
     >
       {children}
     </ClerkProvider>
