@@ -11,8 +11,11 @@ import {
   MY_ORDERS_QUERY,
   OTHERS_BLOG_QUERY,
   PRODUCT_BY_SLUG_QUERY,
+  SHOP_PRODUCTS_QUERY,
   SINGLE_BLOG_QUERY,
 } from "./query";
+import { parsePriceRange } from "@/constants/currencies";
+import type { ShopFilters } from "@/lib/shopFilters";
 
 const getCategories = async (quantity?: number) => {
   try {
@@ -114,6 +117,20 @@ const getMyOrders = async (userId: string) => {
   } catch (error) {
     console.error("Error fetching user orders:", error);
     return null;
+  }
+};
+
+const getShopProducts = async ({ category, brand, price }: ShopFilters) => {
+  try {
+    const { minPrice, maxPrice } = parsePriceRange(price);
+    const { data } = await sanityFetch({
+      query: SHOP_PRODUCTS_QUERY,
+      params: { selectedCategory: category, selectedBrand: brand, minPrice, maxPrice },
+    });
+    return data ?? [];
+  } catch (error) {
+    console.log("Error fetching shop products:", error);
+    return [];
   }
 };
 
@@ -232,6 +249,7 @@ export {
   getBrand,
   getMyOrders,
   getMyOrderCount,
+  getShopProducts,
   getAllOrders,
   getAllBlogs,
   getSingleBlog,

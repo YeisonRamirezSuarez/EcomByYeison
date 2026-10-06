@@ -9,7 +9,7 @@ import { t } from "@/lib/i18n";
 interface Props {
   brands: BRANDS_QUERYResult;
   selectedBrand?: string | null;
-  setSelectedBrand: React.Dispatch<React.SetStateAction<string | null>>;
+  setSelectedBrand: (value: string | null) => void;
 }
 
 const BrandList = ({ brands, selectedBrand, setSelectedBrand }: Props) => {

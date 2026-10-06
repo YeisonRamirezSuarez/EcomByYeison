@@ -38,6 +38,13 @@ const GET_ALL_ORDERS_QUERY =
   ...,product->
 }
 }`);
+const SHOP_PRODUCTS_QUERY = defineQuery(`*[_type == 'product'
+  && (!defined($selectedCategory) || references(*[_type == "category" && slug.current == $selectedCategory]._id))
+  && (!defined($selectedBrand) || references(*[_type == "brand" && slug.current == $selectedBrand]._id))
+  && price >= $minPrice && (!defined($maxPrice) || price <= $maxPrice)
+] | order(name asc) {
+  ...,"categories": categories[]->title
+}`);
 const GET_ALL_BLOG = defineQuery(
   `*[_type == 'blog'] | order(publishedAt desc)[0...$quantity]{
   ...,  
@@ -100,4 +107,5 @@ export {
   SINGLE_BLOG_QUERY,
   BLOG_CATEGORIES,
   OTHERS_BLOG_QUERY,
+  SHOP_PRODUCTS_QUERY,
 };

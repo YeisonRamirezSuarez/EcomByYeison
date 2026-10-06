@@ -9,7 +9,7 @@ import { t } from "@/lib/i18n";
 
 interface Props {
   selectedPrice?: string | null;
-  setSelectedPrice: React.Dispatch<React.SetStateAction<string | null>>;
+  setSelectedPrice: (value: string | null) => void;
 }
 const PriceList = ({ selectedPrice, setSelectedPrice }: Props) => {
   const { locale } = useStore();

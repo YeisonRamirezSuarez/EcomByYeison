@@ -444,4 +444,15 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
   assert.deepEqual(fired, ["late"]);
 }
 
+// /shop filters live in the URL.
+const sf = await import("../lib/shopFilters.ts");
+assert.deepEqual(sf.readShopFilters({}), { category: null, brand: null, price: null });
+assert.deepEqual(sf.readShopFilters({ category: "audio", price: "0-100" }), { category: "audio", brand: null, price: "0-100" });
+assert.deepEqual(sf.readShopFilters({ brand: ["a", "b"], category: "" }), { category: null, brand: "a", price: null });
+assert.equal(sf.shopHref("", "category", "audio"), "/shop?category=audio");
+assert.equal(sf.shopHref("category=audio&price=0-100", "brand", "sony"), "/shop?category=audio&price=0-100&brand=sony");
+assert.equal(sf.shopHref("category=audio&brand=sony", "brand", null), "/shop?category=audio");
+assert.equal(sf.shopHref("category=audio&brand=sony&price=1-&utm=x", "all", null), "/shop?utm=x");
+assert.equal(sf.shopHref("category=audio", "all", null), "/shop");
+
 console.log("check-permissions: ok");

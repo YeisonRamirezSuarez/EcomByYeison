@@ -9,7 +9,7 @@ import { t } from "@/lib/i18n";
 interface Props {
   categories: Category[];
   selectedCategory?: string | null;
-  setSelectedCategory: React.Dispatch<React.SetStateAction<string | null>>;
+  setSelectedCategory: (value: string | null) => void;
 }
 
 const CategoryList = ({

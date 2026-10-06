@@ -1,68 +1,38 @@
 "use client";
 import { BRANDS_QUERYResult, Category, Product } from "@/sanity.types";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useTransition } from "react";
 import Container from "./Container";
 import CategoryList from "./shop/CategoryList";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import BrandList from "./shop/BrandList";
 import PriceList from "./shop/PriceList";
-import { client } from "@/sanity/lib/client";
 import { Loader2, SlidersHorizontal, X } from "lucide-react";
 import NoProductAvailable from "./NoProductAvailable";
 import ProductCard from "./ProductCard";
 import useStore from "@/store";
 import { t } from "@/lib/i18n";
-import { parsePriceRange } from "@/constants/currencies";
+import { readShopFilters, shopHref, type ShopFilterKey } from "@/lib/shopFilters";
 
 interface Props {
   categories: Category[];
   brands: BRANDS_QUERYResult;
+  products: Product[];
 }
-const Shop = ({ categories, brands }: Props) => {
+const Shop = ({ categories, brands, products }: Props) => {
   const { locale } = useStore();
+  const router = useRouter();
   const searchParams = useSearchParams();
-  const brandParams = searchParams?.get("brand");
-  const categoryParams = searchParams?.get("category");
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, startTransition] = useTransition();
   const [filtersOpen, setFiltersOpen] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(
-    categoryParams || null
+  const { category: selectedCategory, brand: selectedBrand, price: selectedPrice } = readShopFilters(
+    Object.fromEntries(searchParams)
   );
-  const [selectedBrand, setSelectedBrand] = useState<string | null>(
-    brandParams || null
-  );
-  const [selectedPrice, setSelectedPrice] = useState<string | null>(null);
-  const fetchProducts = async () => {
-    setLoading(true);
-    try {
-      const { minPrice, maxPrice } = parsePriceRange(selectedPrice);
-      const query = `
-      *[_type == 'product' 
-        && (!defined($selectedCategory) || references(*[_type == "category" && slug.current == $selectedCategory]._id))
-        && (!defined($selectedBrand) || references(*[_type == "brand" && slug.current == $selectedBrand]._id))
-        && price >= $minPrice && (!defined($maxPrice) || price <= $maxPrice)
-      ] 
-      | order(name asc) {
-        ...,"categories": categories[]->title
-      }
-    `;
-      const data = await client.fetch(
-        query,
-        { selectedCategory, selectedBrand, minPrice, maxPrice },
-        { next: { revalidate: 0 } }
-      );
-      setProducts(data);
-    } catch (error) {
-      console.log("Shop product fetching Error", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchProducts();
-  }, [selectedCategory, selectedBrand, selectedPrice]);
+  // The server renders the products for the URL; while it answers, the spinner shows.
+  const go = (key: ShopFilterKey | "all", value: string | null) =>
+    startTransition(() => router.push(shopHref(searchParams.toString(), key, value), { scroll: false }));
+  const setSelectedCategory = (value: string | null) => go("category", value);
+  const setSelectedBrand = (value: string | null) => go("brand", value);
+  const setSelectedPrice = (value: string | null) => go("price", value);
 
   // Lock page scroll while the mobile filter sheet is open.
   useEffect(() => {
@@ -80,11 +50,7 @@ const Shop = ({ categories, brands }: Props) => {
     selectedPrice,
   ].filter(Boolean).length;
 
-  const resetFilters = () => {
-    setSelectedCategory(null);
-    setSelectedBrand(null);
-    setSelectedPrice(null);
-  };
+  const resetFilters = () => go("all", null);
 
   const filterControls = (
     <>
