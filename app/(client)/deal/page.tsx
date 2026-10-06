@@ -16,8 +16,8 @@ const DealPage = async () => {
           <h1 className="text-3xl font-bold text-darkColor">{t(locale, "dealWeekTitle")}</h1>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2.5">
-          {products?.map((product) => (
-            <ProductCard key={product?._id} product={product as unknown as Product} />
+          {products?.map((product: Product) => (
+            <ProductCard key={product?._id} product={product} />
           ))}
         </div>
       </Container>

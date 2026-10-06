@@ -24,7 +24,7 @@ const ProductGrid = ({ initialProducts = [], initialTab }: ProductGridProps) => 
   const [products, setProducts] = useState<Product[]>(initialProducts);
   const [loading, setLoading] = useState(false);
   const [selectedTab, setSelectedTab] = useState(defaultTab);
-  const query = `*[_type == "product" && variant == $variant] | order(name asc){
+  const query = `*[_type == "product" && archived != true && variant == $variant] | order(name asc){
   ...,"categories": categories[]->title
 }`;
 

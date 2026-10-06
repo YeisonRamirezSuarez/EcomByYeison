@@ -97,6 +97,19 @@ export const productType = defineType({
       description: "Toggle to Featured on or off",
       initialValue: false,
     }),
+    defineField({
+      name: "archived",
+      title: "Archivado",
+      type: "boolean",
+      description: "Los productos archivados no se muestran en la tienda.",
+      initialValue: false,
+    }),
+    defineField({
+      // Stock when the current draft was created (admin panel). Used to keep sales on publish.
+      name: "stockBase",
+      type: "number",
+      hidden: true,
+    }),
   ],
   preview: {
     select: {

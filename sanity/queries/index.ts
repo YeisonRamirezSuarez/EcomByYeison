@@ -25,7 +25,7 @@ const getCategories = async (quantity?: number) => {
     const slice = quantity ? "[0...$quantity]" : "";
     const query = `{
       "categories": *[_type == 'category'] | order(title asc) ${slice}{ ... },
-      "refs": *[_type == "product" && defined(categories)].categories[]._ref
+      "refs": *[_type == "product" && archived != true && defined(categories)].categories[]._ref
     }`;
     const { data } = await sanityFetch({
       query,
@@ -199,7 +199,7 @@ const searchProducts = async (searchTerm: string) => {
   try {
     // Parameterized: the term (incl. the wildcards) is a value, never spliced
     // into the query structure, so this is injection-safe.
-    const query = `*[_type == "product" && name match $q] | order(name asc){
+    const query = `*[_type == "product" && archived != true && name match $q] | order(name asc){
       ..., "categories": categories[]->title
     }`;
     const { data } = await sanityFetch({
@@ -215,7 +215,7 @@ const searchProducts = async (searchTerm: string) => {
 
 const getProductsByVariant = async (variant: string) => {
   try {
-    const query = `*[_type == "product" && variant == $variant] | order(name asc){
+    const query = `*[_type == "product" && archived != true && variant == $variant] | order(name asc){
   ...,"categories": categories[]->title
 }`;
     const { data } = await sanityFetch({ query, params: { variant } });
