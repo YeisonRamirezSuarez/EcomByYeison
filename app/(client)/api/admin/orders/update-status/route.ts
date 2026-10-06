@@ -1,7 +1,6 @@
 import { getActor } from "@/lib/roles";
 import { can } from "@/lib/permissions";
 import { backendClient } from "@/sanity/lib/backendClient";
-import stripe from "@/lib/stripe";
 import { sendInvoiceEmail } from "@/lib/email";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -58,6 +57,8 @@ export async function PATCH(req: NextRequest) {
     // Send invoice email if status is delivered
     if (newStatus === "delivered" && orderBefore?.invoice?.id) {
       try {
+        // Loaded only here: status changes must work even without STRIPE_SECRET_KEY.
+        const { default: stripe } = await import("@/lib/stripe");
         const invoice = await stripe.invoices.retrieve(orderBefore.invoice.id);
 
         if (invoice.hosted_invoice_url) {
