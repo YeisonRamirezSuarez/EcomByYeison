@@ -252,4 +252,65 @@ assert.equal(
 );
 assert.equal(v.validateSubscription({ email: "nada", consent: true }).errors.email, "Ingresa un correo válido");
 
+// Brand defaults
+const { withDefaults } = await import("../lib/brand.ts");
+const { BRAND_DEFAULTS } = await import("../constants/brandDefaults.ts");
+assert.equal(BRAND_DEFAULTS.storeName, "Mi tienda");
+assert.equal(JSON.stringify(BRAND_DEFAULTS).toLowerCase().includes("yeison"), false);
+assert.equal(v.validateIdentity(BRAND_DEFAULTS).ok, true);
+assert.equal(v.validateBanner(BRAND_DEFAULTS.banner).ok, true);
+assert.equal(v.validateContact(BRAND_DEFAULTS.contact).ok, true);
+assert.equal(v.validateSocial(BRAND_DEFAULTS.social).ok, true);
+for (const key of v.PAGE_KEYS) {
+  assert.equal(v.validatePage(BRAND_DEFAULTS.pages[key]).ok, true, key);
+  assert.ok(BRAND_DEFAULTS.pages[key].blocks.length > 0, key);
+}
+
+assert.deepEqual(withDefaults(null, BRAND_DEFAULTS), BRAND_DEFAULTS);
+assert.deepEqual(withDefaults({}, BRAND_DEFAULTS), BRAND_DEFAULTS);
+assert.deepEqual(withDefaults({ currency: "USD" }, BRAND_DEFAULTS), BRAND_DEFAULTS);
+
+const partial = withDefaults({ storeName: "Nike", contact: { email: "hola@nike.com" } }, BRAND_DEFAULTS);
+assert.equal(partial.storeName, "Nike");
+assert.equal(partial.contact.email, "hola@nike.com");
+assert.equal(partial.contact.phone, BRAND_DEFAULTS.contact.phone);
+assert.deepEqual(partial.banner, BRAND_DEFAULTS.banner);
+
+const kept = withDefaults(
+  { tagline: "", contact: { phone: "" }, pages: { faqs: { blocks: [] } } },
+  BRAND_DEFAULTS
+);
+assert.equal(kept.tagline, "");
+assert.equal(kept.contact.phone, "");
+assert.deepEqual(kept.pages.faqs.blocks, []);
+assert.equal(kept.pages.faqs.intro, BRAND_DEFAULTS.pages.faqs.intro);
+assert.deepEqual(kept.pages.about, BRAND_DEFAULTS.pages.about);
+
+const wrong = withDefaults(
+  { storeName: 5, banner: "x", pages: { about: { blocks: "x" } } },
+  BRAND_DEFAULTS
+);
+assert.equal(wrong.storeName, "Mi tienda");
+assert.deepEqual(wrong.banner, BRAND_DEFAULTS.banner);
+assert.deepEqual(wrong.pages.about.blocks, BRAND_DEFAULTS.pages.about.blocks);
+
+assert.equal(
+  withDefaults({ logoImage: { assetId: "image-a-1x1-png", url: null } }, BRAND_DEFAULTS).logoImage,
+  null
+);
+assert.deepEqual(withDefaults({ logoImage: img }, BRAND_DEFAULTS).logoImage, img);
+
+const extra = withDefaults(JSON.parse('{"__proto__": {"polluted": true}, "hack": 1}'), BRAND_DEFAULTS);
+assert.equal(extra.hack, undefined);
+assert.equal({}.polluted, undefined);
+
+const full = {
+  ...BRAND_DEFAULTS,
+  storeName: "Adidas",
+  logoImage: img,
+  favicon: img,
+  banner: { ...BRAND_DEFAULTS.banner, image: img },
+};
+assert.deepEqual(withDefaults(full, BRAND_DEFAULTS), full);
+
 console.log("check-permissions: ok");

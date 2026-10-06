@@ -48,3 +48,26 @@ export type Brand = IdentitySettings & {
 };
 
 export type BrandSection = "identity" | "banner" | "contact" | "social";
+
+const isPlainObject = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null && !Array.isArray(value);
+
+// A field missing in Sanity (undefined or null) takes the default; a stored value wins, even "" or [].
+// Objects merge field by field over the default's keys only; a value of the wrong type falls back.
+function merge<T>(raw: unknown, defaults: T): T {
+  if (raw === undefined || raw === null) return defaults;
+  if (defaults === null) {
+    // Image fields: keep only images whose asset still resolves to a URL.
+    return (isPlainObject(raw) && typeof raw.url === "string" ? raw : defaults) as T;
+  }
+  if (Array.isArray(defaults)) return (Array.isArray(raw) ? raw : defaults) as T;
+  if (isPlainObject(defaults)) {
+    if (!isPlainObject(raw)) return defaults;
+    const out: Record<string, unknown> = {};
+    for (const key of Object.keys(defaults)) out[key] = merge(raw[key], defaults[key]);
+    return out as T;
+  }
+  return (typeof raw === typeof defaults ? raw : defaults) as T;
+}
+
+export const withDefaults = (raw: unknown, defaults: Brand): Brand => merge(raw, defaults);
