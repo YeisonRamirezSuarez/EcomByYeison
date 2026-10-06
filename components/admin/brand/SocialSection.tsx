@@ -1,18 +1,18 @@
 "use client";
 
 import { useState } from "react";
-import { saveBrandSection } from "@/actions/brand";
+import { saveAppearanceDraft } from "@/actions/appearance";
 import type { SocialSettings } from "@/lib/brand";
 import { SOCIAL_KEYS, SOCIAL_LABELS, validateSocial } from "@/lib/validation";
-import { SectionCard, TextField, useSave } from "./fields";
+import { TextField, useAutosave, SavingNote, type AutosaveEvents } from "./fields";
 
-const SocialSection = ({ initial }: { initial: SocialSettings }) => {
+const SocialSection = ({ initial, ...events }: { initial: SocialSettings } & AutosaveEvents) => {
   const [value, setValue] = useState(initial);
-  const { errors, pending, save } = useSave(validateSocial, (v) => saveBrandSection("social", v));
+  const { errors, pending } = useAutosave(value, validateSocial, (v) => saveAppearanceDraft("social", v), events);
 
   return (
-    <SectionCard title="Redes sociales" pending={pending} onSave={() => save(value)}>
-      <p className="text-xs text-gray-500 -mt-2">Pega el enlace de cada red que uses. Las vacías no se muestran.</p>
+    <div className="flex flex-col gap-3">
+      <p className="text-xs text-gray-500">Pega el enlace de cada red que uses. Las vacías no se muestran.</p>
       {SOCIAL_KEYS.map((key) => (
         <TextField
           key={key}
@@ -24,7 +24,8 @@ const SocialSection = ({ initial }: { initial: SocialSettings }) => {
           max={300}
         />
       ))}
-    </SectionCard>
+      <SavingNote pending={pending} />
+    </div>
   );
 };
 

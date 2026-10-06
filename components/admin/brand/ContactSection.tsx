@@ -1,10 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { saveBrandSection } from "@/actions/brand";
+import { saveAppearanceDraft } from "@/actions/appearance";
 import type { ContactSettings } from "@/lib/brand";
 import { validateContact } from "@/lib/validation";
-import { SectionCard, TextField, useSave } from "./fields";
+import { TextField, useAutosave, SavingNote, type AutosaveEvents } from "./fields";
 
 const FIELDS: { key: keyof ContactSettings; label: string; max: number }[] = [
   { key: "email", label: "Correo", max: 254 },
@@ -13,13 +13,13 @@ const FIELDS: { key: keyof ContactSettings; label: string; max: number }[] = [
   { key: "hours", label: "Horario", max: 80 },
 ];
 
-const ContactSection = ({ initial }: { initial: ContactSettings }) => {
+const ContactSection = ({ initial, ...events }: { initial: ContactSettings } & AutosaveEvents) => {
   const [value, setValue] = useState(initial);
-  const { errors, pending, save } = useSave(validateContact, (v) => saveBrandSection("contact", v));
+  const { errors, pending } = useAutosave(value, validateContact, (v) => saveAppearanceDraft("contact", v), events);
 
   return (
-    <SectionCard title="Contacto" pending={pending} onSave={() => save(value)}>
-      <p className="text-xs text-gray-500 -mt-2">Los campos vacíos no se muestran en la tienda.</p>
+    <div className="flex flex-col gap-3">
+      <p className="text-xs text-gray-500">Los campos vacíos no se muestran en la tienda.</p>
       {FIELDS.map(({ key, label, max }) => (
         <TextField
           key={key}
@@ -30,7 +30,8 @@ const ContactSection = ({ initial }: { initial: ContactSettings }) => {
           max={max}
         />
       ))}
-    </SectionCard>
+      <SavingNote pending={pending} />
+    </div>
   );
 };
 

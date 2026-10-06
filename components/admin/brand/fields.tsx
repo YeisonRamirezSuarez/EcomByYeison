@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import toast from "react-hot-toast";
 import type { ActionResult } from "@/lib/actionResult";
 import { INVALID_FORM, type ValidationResult } from "@/lib/validation";
@@ -112,3 +112,53 @@ export function useSave<T>(
 
   return { errors, pending, save, clearErrors: () => setErrors({}) };
 }
+
+export type AutosaveEvents = { onSaved: () => void; onError: () => void };
+
+// Saves a section 1 s after the last change. Invalid input shows field errors and is not sent.
+// Compares with the last value sent, so mounting (or React's dev double-mount) never saves.
+export function useAutosave<T>(
+  value: T,
+  validate: (input: unknown) => ValidationResult<T>,
+  action: (value: T) => Promise<ActionResult<null>>,
+  events: AutosaveEvents
+) {
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [pending, setPending] = useState(false);
+  const lastSent = useRef(JSON.stringify(value));
+  const latest = useRef({ validate, action, events });
+  useEffect(() => {
+    latest.current = { validate, action, events };
+  });
+
+  useEffect(() => {
+    const serialized = JSON.stringify(value);
+    if (serialized === lastSent.current) return;
+    const timer = setTimeout(async () => {
+      const { validate, action, events } = latest.current;
+      const checked = validate(value);
+      if (!checked.ok) {
+        setErrors(checked.errors);
+        return;
+      }
+      lastSent.current = serialized;
+      setPending(true);
+      const result = await action(checked.value);
+      setPending(false);
+      if (!result.ok) {
+        lastSent.current = "";
+        setErrors(result.errors ?? {});
+        events.onError();
+        return;
+      }
+      setErrors({});
+      events.onSaved();
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, [value]);
+
+  return { errors, pending };
+}
+
+export const SavingNote = ({ pending }: { pending: boolean }) =>
+  pending ? <p className="text-xs text-gray-400">Guardando borrador…</p> : null;

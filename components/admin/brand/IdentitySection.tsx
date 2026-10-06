@@ -1,22 +1,20 @@
 "use client";
 
 import { useState } from "react";
-import { saveBrandSection } from "@/actions/brand";
+import { saveAppearanceDraft } from "@/actions/appearance";
 import type { IdentitySettings } from "@/lib/brand";
 import { validateIdentity } from "@/lib/validation";
-import { SectionCard, TextField, useSave } from "./fields";
+import { TextField, useAutosave, SavingNote, type AutosaveEvents } from "./fields";
 import ImageField from "./ImageField";
 
-const IdentitySection = ({ initial }: { initial: IdentitySettings }) => {
+const IdentitySection = ({ initial, ...events }: { initial: IdentitySettings } & AutosaveEvents) => {
   const [value, setValue] = useState(initial);
-  const { errors, pending, save } = useSave(validateIdentity, (v) =>
-    saveBrandSection("identity", v)
-  );
+  const { errors, pending } = useAutosave(value, validateIdentity, (v) => saveAppearanceDraft("identity", v), events);
   const set = <K extends keyof IdentitySettings>(key: K, v: IdentitySettings[K]) =>
     setValue((prev) => ({ ...prev, [key]: v }));
 
   return (
-    <SectionCard title="Identidad" pending={pending} onSave={() => save(value)}>
+    <div className="flex flex-col gap-3">
       <TextField label="Nombre de la tienda" value={value.storeName} onChange={(v) => set("storeName", v)} error={errors.storeName} max={60} />
       <TextField label="Eslogan" value={value.tagline} onChange={(v) => set("tagline", v)} error={errors.tagline} max={80} />
       <TextField label="Descripción" multiline value={value.description} onChange={(v) => set("description", v)} error={errors.description} max={300} />
@@ -46,7 +44,8 @@ const IdentitySection = ({ initial }: { initial: IdentitySettings }) => {
         <ImageField label="Imagen del logo" value={value.logoImage} onChange={(v) => set("logoImage", v)} error={errors.logoImage} />
       )}
       <ImageField label="Favicon" value={value.favicon} onChange={(v) => set("favicon", v)} error={errors.favicon} />
-    </SectionCard>
+      <SavingNote pending={pending} />
+    </div>
   );
 };
 

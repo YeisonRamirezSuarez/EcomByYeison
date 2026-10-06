@@ -2,17 +2,17 @@
 
 import { useState } from "react";
 import { X } from "lucide-react";
-import { saveBrandSection } from "@/actions/brand";
+import { saveAppearanceDraft } from "@/actions/appearance";
 import type { BannerSettings, Cta } from "@/lib/brand";
 import { MAX_STATS, validateBanner } from "@/lib/validation";
-import { SectionCard, TextField, useSave } from "./fields";
+import { TextField, useAutosave, SavingNote, type AutosaveEvents } from "./fields";
 import ImageField from "./ImageField";
 
 const CTA_LABELS = { primaryCta: "Botón principal", secondaryCta: "Botón secundario" } as const;
 
-const BannerSection = ({ initial }: { initial: BannerSettings }) => {
+const BannerSection = ({ initial, ...events }: { initial: BannerSettings } & AutosaveEvents) => {
   const [value, setValue] = useState(initial);
-  const { errors, pending, save } = useSave(validateBanner, (v) => saveBrandSection("banner", v));
+  const { errors, pending } = useAutosave(value, validateBanner, (v) => saveAppearanceDraft("banner", v), events);
   const set = <K extends keyof BannerSettings>(key: K, v: BannerSettings[K]) =>
     setValue((prev) => ({ ...prev, [key]: v }));
   const setCta = (key: keyof typeof CTA_LABELS, field: keyof Cta, v: string) =>
@@ -24,7 +24,7 @@ const BannerSection = ({ initial }: { initial: BannerSettings }) => {
     }));
 
   return (
-    <SectionCard title="Banner de portada" pending={pending} onSave={() => save(value)}>
+    <div className="flex flex-col gap-3">
       <TextField label="Etiqueta" value={value.badge} onChange={(v) => set("badge", v)} error={errors.badge} max={40} />
       <TextField label="Título" value={value.title} onChange={(v) => set("title", v)} error={errors.title} max={60} />
       <TextField label="Parte resaltada del título" value={value.highlight} onChange={(v) => set("highlight", v)} error={errors.highlight} max={30} />
@@ -64,7 +64,8 @@ const BannerSection = ({ initial }: { initial: BannerSettings }) => {
           </button>
         )}
       </div>
-    </SectionCard>
+      <SavingNote pending={pending} />
+    </div>
   );
 };
 
