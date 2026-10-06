@@ -55,6 +55,8 @@ type Messages = {
   cartTitle: string;
   cartConfirmReset: string;
   cartResetSuccess: string;
+  checkoutUnavailable: string;
+  checkoutFailed: string;
   cartVariant: string;
   cartStatus: string;
   cartAddToFavorite: string;
@@ -294,6 +296,8 @@ export const MESSAGES: Record<Locale, Messages> = {
     cartTitle: "Carrito de compras",
     cartConfirmReset: "¿Seguro que deseas vaciar tu carrito?",
     cartResetSuccess: "¡Carrito reiniciado con éxito!",
+    checkoutUnavailable: "Algunos productos de tu carrito ya no están disponibles. Quítalos e inténtalo de nuevo.",
+    checkoutFailed: "No se pudo iniciar el pago. Inténtalo de nuevo.",
     cartVariant: "Variante",
     cartStatus: "Estado",
     cartAddToFavorite: "Agregar a favoritos",
@@ -531,6 +535,8 @@ export const MESSAGES: Record<Locale, Messages> = {
     cartTitle: "Shopping Cart",
     cartConfirmReset: "Are you sure you want to reset your cart?",
     cartResetSuccess: "Cart reset successfully!",
+    checkoutUnavailable: "Some products in your cart are no longer available. Remove them and try again.",
+    checkoutFailed: "Could not start the payment. Please try again.",
     cartVariant: "Variant",
     cartStatus: "Status",
     cartAddToFavorite: "Add to Favorite",

@@ -1,11 +1,14 @@
 "use server";
 
-import stripe from "@/lib/stripe";
 import { Address } from "@/sanity.types";
 import { urlFor } from "@/sanity/lib/image";
 import { CartItem } from "@/store";
 import Stripe from "stripe";
 import { getSiteSettings } from "@/sanity/queries/siteSettings";
+import { backendClient } from "@/sanity/lib/backendClient";
+import { checkoutLines, type CheckoutProduct } from "@/lib/checkout";
+import type { ActionResult } from "@/lib/actionResult";
+import { t } from "@/lib/i18n";
 
 export interface Metadata {
   orderNumber: string;
@@ -24,8 +27,21 @@ export interface GroupedCartItems {
 export async function createCheckoutSession(
   items: GroupedCartItems[],
   metadata: Metadata
-) {
+): Promise<ActionResult<string>> {
+  const locale = metadata.locale === "en" ? "en" : "es";
   try {
+    // Only ids and quantities come from the browser: name, price and photo are read from Sanity.
+    const wanted = (items ?? []).map((item) => ({ id: String(item?.product?._id ?? ""), quantity: item?.quantity }));
+    const products = await backendClient.fetch<CheckoutProduct[]>(
+      `*[_type == "product" && _id in $ids && archived != true]{ _id, name, price, description, images }`,
+      { ids: wanted.map((w) => w.id) },
+      { perspective: "published", useCdn: false, cache: "no-store" }
+    );
+    const checked = checkoutLines(wanted, products);
+    if (!checked.ok) return { ok: false, error: t(locale, "checkoutUnavailable") };
+    // Lazy: lib/stripe throws at import when STRIPE_SECRET_KEY is missing.
+    const { default: stripe } = await import("@/lib/stripe");
+
     // Retrieve existing customer or create a new one
     const customers = await stripe.customers.list({
       email: metadata.customerEmail,
@@ -55,21 +71,18 @@ export async function createCheckoutSession(
         process.env.NEXT_PUBLIC_BASE_URL
       }/success?session_id={CHECKOUT_SESSION_ID}&orderNumber=${metadata.orderNumber}`,
       cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/cart`,
-      line_items: items?.map((item) => ({
+      line_items: checked.lines.map(({ product, quantity }) => ({
         price_data: {
           currency: currency.toLowerCase(),
-          unit_amount: Math.round(item?.product?.price! * 100),
+          unit_amount: Math.round(product.price! * 100),
           product_data: {
-            name: item?.product?.name || (metadata.locale === "en" ? "Unknown Product" : "Producto desconocido"),
-            description: item?.product?.description,
-            metadata: { id: item?.product?._id },
-            images:
-              item?.product?.images && item?.product?.images?.length > 0
-                ? [urlFor(item?.product?.images[0]).url()]
-                : undefined,
+            name: product.name || (locale === "en" ? "Unknown Product" : "Producto desconocido"),
+            description: product.description || undefined,
+            metadata: { id: product._id },
+            images: product.images?.length ? [urlFor(product.images[0] as Parameters<typeof urlFor>[0]).url()] : undefined,
           },
         },
-        quantity: item?.quantity,
+        quantity,
       })),
     };
     if (customerId) {
@@ -79,9 +92,10 @@ export async function createCheckoutSession(
     }
 
     const session = await stripe.checkout.sessions.create(sessionPayload);
-    return session.url;
+    if (!session.url) throw new Error("Stripe returned no checkout URL");
+    return { ok: true, data: session.url };
   } catch (error) {
     console.error("Error creating Checkout Session", error);
-    throw error;
+    return { ok: false, error: t(locale, "checkoutFailed") };
   }
 }

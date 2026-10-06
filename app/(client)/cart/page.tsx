@@ -101,10 +101,9 @@ const CartPage = () => {
         address: selectedAddress,
         locale,
       };
-      const checkoutUrl = await createCheckoutSession(groupedItems, metadata);
-      if (checkoutUrl) {
-        window.location.href = checkoutUrl;
-      }
+      const result = await createCheckoutSession(groupedItems, metadata);
+      if (result.ok) window.location.href = result.data;
+      else toast.error(result.error);
     } catch (error) {
       console.error("Error creating checkout session:", error);
     } finally {
