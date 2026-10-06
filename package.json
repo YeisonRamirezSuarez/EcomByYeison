@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "next lint",
     "typegen": "npx sanity@latest schema extract && npx sanity@latest typegen generate",
-    "check:permissions": "node --experimental-strip-types scripts/check-permissions.mjs"
+    "check:permissions": "node --experimental-strip-types scripts/check-permissions.mjs",
+    "seed:yeison": "node --env-file=.env.local scripts/seed-ecom-by-yeison.mjs"
   },
   "dependencies": {
     "@clerk/localizations": "^4.21.2",
