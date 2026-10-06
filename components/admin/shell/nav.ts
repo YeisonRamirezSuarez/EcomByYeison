@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import type { AdminSection } from "@/lib/permissions";
 
-export type NavItem = { section: AdminSection; label: string; icon: LucideIcon; soon?: boolean };
+export type NavItem = { section: AdminSection; label: string; icon: LucideIcon };
 
 export const SECTION_PATHS: Record<AdminSection, string> = {
   inicio: "/admin",
@@ -32,9 +32,9 @@ export const NAV_GROUPS: { title: string; items: NavItem[] }[] = [
     items: [
       { section: "inicio", label: "Inicio", icon: LayoutDashboard },
       { section: "pedidos", label: "Pedidos", icon: ShoppingBag },
-      { section: "productos", label: "Productos", icon: Package, soon: true },
-      { section: "categorias", label: "Categorías", icon: FolderTree, soon: true },
-      { section: "marcas", label: "Marcas", icon: Tag, soon: true },
+      { section: "productos", label: "Productos", icon: Package },
+      { section: "categorias", label: "Categorías", icon: FolderTree },
+      { section: "marcas", label: "Marcas", icon: Tag },
     ],
   },
   {

@@ -49,17 +49,8 @@ const Sidebar = ({
             <div key={group.title}>
               <p className="px-3 mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-white/50">{group.title}</p>
               <ul className="flex flex-col gap-0.5">
-                {items.map(({ section, label, icon: Icon, soon }) => {
+                {items.map(({ section, label, icon: Icon }) => {
                   const href = SECTION_PATHS[section];
-                  if (soon) {
-                    return (
-                      <li key={section} className="flex items-center gap-3 px-3 py-2 rounded-lg text-white/40 cursor-default">
-                        <Icon size={18} />
-                        <span className="text-sm">{label}</span>
-                        <span className="ml-auto text-[10px] font-semibold uppercase bg-white/10 rounded px-1.5 py-0.5">Pronto</span>
-                      </li>
-                    );
-                  }
                   const active = isActive(pathname, href);
                   return (
                     <li key={section}>
