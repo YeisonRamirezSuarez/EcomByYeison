@@ -371,6 +371,14 @@ assert.ok(patch.unset.includes("favicon"));
 assert.ok(patch.unset.includes("tagline"));
 assert.equal(patch.unset.includes("logoImage"), false);
 assert.equal(patch.unset.includes("currency"), false);
+// The editor's new fields travel with the appearance draft
+assert.ok(brandMod.APPEARANCE_FIELDS.includes("homeSections"));
+assert.ok(brandMod.APPEARANCE_FIELDS.includes("styles"));
+// A draft from before the editor (no homeSections/styles) publishes the defaults back
+const oldDraft = brandMod.appearancePatch({ theme: "sand" });
+assert.ok(oldDraft.unset.includes("homeSections"));
+assert.ok(oldDraft.unset.includes("styles"));
+assert.deepEqual(brandMod.pickAppearance({ homeSections: [], styles: { corners: "round" } }), { homeSections: [], styles: { corners: "round" } });
 
 // Dashboard
 const dash = await import("../lib/dashboard.ts");

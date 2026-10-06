@@ -10,6 +10,8 @@ import {
   SOCIAL_KEYS,
   SOCIAL_LABELS,
 } from "../../lib/validation";
+import { SECTION_LABELS } from "../../lib/homeSections";
+import { COLOR_FIELDS } from "../../lib/styles";
 
 const text = (name: string, title: string) => defineField({ name, title, type: "string" });
 const longText = (name: string, title: string) =>
@@ -149,5 +151,74 @@ export const siteSettingsType = defineType({
       fields: SOCIAL_KEYS.map((key) => text(key, SOCIAL_LABELS[key])),
     }),
     defineField({ name: "pages", title: "Páginas", type: "object", fields: pageFields }),
+    defineField({
+      name: "homeSections",
+      title: "Secciones del inicio",
+      description: "Se editan en el panel: Apariencia → Inicio.",
+      type: "array",
+      of: [
+        defineArrayMember({
+          type: "object",
+          name: "homeSection",
+          title: "Sección",
+          fields: [
+            defineField({
+              name: "kind",
+              title: "Tipo",
+              type: "string",
+              options: { list: Object.entries(SECTION_LABELS).map(([value, title]) => ({ title, value })) },
+            }),
+            defineField({ name: "hidden", title: "Oculta", type: "boolean" }),
+            text("title", "Título"),
+            longText("text", "Texto"),
+            defineField({ name: "count", title: "Cantidad", type: "number" }),
+            image("image", "Imagen"),
+            cta("button", "Botón"),
+            text("imageSide", "Lado de la imagen"),
+            text("background", "Color de fondo"),
+            text("source", "Origen de los productos"),
+            defineField({ name: "category", title: "Categoría", type: "reference", to: [{ type: "category" }], weak: true }),
+            text("align", "Alineación"),
+            defineField({
+              name: "items",
+              title: "Testimonios",
+              type: "array",
+              of: [
+                defineArrayMember({
+                  type: "object",
+                  name: "testimonial",
+                  title: "Testimonio",
+                  fields: [
+                    text("name", "Nombre"),
+                    longText("text", "Opinión"),
+                    defineField({ name: "rating", title: "Estrellas", type: "number" }),
+                    image("photo", "Foto"),
+                  ],
+                }),
+              ],
+            }),
+          ],
+          preview: { select: { title: "title", subtitle: "kind" } },
+        }),
+      ],
+    }),
+    defineField({
+      name: "styles",
+      title: "Estilos",
+      description: "Se editan en el panel: Apariencia → Estilos.",
+      type: "object",
+      fields: [
+        defineField({
+          name: "colors",
+          title: "Colores propios",
+          type: "object",
+          fields: Object.entries(COLOR_FIELDS).map(([name, title]) => text(name, title)),
+        }),
+        text("headingFont", "Tipografía de títulos"),
+        text("bodyFont", "Tipografía de textos"),
+        text("corners", "Esquinas"),
+        text("buttons", "Botones"),
+      ],
+    }),
   ],
 });

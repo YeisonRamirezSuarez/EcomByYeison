@@ -6,9 +6,11 @@ import {
   validateIdentity,
   validateSocial,
 } from "@/lib/validation";
+import { homeSectionsWrite, validateHomeSections } from "@/lib/homeSections";
+import { validateStyles } from "@/lib/styles";
 import { backendClient } from "@/sanity/lib/backendClient";
 
-export type Write = { set: Record<string, unknown>; unset: string[]; images: ImageValue[] };
+export type Write = { set: Record<string, unknown>; unset: string[]; images: ImageValue[]; categories?: string[] };
 type Planned = { ok: true; write: Write } | { ok: false; errors: Record<string, string> };
 
 const sanityImage = (image: ImageValue) => ({
@@ -59,6 +61,17 @@ export function planSection(section: string, data: unknown): Planned {
       if (!r.ok) return r;
       return { ok: true, write: { set: { social: r.value }, unset: [], images: [] } };
     }
+    case "homeSections": {
+      const r = validateHomeSections(data);
+      if (!r.ok) return r;
+      const { homeSections, images, categories } = homeSectionsWrite(r.value);
+      return { ok: true, write: { set: { homeSections }, unset: [], images, categories } };
+    }
+    case "styles": {
+      const r = validateStyles(data);
+      if (!r.ok) return r;
+      return { ok: true, write: { set: { styles: r.value }, unset: [], images: [] } };
+    }
     default:
       return { ok: false, errors: {} };
   }
@@ -74,4 +87,15 @@ export async function assertImagesExist(images: ImageValue[]) {
     { useCdn: false }
   );
   if (found !== ids.length) throw new Error("Imagen inexistente");
+}
+
+// Category ids in "Productos elegidos" come from the browser: report the ones that do not exist.
+export async function findMissingCategories(ids: string[]): Promise<string[]> {
+  if (ids.length === 0) return [];
+  const found = await backendClient.fetch<string[]>(
+    `*[_type == "category" && _id in $ids]._id`,
+    { ids },
+    { useCdn: false }
+  );
+  return ids.filter((id) => !found.includes(id));
 }

@@ -10,6 +10,8 @@ import {
 } from "@/constants/currencies";
 import { BRAND_DEFAULTS } from "@/constants/brandDefaults";
 import { withDefaults, type Brand } from "@/lib/brand";
+import { readHomeSections, type HomeSection } from "@/lib/homeSections";
+import { DEFAULT_STYLES, readStyles, type Styles } from "@/lib/styles";
 import { getActor } from "@/lib/roles";
 import { can } from "@/lib/permissions";
 
@@ -28,10 +30,17 @@ const SITE_SETTINGS_QUERY = `*[_id == "siteSettings"][0]{
   "logoImage": ${image("logoImage")},
   "favicon": ${image("favicon")},
   banner{ badge, title, highlight, subtitle, description, primaryCta, secondaryCta, stats, "image": ${image("image")} },
-  contact, social, pages
+  contact, social, pages,
+  homeSections[]{
+    _key, kind, hidden, title, text, count, button, imageSide, background, source, align,
+    "category": category._ref,
+    "image": ${image("image")},
+    items[]{ _key, name, text, rating, "photo": ${image("photo")} }
+  },
+  styles
 }`;
 
-export type SiteSettings = { theme: ThemeKey; currency: CurrencyCode } & Brand;
+export type SiteSettings = { theme: ThemeKey; currency: CurrencyCode; homeSections: HomeSection[] | null; styles: Styles } & Brand;
 
 function normalize(data: Record<string, unknown> | null): SiteSettings {
   const theme = data?.theme;
@@ -40,6 +49,8 @@ function normalize(data: Record<string, unknown> | null): SiteSettings {
     ...withDefaults(data, BRAND_DEFAULTS),
     theme: isThemeKey(theme) ? theme : DEFAULT_THEME,
     currency: isCurrencyCode(currency) ? currency : DEFAULT_CURRENCY,
+    homeSections: readHomeSections(data?.homeSections),
+    styles: readStyles(data?.styles),
   };
 }
 
@@ -74,7 +85,7 @@ const loadSiteSettings = cache(async (draft: boolean): Promise<SiteSettings> => 
     return normalize(data);
   } catch (error) {
     console.log("Error fetching site settings", error);
-    return { ...BRAND_DEFAULTS, theme: DEFAULT_THEME, currency: DEFAULT_CURRENCY };
+    return { ...BRAND_DEFAULTS, theme: DEFAULT_THEME, currency: DEFAULT_CURRENCY, homeSections: null, styles: DEFAULT_STYLES };
   }
 });
 

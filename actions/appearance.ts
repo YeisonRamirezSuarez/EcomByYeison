@@ -4,7 +4,8 @@ import { updateTag } from "next/cache";
 import { requirePermission } from "@/lib/roles";
 import { run, type ActionResult } from "@/lib/actionResult";
 import { appearancePatch } from "@/lib/brand";
-import { assertImagesExist, planSection, type Write } from "@/lib/brandWrites";
+import { assertImagesExist, findMissingCategories, planSection, type Write } from "@/lib/brandWrites";
+import { categoryErrors } from "@/lib/homeSections";
 import { INVALID_FORM } from "@/lib/validation";
 import { isThemeKey } from "@/constants/themes";
 import { backendClient } from "@/sanity/lib/backendClient";
@@ -37,8 +38,12 @@ export async function saveAppearanceDraft(section: string, data: unknown): Promi
     if (!planned.ok) return { ok: false, error: INVALID_FORM, errors: planned.errors };
     write = planned.write;
   }
+  const allowed = await run(() => requirePermission("configurar"));
+  if (!allowed.ok) return allowed;
+  const found = await run(() => findMissingCategories(write.categories ?? []));
+  if (!found.ok) return found;
+  if (found.data.length > 0) return { ok: false, error: INVALID_FORM, errors: categoryErrors(data, found.data) };
   return run(async () => {
-    await requirePermission("configurar");
     await assertImagesExist(write.images);
     await ensureDraft();
     let patch = backendClient.patch(SITE_SETTINGS_DRAFT_ID).set(write.set);

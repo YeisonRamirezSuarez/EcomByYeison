@@ -102,6 +102,8 @@ export const APPEARANCE_FIELDS = [
   "banner",
   "contact",
   "social",
+  "homeSections",
+  "styles",
 ] as const;
 
 export function pickAppearance(doc: Record<string, unknown>): Record<string, unknown> {
