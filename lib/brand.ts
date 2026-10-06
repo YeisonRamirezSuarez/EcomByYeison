@@ -49,6 +49,21 @@ export type Brand = IdentitySettings & {
 
 export type BrandSection = "identity" | "banner" | "contact" | "social";
 
+// Identity pieces client components need (logo in the mobile menu, social links).
+export type ClientBrand = Pick<
+  Brand,
+  "storeName" | "logoType" | "logoText" | "logoSubtext" | "logoImage" | "social"
+>;
+
+export const toClientBrand = ({
+  storeName,
+  logoType,
+  logoText,
+  logoSubtext,
+  logoImage,
+  social,
+}: Brand): ClientBrand => ({ storeName, logoType, logoText, logoSubtext, logoImage, social });
+
 const isPlainObject = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
 

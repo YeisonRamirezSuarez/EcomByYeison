@@ -4,6 +4,7 @@ import { Poppins } from "next/font/google";
 import { themeCssVars } from "@/constants/themes";
 import { getSiteSettings } from "@/sanity/queries/siteSettings";
 import StoreSettingsProvider from "@/components/StoreSettingsProvider";
+import { toClientBrand } from "@/lib/brand";
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -13,15 +14,17 @@ const poppins = Poppins({
 });
 
 const RootLayout = async ({ children }: { children: React.ReactNode }) => {
-  const { theme, currency } = await getSiteSettings();
+  const settings = await getSiteSettings();
   return (
     <html
       lang="es"
       className={poppins.variable}
-      style={themeCssVars(theme) as React.CSSProperties}
+      style={themeCssVars(settings.theme) as React.CSSProperties}
     >
       <body className="font-poppins antialiased overflow-x-hidden">
-        <StoreSettingsProvider currency={currency}>{children}</StoreSettingsProvider>
+        <StoreSettingsProvider currency={settings.currency} brand={toClientBrand(settings)}>
+          {children}
+        </StoreSettingsProvider>
         <Toaster
           position="bottom-right"
           toastOptions={{

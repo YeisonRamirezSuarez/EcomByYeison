@@ -3,15 +3,19 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { ClerkProvider } from "@clerk/nextjs";
 import { esES } from "@clerk/localizations";
+import { getSiteSettings } from "@/sanity/queries/siteSettings";
 
-export const metadata: Metadata = {
-  title: {
-    template: "%s | Ecom by Yeison",
-    default: "Ecom by Yeison — Tu tienda de tecnología",
-  },
-  description:
-    "Ecom by Yeison — La mejor selección de tecnología, gadgets y electrónica con los mejores precios.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { storeName, tagline, description, favicon } = await getSiteSettings();
+  return {
+    title: {
+      template: `%s | ${storeName}`,
+      default: tagline ? `${storeName} — ${tagline}` : storeName,
+    },
+    description,
+    icons: { icon: favicon?.url ?? "/favicon.ico" },
+  };
+}
 
 export default function RootLayout({
   children,
