@@ -21,3 +21,9 @@ export async function requirePermission(permission: Permission): Promise<RoleHol
   if (!actor || !can(actor.role, permission)) throw new Error(NOT_AUTHORIZED);
   return actor;
 }
+
+export async function requireAnyPermission(...permissions: Permission[]): Promise<RoleHolder> {
+  const actor = await getActor();
+  if (!actor || !permissions.some((permission) => can(actor.role, permission))) throw new Error(NOT_AUTHORIZED);
+  return actor;
+}

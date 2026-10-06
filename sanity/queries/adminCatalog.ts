@@ -1,0 +1,150 @@
+import "server-only";
+import type { ImageValue } from "@/lib/brand";
+import { isDocId, mergeProductRows, type ProductDocRow, type ProductRow } from "@/lib/catalog";
+import { backendClient } from "../lib/backendClient";
+
+// Panel reads see drafts and fresh data.
+const RAW = { perspective: "raw", useCdn: false, cache: "no-store" } as const;
+const FRESH = { useCdn: false, cache: "no-store" } as const;
+const NOT_VERSIONS = `!(_id in path("versions.**"))`;
+
+// Form values as the editor keeps them (numbers as text, empty selects as "").
+export type ProductForm = {
+  name: string;
+  slug: string;
+  images: ImageValue[];
+  description: string;
+  price: string;
+  discount: string;
+  stock: string;
+  categories: string[];
+  brand: string;
+  status: string;
+  variant: string;
+  isFeatured: boolean;
+};
+
+export const EMPTY_PRODUCT: ProductForm = {
+  name: "",
+  slug: "",
+  images: [],
+  description: "",
+  price: "",
+  discount: "0",
+  stock: "0",
+  categories: [],
+  brand: "",
+  status: "",
+  variant: "",
+  isFeatured: false,
+};
+
+const FORM_PROJECTION = `{
+  name, "slug": slug.current, description, price, discount, stock, status, variant, isFeatured, archived,
+  "images": images[defined(asset)]{ "assetId": asset._ref, "url": asset->url },
+  "categories": categories[]._ref, "brand": brand._ref
+}`;
+
+type FormDoc = {
+  name?: string;
+  slug?: string;
+  description?: string;
+  price?: number;
+  discount?: number;
+  stock?: number;
+  status?: string;
+  variant?: string;
+  isFeatured?: boolean;
+  archived?: boolean;
+  images?: ImageValue[] | null;
+  categories?: (string | null)[] | null;
+  brand?: string | null;
+};
+
+const asText = (n: number | undefined, fallback: string) => (typeof n === "number" ? String(n) : fallback);
+
+function toForm(doc: FormDoc): ProductForm {
+  return {
+    name: doc.name ?? "",
+    slug: doc.slug ?? "",
+    images: (doc.images ?? []).filter((image) => image?.assetId && image?.url),
+    description: doc.description ?? "",
+    price: asText(doc.price, ""),
+    discount: asText(doc.discount, "0"),
+    stock: asText(doc.stock, "0"),
+    categories: (doc.categories ?? []).filter((id): id is string => typeof id === "string"),
+    brand: doc.brand ?? "",
+    status: doc.status ?? "",
+    variant: doc.variant ?? "",
+    isFeatured: doc.isFeatured === true,
+  };
+}
+
+export async function getAdminProducts(): Promise<ProductRow[]> {
+  // ponytail: loads every product; paginate on the server when a store has many thousands.
+  const docs = await backendClient.fetch<ProductDocRow[]>(
+    `*[_type == "product" && ${NOT_VERSIONS}]{ _id, name, price, stock, archived, _updatedAt, "image": images[0].asset->url }`,
+    {},
+    RAW
+  );
+  return mergeProductRows(docs);
+}
+
+export async function getAdminProduct(id: string) {
+  if (!isDocId(id)) return null;
+  const [draft, published] = await backendClient.fetch<[FormDoc | null, FormDoc | null]>(
+    `[*[_id == $draftId && _type == "product"][0]${FORM_PROJECTION}, *[_id == $id && _type == "product"][0]${FORM_PROJECTION}]`,
+    { id, draftId: `drafts.${id}` },
+    RAW
+  );
+  const shown = draft ?? published;
+  if (!shown) return null;
+  return {
+    form: toForm(shown),
+    hasPublished: Boolean(published),
+    hasDraft: Boolean(draft),
+    archived: published?.archived === true,
+  };
+}
+
+export type Option = { _id: string; title: string };
+
+export async function getCatalogOptions(): Promise<{ categories: Option[]; brands: Option[] }> {
+  return backendClient.fetch(
+    `{
+      "categories": *[_type == "category"] | order(title asc){ _id, "title": coalesce(title, "Sin título") },
+      "brands": *[_type == "brand"] | order(title asc){ _id, "title": coalesce(title, "Sin título") }
+    }`,
+    {},
+    FRESH
+  );
+}
+
+export type TaxonomyKind = "category" | "brand";
+
+export type TaxonomyRow = {
+  _id: string;
+  title: string;
+  slug: string;
+  description: string;
+  range: string;
+  featured: boolean;
+  image: ImageValue | null;
+  uses: number;
+};
+
+export async function getTaxonomy(kind: TaxonomyKind): Promise<TaxonomyRow[]> {
+  const rows = await backendClient.fetch<
+    (Omit<TaxonomyRow, "range" | "image"> & { range: number | null; image: ImageValue | null })[]
+  >(
+    `*[_type == $kind] | order(title asc){
+      _id, "title": coalesce(title, ""), "slug": coalesce(slug.current, ""), "description": coalesce(description, ""),
+      range, "featured": featured == true,
+      "image": select(defined(image.asset) => { "assetId": image.asset._ref, "url": image.asset->url }, null),
+      "uses": count(*[_type == "product" && references(^._id)])
+    }`,
+    { kind },
+    FRESH
+  );
+  return rows.map((row) => ({ ...row, range: typeof row.range === "number" ? String(row.range) : "" }));
+}

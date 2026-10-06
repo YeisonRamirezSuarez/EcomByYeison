@@ -1,7 +1,7 @@
 "use server";
 
 import { updateTag } from "next/cache";
-import { requirePermission } from "@/lib/roles";
+import { requireAnyPermission, requirePermission } from "@/lib/roles";
 import { run, type ActionResult } from "@/lib/actionResult";
 import type { ImageValue } from "@/lib/brand";
 import {
@@ -47,7 +47,8 @@ export async function uploadImage(formData: FormData): Promise<ActionResult<Imag
     return { ok: false, error: IMAGE_ERROR };
   }
   return run(async () => {
-    await requirePermission("configurar");
+    // Used by Apariencia (configurar) and the catalog (productos).
+    await requireAnyPermission("configurar", "productos");
     const asset = await backendClient.assets.upload(
       "image",
       Buffer.from(await file.arrayBuffer()),
