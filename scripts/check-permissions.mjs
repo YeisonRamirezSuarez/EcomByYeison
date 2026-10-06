@@ -65,7 +65,16 @@ assert.deepEqual(adminTabs("cliente"), []);
 
 // Themes
 const { THEMES, isThemeKey, themeCssVars } = await import("../constants/themes.ts");
-assert.deepEqual(Object.keys(THEMES), ["emerald", "ocean", "violet", "crimson", "rose", "slate"]);
+assert.deepEqual(Object.keys(THEMES), [
+  "emerald", "ocean", "violet", "crimson", "rose", "slate",
+  "amber", "mint", "sunset", "indigo", "cobalt", "forest", "lavender", "coral", "midnight", "sand",
+]);
+for (const key of Object.keys(THEMES)) {
+  const vars = themeCssVars(key);
+  assert.equal(Object.keys(vars).length, 8, key);
+  assert.ok(Object.values(vars).every((v) => /^#[0-9a-f]{6}$/.test(v)), key);
+}
+assert.equal(themeCssVars("sand")["--color-shop_dark_green"], "#713f12");
 assert.equal(isThemeKey("ocean"), true);
 assert.equal(isThemeKey("desconocido"), false);
 assert.equal(isThemeKey(undefined), false);

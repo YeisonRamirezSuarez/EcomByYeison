@@ -14,7 +14,6 @@ export interface Metadata {
   clerkUserId?: string;
   address?: Address | null;
   locale?: "es" | "en";
-  themeName?: string;
 }
 
 export interface GroupedCartItems {
@@ -36,8 +35,6 @@ export async function createCheckoutSession(
     // Store currency comes from the server, never from the browser.
     const { currency } = await getSiteSettings();
 
-    const themeName = metadata.themeName || "emerald";
- 
     const sessionPayload: Stripe.Checkout.SessionCreateParams = {
       locale: metadata.locale === "en" ? "en" : "es",
       metadata: {
@@ -47,7 +44,6 @@ export async function createCheckoutSession(
         clerkUserId: metadata.clerkUserId!,
         address: JSON.stringify(metadata.address),
         locale: metadata.locale || "es",
-        themeName: themeName,
       },
       mode: "payment",
       allow_promotion_codes: true,

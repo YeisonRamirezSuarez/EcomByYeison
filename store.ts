@@ -23,9 +23,6 @@ interface StoreState {
   addToFavorite: (product: Product) => Promise<void>;
   removeFromFavorite: (productId: string) => void;
   resetFavorite: () => void;
-  // theme
-  themeName: string;
-  setThemeName: (name: string) => void;
   locale: Locale;
   setLocale: (value: Locale) => void;
   hasHydrated: boolean;
@@ -120,9 +117,6 @@ const useStore = create<StoreState>()(
       resetFavorite: () => {
         set({ favoriteProduct: [] });
       },
-      // theme
-      themeName: "emerald",
-      setThemeName: (name: string) => set({ themeName: name }),
       locale: "es",
       setLocale: (value: Locale) => set({ locale: value }),
       hasHydrated: false,

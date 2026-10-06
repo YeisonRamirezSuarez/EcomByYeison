@@ -6,7 +6,7 @@ import { sendOrderConfirmationEmail } from "@/lib/email";
 import type { Metadata } from "@/actions/createCheckoutSession";
 import Stripe from "stripe";
 
-type OrderMetadata = Metadata & { address?: string; themeName?: string };
+type OrderMetadata = Metadata & { address?: string };
 
 // Sanity has no unique constraints, so idempotency is enforced in code:
 // a deterministic document id derived from the Stripe session means a duplicate
@@ -63,7 +63,6 @@ export async function createOrderFromStripeSession(
     customerEmail,
     clerkUserId,
     address,
-    themeName,
   } = session.metadata as unknown as OrderMetadata;
   const parsedAddress = address ? JSON.parse(address) : null;
 
@@ -139,7 +138,6 @@ export async function createOrderFromStripeSession(
       totalPrice: session.amount_total ? session.amount_total / 100 : 0,
       status: "paid",
       orderDate: new Date().toISOString(),
-      themeName: themeName || "emerald",
       invoice: invoice
         ? {
             id: invoice.id,
@@ -172,8 +170,7 @@ export async function createOrderFromStripeSession(
       orderNumber,
       session.amount_total ? session.amount_total / 100 : 0,
       productsForEmail,
-      invoice?.hosted_invoice_url || undefined,
-      themeName
+      invoice?.hosted_invoice_url || undefined
     );
   } catch (error) {
     console.error("❌ Error sending confirmation email:", error);

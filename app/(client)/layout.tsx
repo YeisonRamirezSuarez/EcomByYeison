@@ -1,20 +1,10 @@
-import type { Metadata } from "next";
 import { headers } from "next/headers";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ClientClerkProvider from "@/components/ClientClerkProvider";
 import InstallPrompt from "@/components/InstallPrompt";
 
-export const metadata: Metadata = {
-  title: {
-    template: "%s | Ecom by Yeison",
-    default: "Ecom by Yeison — Tu tienda de tecnología",
-  },
-  description:
-    "Ecom by Yeison — La mejor selección de tecnología, gadgets y electrónica con los mejores precios.",
-};
-
-export default async function RootLayout({
+export default async function ClientLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;

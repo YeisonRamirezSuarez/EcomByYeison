@@ -146,7 +146,7 @@ export const orderType = defineType({
       name: "themeName",
       title: "Theme",
       type: "string",
-      description: "Storefront theme used at checkout, for branded emails.",
+      description: "Solo pedidos antiguos: la paleta ahora es de la tienda",
       readOnly: true,
     }),
     defineField({
