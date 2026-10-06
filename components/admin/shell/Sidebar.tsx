@@ -75,7 +75,7 @@ const Sidebar = ({
       </nav>
 
       <div className="border-t border-white/10 p-4 flex items-center justify-between gap-2">
-        <UserButton />
+        <UserButton userProfileProps={{ apiKeysProps: { hide: true } }} />
         <a
           href="/"
           target="_blank"

@@ -2,7 +2,8 @@
 
 import { ReactNode, useMemo } from "react";
 import { ClerkProvider } from "@clerk/nextjs";
-import { enUS, esES } from "@clerk/localizations";
+import { enUS } from "@clerk/localizations";
+import { clerkEs } from "@/lib/clerkEs";
 import useStore from "@/store";
 
 const ClientClerkProvider = ({
@@ -15,7 +16,7 @@ const ClientClerkProvider = ({
   const { locale } = useStore();
 
   const localization = useMemo(() => {
-    return locale === "en" ? enUS : esES;
+    return locale === "en" ? enUS : clerkEs;
   }, [locale]);
 
   return (
@@ -24,7 +25,12 @@ const ClientClerkProvider = ({
       signInUrl="/sign-in"
       signUpUrl="/sign-up"
       nonce={nonce}
-      appearance={{ layout: { unsafe_disableDevelopmentModeWarnings: true } }}
+      // Clerk 7 renamed appearance.layout to appearance.options.
+      // "Secured by Clerk" hidden by the store owner's choice (Clerk removes it officially only on paid plans).
+      appearance={{
+        options: { unsafe_disableDevelopmentModeWarnings: true },
+        elements: { userButtonPopoverFooter: { display: "none" }, footerItem: { display: "none" } },
+      }}
     >
       {children}
     </ClerkProvider>

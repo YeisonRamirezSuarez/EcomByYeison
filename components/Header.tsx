@@ -79,7 +79,7 @@ const Header = async () => {
                   <OrderCountBadge />
                 </Link>
               )}
-              <ClerkLoaded>{userId ? <UserButton /> : <SignIn />}</ClerkLoaded>
+              <ClerkLoaded>{userId ? <UserButton userProfileProps={{ apiKeysProps: { hide: true } }} /> : <SignIn />}</ClerkLoaded>
             </div>
           </div>
         </Container>
