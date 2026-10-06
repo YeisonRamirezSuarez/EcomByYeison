@@ -457,4 +457,89 @@ assert.equal(sf.shopHref("category=audio", "all", null), "/shop");
 // Two quick clicks: the second builds on the first query, not on the URL still on screen.
 assert.equal(sf.shopQuery(sf.shopQuery("", "category", "headphones"), "price", "0-100"), "category=headphones&price=0-100");
 
+// Catalog rules (products, categories, brands).
+const cat = await import("../lib/catalog.ts");
+assert.equal(cat.slugify("Audífonos Bluetooth  Pro!"), "audifonos-bluetooth-pro");
+assert.equal(cat.slugify("  --Ñandú__ 2025-- "), "nandu-2025");
+assert.equal(cat.slugify("a".repeat(120)).length, 96);
+assert.equal(cat.isValidSlug("tv-55-pulgadas"), true);
+assert.equal(cat.isValidSlug("TV"), false);
+assert.equal(cat.isValidSlug("a--b"), false);
+assert.equal(cat.isValidSlug("-a"), false);
+assert.equal(cat.isDocId("4f1c2b7e-9a1d-4c3e-8f00-1234567890ab"), true);
+assert.equal(cat.isDocId("drafts.abc"), false);
+assert.equal(cat.isDocId("../x"), false);
+assert.equal(cat.isDocId(""), false);
+
+const IMG = { assetId: "image-abc123-800x600-png", url: "https://cdn.sanity.io/images/p/d/abc123-800x600.png" };
+const goodProduct = {
+  name: " Parlante ", slug: "parlante", images: [IMG, IMG], description: "", price: "10.5", discount: "", stock: "3",
+  categories: ["cat1", "cat1", "cat2"], brand: "", status: "hot", variant: "gadget", isFeatured: true,
+};
+const vp = cat.validateProduct(goodProduct);
+assert.equal(vp.ok, true);
+assert.deepEqual(vp.value, {
+  name: "Parlante", slug: "parlante", images: [IMG], description: "", price: 10.5, discount: 0, stock: 3,
+  categories: ["cat1", "cat2"], brand: null, status: "hot", variant: "gadget", isFeatured: true,
+});
+const bad = cat.validateProduct({
+  name: "", slug: "Mal Slug", images: Array(11).fill(IMG).map((im, i) => ({ ...im, assetId: `image-a${i}-1x1-png` })),
+  description: "x".repeat(2001), price: "-1", discount: "101", stock: "1.5", categories: ["ok", "../bad"], brand: "../b",
+  status: "otro", variant: "otro",
+});
+assert.equal(bad.ok, false);
+for (const key of ["name", "slug", "images", "description", "price", "discount", "stock", "categories", "brand", "status", "variant"]) {
+  assert.ok(bad.errors[key], `product error ${key}`);
+}
+assert.equal(cat.validateProduct({ ...goodProduct, price: "" }).errors.price, "Campo obligatorio");
+assert.equal(cat.validateProduct({ ...goodProduct, status: "", variant: "" }).value.status, null);
+
+const vc = cat.validateCategory({ title: "Audio", slug: "audio", description: "", range: "", featured: true, image: null });
+assert.deepEqual(vc.value, { title: "Audio", slug: "audio", description: "", range: null, featured: true, image: null });
+const badCat = cat.validateCategory({ title: "", slug: "x y", description: "d".repeat(501), range: "-3", image: { assetId: "nope" } });
+for (const key of ["title", "slug", "description", "range", "image"]) assert.ok(badCat.errors[key], `category error ${key}`);
+const vb = cat.validateBrand({ title: "Sony", slug: "sony", description: "Japón", image: IMG });
+assert.deepEqual(vb.value, { title: "Sony", slug: "sony", description: "Japón", image: IMG });
+assert.equal(cat.validateBrand({ title: "x".repeat(81), slug: "sony" }).errors.title, "Máximo 80 caracteres");
+
+const pw = cat.productWrite(vp.value);
+assert.deepEqual(pw.set.slug, { _type: "slug", current: "parlante" });
+assert.deepEqual(pw.set.images, [{ _key: "img0", _type: "image", asset: { _type: "reference", _ref: IMG.assetId } }]);
+assert.deepEqual(pw.set.categories, [
+  { _key: "cat0", _type: "reference", _ref: "cat1" },
+  { _key: "cat1", _type: "reference", _ref: "cat2" },
+]);
+assert.deepEqual(pw.unset, ["brand"]);
+assert.equal("brand" in pw.set, false);
+const cw = cat.categoryWrite(vc.value);
+assert.deepEqual(cw.unset, ["range", "image"]);
+assert.deepEqual(cat.brandWrite(vb.value).set.image, { _type: "image", asset: { _type: "reference", _ref: IMG.assetId } });
+
+assert.equal(cat.publishedStock(10, 10, 7), 7); // untouched in the draft: keep real stock (3 sold)
+assert.equal(cat.publishedStock(20, 10, 7), 20); // edited in the draft: use it
+assert.equal(cat.publishedStock(5, undefined, 7), 5); // new product: no base
+assert.equal(cat.publishedStock(10, 10, undefined), 10); // published had no stock
+
+assert.equal(cat.productState({ hasPublished: true, hasDraft: false, archived: false }), "publicado");
+assert.equal(cat.productState({ hasPublished: false, hasDraft: true, archived: false }), "borrador");
+assert.equal(cat.productState({ hasPublished: true, hasDraft: true, archived: false }), "por-publicar");
+assert.equal(cat.productState({ hasPublished: true, hasDraft: true, archived: true }), "archivado");
+
+const rows = cat.mergeProductRows([
+  { _id: "a", name: "Viejo", price: 1, stock: 2, image: null, _updatedAt: "2026-01-01" },
+  { _id: "drafts.a", name: "Nuevo nombre", price: 3, stock: 2, image: "u", _updatedAt: "2026-03-01" },
+  { _id: "b", name: "Archivado", price: 5, archived: true, _updatedAt: "2026-02-01" },
+  { _id: "drafts.c", name: "Solo borrador", _updatedAt: "2026-01-15" },
+]);
+assert.deepEqual(rows.map((r) => [r.id, r.name, r.state]), [
+  ["a", "Nuevo nombre", "por-publicar"],
+  ["b", "Archivado", "archivado"],
+  ["c", "Solo borrador", "borrador"],
+]);
+assert.deepEqual(rows.find((r) => r.id === "c"), { id: "c", name: "Solo borrador", price: 0, stock: 0, image: null, state: "borrador", updatedAt: "2026-01-15" });
+assert.deepEqual(cat.filterProducts(rows, "activos", "").map((r) => r.id), ["a", "c"]);
+assert.deepEqual(cat.filterProducts(rows, "por-publicar", "").map((r) => r.id), ["a", "c"]);
+assert.deepEqual(cat.filterProducts(rows, "archivados", "").map((r) => r.id), ["b"]);
+assert.deepEqual(cat.filterProducts(rows, "activos", "  NUEVO ").map((r) => r.id), ["a"]);
+
 console.log("check-permissions: ok");
