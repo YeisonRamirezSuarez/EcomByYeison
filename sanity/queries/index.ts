@@ -6,7 +6,6 @@ import {
   BRANDS_QUERY,
   DEAL_PRODUCTS,
   GET_ALL_BLOG,
-  GET_ALL_ORDERS_QUERY,
   LATEST_BLOG_QUERY,
   MY_ORDERS_QUERY,
   OTHERS_BLOG_QUERY,
@@ -147,18 +146,6 @@ const getMyOrderCount = async (userId: string): Promise<number> => {
   }
 };
 
-const getAllOrders = async () => {
-  try {
-    const orders = await sanityFetch({
-      query: GET_ALL_ORDERS_QUERY,
-    });
-    return orders?.data || null;
-  } catch (error) {
-    console.error("Error fetching all orders:", error);
-    return null;
-  }
-};
-
 const getAllBlogs = async (quantity: number) => {
   try {
     const { data } = await sanityFetch({
@@ -250,7 +237,6 @@ export {
   getMyOrders,
   getMyOrderCount,
   getShopProducts,
-  getAllOrders,
   getAllBlogs,
   getSingleBlog,
   getBlogCategories,

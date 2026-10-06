@@ -32,11 +32,11 @@ const MY_ORDERS_QUERY =
 }
 }`);
 
-const GET_ALL_ORDERS_QUERY =
-  defineQuery(`*[_type == 'order'] | order(orderDate desc){
-...,products[]{
-  ...,product->
-}
+// Admin orders list (polled every 10 s): only what the list and drawer show.
+// ponytail: all orders in one response; paginate on the server when a store has many thousands.
+const ADMIN_ORDERS_QUERY = defineQuery(`*[_type == 'order'] | order(orderDate desc){
+  _id, orderNumber, customerName, email, status, orderDate, totalPrice, currency, amountDiscount, address,
+  products[]{ _key, quantity, product->{ _id, name, price, "images": images[0...1] } }
 }`);
 const SHOP_PRODUCTS_QUERY = defineQuery(`*[_type == 'product'
   && (!defined($selectedCategory) || references(*[_type == "category" && slug.current == $selectedCategory]._id))
@@ -102,7 +102,7 @@ export {
   PRODUCT_BY_SLUG_QUERY,
   BRAND_QUERY,
   MY_ORDERS_QUERY,
-  GET_ALL_ORDERS_QUERY,
+  ADMIN_ORDERS_QUERY,
   GET_ALL_BLOG,
   SINGLE_BLOG_QUERY,
   BLOG_CATEGORIES,

@@ -1,6 +1,6 @@
 import { getActor } from "@/lib/roles";
 import { can } from "@/lib/permissions";
-import { GET_ALL_ORDERS_QUERY } from "@/sanity/queries/query";
+import { ADMIN_ORDERS_QUERY } from "@/sanity/queries/query";
 import { backendClient } from "@/sanity/lib/backendClient";
 import { NextResponse } from "next/server";
 
@@ -12,7 +12,7 @@ export async function GET() {
     }
 
     // Use backendClient directly to bypass caching
-    const orders = await backendClient.fetch(GET_ALL_ORDERS_QUERY);
+    const orders = await backendClient.fetch(ADMIN_ORDERS_QUERY);
     
     return NextResponse.json(orders || []);
   } catch (error) {
