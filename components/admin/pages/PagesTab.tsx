@@ -38,7 +38,13 @@ const PagesTab = ({ initialPages }: { initialPages: Record<PageKey, PageContent>
     <div className="flex flex-col gap-4">
       <label className="block">
         <span className="text-xs font-semibold text-gray-700">Página</span>
-        <select value={key} onChange={(e) => choose(e.target.value as PageKey)} className={`${INPUT} mt-1`}>
+        {/* Locked while saving: a late save must not land on another page's draft. */}
+        <select
+          value={key}
+          disabled={pending}
+          onChange={(e) => choose(e.target.value as PageKey)}
+          className={`${INPUT} mt-1`}
+        >
           {PAGE_KEYS.map((k) => (
             <option key={k} value={k}>
               {PAGE_LABELS[k]}
@@ -53,7 +59,8 @@ const PagesTab = ({ initialPages }: { initialPages: Record<PageKey, PageContent>
             <button
               type="button"
               onClick={() => open(askDiscard)}
-              className="px-3 py-1.5 rounded-lg bg-amber-600 text-white text-xs font-semibold"
+              disabled={pending}
+              className="px-3 py-1.5 rounded-lg bg-amber-600 text-white text-xs font-semibold disabled:opacity-60"
             >
               Descartar
             </button>
