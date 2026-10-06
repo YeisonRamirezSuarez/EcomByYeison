@@ -12,7 +12,7 @@ import { auth } from "@clerk/nextjs/server";
 import { ClerkLoaded, UserButton } from "@clerk/nextjs";
 import Link from "next/link";
 import { ClipboardList, Truck, ShieldCheck, HeadphonesIcon } from "lucide-react";
-import { getMyOrderCount } from "@/sanity/queries";
+import OrderCountBadge from "./OrderCountBadge";
 import { getServerLocale } from "@/lib/locale";
 import { t } from "@/lib/i18n";
 import AdminLink from "./AdminLink";
@@ -22,11 +22,7 @@ import { CURRENCIES, formatPrice } from "@/constants/currencies";
 const Header = async () => {
   // auth() reads the session from the request (no network); the rest runs in parallel.
   const { userId } = await auth();
-  const [locale, orderCount, settings] = await Promise.all([
-    getServerLocale(),
-    userId ? getMyOrderCount(userId) : Promise.resolve(0),
-    getSiteSettings(),
-  ]);
+  const [locale, settings] = await Promise.all([getServerLocale(), getSiteSettings()]);
   const freeShippingFrom = formatPrice(
     CURRENCIES[settings.currency].freeShippingFrom,
     settings.currency,
@@ -80,9 +76,7 @@ const Header = async () => {
                   title={t(locale, "headerMyOrders")}
                 >
                   <ClipboardList size={20} />
-                  <span className="absolute -top-1.5 -right-1.5 bg-shop_btn_dark_green text-white h-4 w-4 rounded-full text-[10px] font-bold flex items-center justify-center shadow">
-                    {orderCount}
-                  </span>
+                  <OrderCountBadge />
                 </Link>
               )}
               <ClerkLoaded>{userId ? <UserButton /> : <SignIn />}</ClerkLoaded>
