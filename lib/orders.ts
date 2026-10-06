@@ -2,6 +2,7 @@ import "server-only";
 
 import stripe from "@/lib/stripe";
 import { backendClient } from "@/sanity/lib/backendClient";
+import { urlFor } from "@/sanity/lib/image";
 import { sendOrderConfirmationEmail } from "@/lib/email";
 import type { Metadata } from "@/actions/createCheckoutSession";
 import Stripe from "stripe";
@@ -90,13 +91,11 @@ export async function createOrderFromStripeSession(
     let productImage = "";
     try {
       const sanityProduct = await backendClient.fetch(
-        `*[_id == $productId][0]{ image }`,
+        `*[_id == $productId][0]{ "image": images[0] }`,
         { productId }
       );
-      if (sanityProduct?.image) {
-        productImage = `https://cdn.sanity.io/images/${process.env.NEXT_PUBLIC_SANITY_PROJECT_ID}/${process.env.NEXT_PUBLIC_SANITY_DATASET}/${sanityProduct.image.asset._ref
-          .replace(/^image-/, "")
-          .replace(/-[a-z]+$/, "")}.jpg?w=300&h=300&fit=crop`;
+      if (sanityProduct?.image?.asset) {
+        productImage = urlFor(sanityProduct.image).width(300).height(300).fit("crop").url();
       }
     } catch (error) {
       console.warn(`Could not fetch image for product ${productId}:`, error);
@@ -170,7 +169,8 @@ export async function createOrderFromStripeSession(
       orderNumber,
       session.amount_total ? session.amount_total / 100 : 0,
       productsForEmail,
-      invoice?.hosted_invoice_url || undefined
+      invoice?.hosted_invoice_url || undefined,
+      (session.currency ?? "usd").toUpperCase()
     );
   } catch (error) {
     console.error("❌ Error sending confirmation email:", error);

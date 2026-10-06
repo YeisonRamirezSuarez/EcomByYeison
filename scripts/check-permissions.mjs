@@ -344,4 +344,8 @@ assert.deepEqual(priceRanges("USD", { under: "Under", over: "Over" }).map((r) =>
   "Over $500",
 ]);
 
+// Stripe sends lowercase currency codes; emails format them in uppercase.
+assert.equal(nbsp(formatPrice(1250000, "cop".toUpperCase())), "$ 1.250.000");
+assert.equal(formatPrice(1250000, "cop"), "$1,250,000.00"); // lowercase falls back to USD: callers must uppercase
+
 console.log("check-permissions: ok");

@@ -1,4 +1,7 @@
 import nodemailer from "nodemailer";
+import { getSiteSettings } from "@/sanity/queries/siteSettings";
+import { THEMES } from "@/constants/themes";
+import { formatPrice } from "@/constants/currencies";
 
 // Create transporter
 export const transporter = nodemailer.createTransport({
@@ -11,102 +14,11 @@ export const transporter = nodemailer.createTransport({
   },
 });
 
-// Theme color definitions - sync with ThemePanel.tsx
-export const THEME_COLORS: Record<string, { primary: string; light: string; accent: string; bg: string }> = {
-  emerald: {
-    primary: "#063c28",
-    light: "#3b9c3c",
-    accent: "#fb6c08",
-    bg: "#fcf0e4",
-  },
-  ocean: {
-    primary: "#0c2d57",
-    light: "#1d6fb8",
-    accent: "#0ea5e9",
-    bg: "#eff6ff",
-  },
-  violet: {
-    primary: "#3b0764",
-    light: "#7c3aed",
-    accent: "#a855f7",
-    bg: "#faf5ff",
-  },
-  crimson: {
-    primary: "#7f1d1d",
-    light: "#c53030",
-    accent: "#ea580c",
-    bg: "#fff7ed",
-  },
-  rose: {
-    primary: "#881337",
-    light: "#e11d48",
-    accent: "#fb923c",
-    bg: "#fff1f2",
-  },
-  slate: {
-    primary: "#1e293b",
-    light: "#475569",
-    accent: "#64748b",
-    bg: "#f1f5f9",
-  },
-  amber: {
-    primary: "#78350f",
-    light: "#f59e0b",
-    accent: "#d97706",
-    bg: "#fffbeb",
-  },
-  mint: {
-    primary: "#064e3b",
-    light: "#10b981",
-    accent: "#14b8a6",
-    bg: "#ecfdf5",
-  },
-  sunset: {
-    primary: "#7c2d12",
-    light: "#ea580c",
-    accent: "#f43f5e",
-    bg: "#fff7ed",
-  },
-  indigo: {
-    primary: "#312e81",
-    light: "#6366f1",
-    accent: "#22d3ee",
-    bg: "#eef2ff",
-  },
-  cobalt: {
-    primary: "#172554",
-    light: "#2563eb",
-    accent: "#38bdf8",
-    bg: "#eff6ff",
-  },
-  forest: {
-    primary: "#14532d",
-    light: "#22c55e",
-    accent: "#84cc16",
-    bg: "#f0fdf4",
-  },
-  lavender: {
-    primary: "#4c1d95",
-    light: "#8b5cf6",
-    accent: "#c084fc",
-    bg: "#faf5ff",
-  },
-  coral: {
-    primary: "#9a3412",
-    light: "#fb7185",
-    accent: "#f97316",
-    bg: "#fff7ed",
-  },
-  midnight: {
-    primary: "#0f172a",
-    light: "#334155",
-    accent: "#0ea5e9",
-    bg: "#f8fafc",
-  },
-};
-
-export function getThemeColors(themeName?: string) {
-  return THEME_COLORS[themeName || "emerald"] || THEME_COLORS.emerald;
+// Store name and palette for emails. getSiteSettings never throws: neutral defaults if Sanity is down.
+async function emailBrand() {
+  const { storeName, theme } = await getSiteSettings();
+  const { primary, light, accent, bg } = THEMES[theme];
+  return { storeName, theme: { primary, light, accent, bg } };
 }
 
 export interface EmailOptions {
@@ -143,9 +55,9 @@ export async function sendOrderConfirmationEmail(
   totalPrice: number,
   products: Array<{ name: string; quantity: number; price: number; image?: string }>,
   invoiceUrl?: string,
-  themeName?: string
+  currency = "USD"
 ) {
-  const theme = getThemeColors(themeName);
+  const { storeName, theme } = await emailBrand();
 
   const productsHTML = products
     .map(
@@ -160,7 +72,7 @@ export async function sendOrderConfirmationEmail(
         <span style="vertical-align: middle;">${p.name}</span>
       </td>
       <td style="padding: 15px; border-bottom: 1px solid #eee; text-align: center;">x${p.quantity}</td>
-      <td style="padding: 15px; border-bottom: 1px solid #eee; text-align: right;">$${p.price.toFixed(2)}</td>
+      <td style="padding: 15px; border-bottom: 1px solid #eee; text-align: right;">${formatPrice(p.price, currency)}</td>
     </tr>`
     )
     .join("");
@@ -192,7 +104,7 @@ export async function sendOrderConfirmationEmail(
         
         <div class="content">
           <h2>Hola ${customerName},</h2>
-          <p>Confirmamos que hemos recibido tu pago de <strong style="color: ${theme.accent};">$${totalPrice.toFixed(2)}</strong> para el pedido <strong>#${orderNumber}</strong>.</p>
+          <p>Confirmamos que hemos recibido tu pago de <strong style="color: ${theme.accent};">${formatPrice(totalPrice, currency)}</strong> para el pedido <strong>#${orderNumber}</strong>.</p>
           
           <div class="order-summary">
             <h3 style="color: ${theme.primary};">Detalles del Pedido</h3>
@@ -205,7 +117,7 @@ export async function sendOrderConfirmationEmail(
               ${productsHTML}
               <tr class="total-row">
                 <td colspan="2" style="padding: 10px; text-align: right;">TOTAL:</td>
-                <td style="padding: 10px; text-align: right;">$${totalPrice.toFixed(2)}</td>
+                <td style="padding: 10px; text-align: right;">${formatPrice(totalPrice, currency)}</td>
               </tr>
             </table>
           </div>
@@ -220,7 +132,7 @@ export async function sendOrderConfirmationEmail(
         </div>
         
         <div class="footer">
-          <p>&copy; 2026 Ecom by Yeison. Todos los derechos reservados.</p>
+          <p>&copy; ${new Date().getFullYear()} ${storeName}. Todos los derechos reservados.</p>
           <p>Este es un email automático, por favor no respondas directamente.</p>
         </div>
       </div>
@@ -230,7 +142,7 @@ export async function sendOrderConfirmationEmail(
 
   return sendEmail({
     to: customerEmail,
-    subject: `Confirmación de Pedido #${orderNumber} - Ecom by Yeison`,
+    subject: `Confirmación de Pedido #${orderNumber} - ${storeName}`,
     html,
   });
 }
@@ -243,10 +155,9 @@ export async function sendInvoiceEmail(
   customerName: string,
   orderNumber: string,
   invoiceUrl: string,
-  invoiceNumber: string,
-  themeName?: string
+  invoiceNumber: string
 ) {
-  const theme = getThemeColors(themeName);
+  const { storeName, theme } = await emailBrand();
   const html = `
     <!DOCTYPE html>
     <html lang="es">
@@ -287,11 +198,11 @@ export async function sendInvoiceEmail(
           
           <p>Si tienes alguna pregunta o inconveniente, por favor contáctanos.</p>
           
-          <p style="color: #666; font-size: 14px; margin-top: 20px;">Agradecemos tu preferencia en Ecom by Yeison. ¡Esperamos volver a verte pronto! 🎉</p>
+          <p style="color: #666; font-size: 14px; margin-top: 20px;">Agradecemos tu preferencia en ${storeName}. ¡Esperamos volver a verte pronto! 🎉</p>
         </div>
         
         <div class="footer">
-          <p>&copy; 2026 Ecom by Yeison. Todos los derechos reservados.</p>
+          <p>&copy; ${new Date().getFullYear()} ${storeName}. Todos los derechos reservados.</p>
           <p>Este es un email automático, por favor no respondas directamente.</p>
         </div>
       </div>
@@ -301,7 +212,7 @@ export async function sendInvoiceEmail(
 
   return sendEmail({
     to: customerEmail,
-    subject: `Factura Pedido #${orderNumber} - Ecom by Yeison`,
+    subject: `Factura Pedido #${orderNumber} - ${storeName}`,
     html,
   });
 }

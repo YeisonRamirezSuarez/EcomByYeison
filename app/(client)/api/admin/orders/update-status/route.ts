@@ -42,7 +42,7 @@ export async function PATCH(req: NextRequest) {
     // Fetch the order first (parameterized query — never interpolate user input
     // into GROQ). Only the fields needed for the invoice email are projected.
     const orderBefore = await backendClient.fetch(
-      `*[_id == $orderId][0]{ email, customerName, orderNumber, themeName, invoice }`,
+      `*[_id == $orderId][0]{ email, customerName, orderNumber, invoice }`,
       { orderId }
     );
 
@@ -66,8 +66,7 @@ export async function PATCH(req: NextRequest) {
             orderBefore.customerName,
             orderBefore.orderNumber,
             invoice.hosted_invoice_url,
-            orderBefore.invoice.number || orderBefore.invoice.id,
-            orderBefore.themeName
+            orderBefore.invoice.number || orderBefore.invoice.id
           );
         }
       } catch (emailError) {
