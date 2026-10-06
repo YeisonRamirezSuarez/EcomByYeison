@@ -11,17 +11,22 @@ import {
   categoryWrite,
   isDocId,
   productWrite,
+  publishMutations,
   publishedStock,
+  stockBaseFor,
   validateBrand,
   validateCategory,
   validateProduct,
   type SanityWrite,
 } from "@/lib/catalog";
 import { backendClient } from "@/sanity/lib/backendClient";
+import type { Mutation } from "@sanity/client";
 
 const RAW = { perspective: "raw", useCdn: false, cache: "no-store" } as const;
 const draftOf = (id: string) => `drafts.${id}`;
 const fail = (error: string, errors?: Record<string, string>): ActionResult<never> => ({ ok: false, error, errors });
+
+const isConflictError = (error: unknown) => (error as { statusCode?: number })?.statusCode === 409;
 
 type Doc = Record<string, unknown> & { _id: string; _type: string };
 
@@ -65,10 +70,12 @@ export async function saveProductDraft(id: string | null, data: unknown): Promis
         ...base,
         _id: draftOf(productId),
         _type: "product",
-        ...(typeof published?.stock === "number" ? { stockBase: published.stock } : {}),
       });
     }
-    tx.patch(draftOf(productId), applyWrite(productWrite(r.value)));
+    const stockBase = stockBaseFor(draft, published);
+    tx.patch(draftOf(productId), (patch) =>
+      applyWrite(productWrite(r.value))(stockBase === undefined ? patch : patch.setIfMissing({ stockBase }))
+    );
     await tx.commit();
     return { id: productId };
   });
@@ -101,21 +108,15 @@ export async function publishProduct(id: string): Promise<ActionResult<null>> {
   );
   if (taken > 0) return fail(INVALID_FORM, { slug: SLUG_TAKEN });
 
-  return run(async () => {
-    const { set } = productWrite(r.value);
-    await backendClient
-      .transaction()
-      .createOrReplace({
-        ...set,
-        _id: id,
-        _type: "product",
-        stock: publishedStock(r.value.stock, draft.stockBase, published?.stock),
-        archived: published?.archived === true,
-      })
-      .delete(draftOf(id))
-      .commit();
-    return null;
-  });
+  const stock = publishedStock(r.value.stock, draft.stockBase, published?.stock);
+  try {
+    await backendClient.mutate(publishMutations(id, productWrite(r.value), stock, published as { _rev: string } | null) as Mutation[]);
+  } catch (error) {
+    if (isConflictError(error)) return fail("Hubo una venta mientras publicabas; inténtalo de nuevo");
+    console.log("Admin action failed", error);
+    return fail("No se pudo completar la acción");
+  }
+  return { ok: true, data: null };
 }
 
 export async function discardProductDraft(id: string): Promise<ActionResult<{ published: boolean }>> {

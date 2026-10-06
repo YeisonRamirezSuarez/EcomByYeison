@@ -245,10 +245,33 @@ export function brandWrite(b: BrandInput): SanityWrite {
 }
 
 // Orders decrement the published stock while a draft waits. The draft's stock wins only if
-// someone changed it in the draft; otherwise the real (published) stock is kept.
+// someone changed it in the draft; otherwise the real (published) stock is kept. A draft with
+// no base (made in Studio) never wins over a published stock: a stale copy would undo sales.
 export function publishedStock(draftStock: number, stockBase: unknown, currentStock: unknown): number {
-  if (typeof stockBase !== "number" || draftStock !== stockBase) return draftStock;
-  return typeof currentStock === "number" ? currentStock : draftStock;
+  const real = typeof currentStock === "number" ? currentStock : draftStock;
+  if (typeof stockBase !== "number") return real;
+  return draftStock !== stockBase ? draftStock : real;
+}
+
+type StockDoc = Record<string, unknown> | null;
+
+// stockBase to set on the draft when the panel saves it (undefined = leave as is). A Studio
+// draft has none: its own stock becomes the base, so only changes made from here count.
+export function stockBaseFor(draft: StockDoc, published: StockDoc): number | undefined {
+  if (!draft) return typeof published?.stock === "number" ? published.stock : undefined;
+  if (typeof draft.stockBase === "number") return undefined;
+  return typeof draft.stock === "number" ? draft.stock : undefined;
+}
+
+// Over an existing product the patch carries its revision, so an order that changed the stock
+// since we read it makes the whole publish fail (409) instead of being overwritten.
+export function publishMutations(id: string, write: SanityWrite, stock: number, published: { _rev: string } | null) {
+  const draft = { delete: { id: `drafts.${id}` } };
+  if (!published) return [{ create: { ...write.set, _id: id, _type: "product", stock, archived: false } }, draft];
+  return [
+    { patch: { id, ifRevisionID: published._rev, set: { ...write.set, stock }, unset: [...write.unset, "stockBase"] } },
+    draft,
+  ];
 }
 
 export type ProductState = "publicado" | "borrador" | "por-publicar" | "archivado";

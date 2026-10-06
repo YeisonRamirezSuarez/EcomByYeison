@@ -517,8 +517,28 @@ assert.deepEqual(cat.brandWrite(vb.value).set.image, { _type: "image", asset: { 
 
 assert.equal(cat.publishedStock(10, 10, 7), 7); // untouched in the draft: keep real stock (3 sold)
 assert.equal(cat.publishedStock(20, 10, 7), 20); // edited in the draft: use it
-assert.equal(cat.publishedStock(5, undefined, 7), 5); // new product: no base
+assert.equal(cat.publishedStock(5, undefined, undefined), 5); // new product: no base, nothing published
+assert.equal(cat.publishedStock(58, undefined, 53), 53); // Studio draft (no base): keep real stock
 assert.equal(cat.publishedStock(10, 10, undefined), 10); // published had no stock
+
+// Base for the draft's stock: published stock for a new draft, the draft's own stock for a
+// Studio draft without one, nothing when it already has one.
+assert.equal(cat.stockBaseFor(null, { stock: 10 }), 10);
+assert.equal(cat.stockBaseFor(null, null), undefined);
+assert.equal(cat.stockBaseFor({ stock: 58 }, { stock: 53 }), 58);
+assert.equal(cat.stockBaseFor({ stock: 58, stockBase: 50 }, { stock: 53 }), undefined);
+assert.equal(cat.stockBaseFor({}, { stock: 53 }), undefined);
+
+// Publishing over an existing product only lands if nobody (an order) changed it since we read it.
+const pwm = { set: { name: "A" }, unset: ["brand"] };
+assert.deepEqual(cat.publishMutations("p1", pwm, 7, { _rev: "r1" }), [
+  { patch: { id: "p1", ifRevisionID: "r1", set: { name: "A", stock: 7 }, unset: ["brand", "stockBase"] } },
+  { delete: { id: "drafts.p1" } },
+]);
+assert.deepEqual(cat.publishMutations("p1", pwm, 7, null), [
+  { create: { name: "A", _id: "p1", _type: "product", stock: 7, archived: false } },
+  { delete: { id: "drafts.p1" } },
+]);
 
 assert.equal(cat.productState({ hasPublished: true, hasDraft: false, archived: false }), "publicado");
 assert.equal(cat.productState({ hasPublished: false, hasDraft: true, archived: false }), "borrador");
