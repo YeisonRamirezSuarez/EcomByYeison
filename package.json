@@ -6,9 +6,8 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "icons": "node scripts/generate-icons.mjs",
-    "splash": "node scripts/generate-splash.mjs",
-    "lint": "next lint",
+    "icons": "node scripts/gen-icons.mjs",
+    "lint": "eslint .",
     "typegen": "npx sanity@latest schema extract && npx sanity@latest typegen generate",
     "check:permissions": "node --experimental-strip-types scripts/check-permissions.mjs",
     "seed:yeison": "node --env-file=.env.local scripts/seed-ecom-by-yeison.mjs"

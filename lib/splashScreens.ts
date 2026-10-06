@@ -1,4 +1,4 @@
-// AUTOGENERADO por scripts/generate-splash.mjs — no editar a mano.
+// Splash screens generated once for the current images in public/splash; regenerate per client if the brand changes.
 // Splash screens de iOS para la PWA. Se renderizan como <link
 // rel="apple-touch-startup-image"> en app/layout.tsx.
 

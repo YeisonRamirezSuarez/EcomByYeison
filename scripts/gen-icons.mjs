@@ -1,3 +1,5 @@
+// Generates the PWA icons and favicon.png from public/logo.svg (replace it with each client's logo).
+// Requires sharp, which is not a project dependency: run `npm i --no-save sharp` first.
 import sharp from "sharp";
 import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
