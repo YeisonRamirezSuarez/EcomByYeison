@@ -11,6 +11,7 @@ import IdentitySection from "../brand/IdentitySection";
 import BannerSection from "../brand/BannerSection";
 import ContactSection from "../brand/ContactSection";
 import SocialSection from "../brand/SocialSection";
+import { draftSaves } from "../brand/fields";
 import ThemePicker from "./ThemePicker";
 import PreviewFrame, { type Device } from "./PreviewFrame";
 
@@ -46,13 +47,15 @@ const AppearanceEditor = ({ initial, initialHasDraft }: { initial: SiteSettings;
   const changeTheme = async (key: ThemeKey) => {
     setTheme(key);
     frameRef.current?.contentWindow?.postMessage({ type: "preview-theme", theme: key }, window.location.origin);
-    const result = await saveAppearanceDraft("theme", key);
+    const result = await draftSaves.run(() => saveAppearanceDraft("theme", key));
     if (result.ok) events.onSaved();
     else events.onError();
   };
 
   const publish = () =>
     startTransition(async () => {
+      // Send edits still waiting for their 1 s pause, so the last keystroke gets published too.
+      await draftSaves.flush();
       const result = await publishAppearance();
       if (!result.ok) {
         toast.error(result.error);

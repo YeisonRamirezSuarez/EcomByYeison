@@ -415,4 +415,33 @@ assert.deepEqual(os.countByStatus(orderRows), {
 
 assert.equal("adminTabs" in perms, false);
 
+// Preview request detection: the param, or any navigation inside the editor's iframe.
+const { wantsPreview } = await import("../lib/preview.ts");
+assert.equal(wantsPreview(new URLSearchParams("vista-previa=1"), null), true);
+assert.equal(wantsPreview(new URLSearchParams(""), "iframe"), true);
+assert.equal(wantsPreview(new URLSearchParams(""), "document"), false);
+assert.equal(wantsPreview(new URLSearchParams("vista-previa=0"), null), false);
+
+// Draft saves run one at a time, in order, and flush() fires pending debounced saves.
+const { createSaveQueue } = await import("../lib/saveQueue.ts");
+const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+{
+  const q = createSaveQueue();
+  const done = [];
+  const a = q.run(async () => { await wait(30); done.push("A"); });
+  const b = q.run(async () => { done.push("B"); });
+  await Promise.all([a, b]);
+  assert.deepEqual(done, ["A", "B"]);
+
+  await q.run(async () => { throw new Error("x"); }).catch(() => {});
+  assert.equal(await q.run(async () => "after"), "after");
+
+  const fired = [];
+  q.schedule(async () => { await wait(20); fired.push("late"); }, 10_000);
+  const cancel = q.schedule(async () => { fired.push("cancelled"); }, 10_000);
+  cancel();
+  await q.flush();
+  assert.deepEqual(fired, ["late"]);
+}
+
 console.log("check-permissions: ok");

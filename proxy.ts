@@ -1,5 +1,6 @@
 import { clerkMiddleware } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
+import { wantsPreview } from "@/lib/preview";
 
 /**
  * Clerk's Frontend API host is encoded inside the publishable key
@@ -74,7 +75,7 @@ export default clerkMiddleware(async (_auth, req) => {
   // Preview mode for the appearance editor. Never trust a client-sent header:
   // getSiteSettings() also checks the configurar permission before reading drafts.
   requestHeaders.delete("x-preview");
-  if (req.nextUrl.searchParams.get("vista-previa") === "1") {
+  if (wantsPreview(req.nextUrl.searchParams, req.headers.get("sec-fetch-dest"))) {
     requestHeaders.set("x-preview", "1");
   }
 

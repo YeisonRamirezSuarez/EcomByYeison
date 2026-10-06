@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, useTransition } from "react";
 import toast from "react-hot-toast";
 import type { ActionResult } from "@/lib/actionResult";
 import { INVALID_FORM, type ValidationResult } from "@/lib/validation";
+import { createSaveQueue } from "@/lib/saveQueue";
 
 export const INPUT =
   "w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-shop_light_green/40 disabled:opacity-60";
@@ -115,6 +116,9 @@ export function useSave<T>(
 
 export type AutosaveEvents = { onSaved: () => void; onError: () => void };
 
+// Every appearance draft save goes through this queue: in order, and flushed before publishing.
+export const draftSaves = createSaveQueue();
+
 // Saves a section 1 s after the last change. Invalid input shows field errors and is not sent.
 // Compares with the last value sent, so mounting (or React's dev double-mount) never saves.
 export function useAutosave<T>(
@@ -126,6 +130,7 @@ export function useAutosave<T>(
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [pending, setPending] = useState(false);
   const lastSent = useRef(JSON.stringify(value));
+  const inFlight = useRef(0);
   const latest = useRef({ validate, action, events });
   useEffect(() => {
     latest.current = { validate, action, events };
@@ -134,7 +139,7 @@ export function useAutosave<T>(
   useEffect(() => {
     const serialized = JSON.stringify(value);
     if (serialized === lastSent.current) return;
-    const timer = setTimeout(async () => {
+    return draftSaves.schedule(async () => {
       const { validate, action, events } = latest.current;
       const checked = validate(value);
       if (!checked.ok) {
@@ -142,9 +147,10 @@ export function useAutosave<T>(
         return;
       }
       lastSent.current = serialized;
+      inFlight.current++;
       setPending(true);
       const result = await action(checked.value);
-      setPending(false);
+      if (--inFlight.current === 0) setPending(false);
       if (!result.ok) {
         lastSent.current = "";
         setErrors(result.errors ?? {});
@@ -154,7 +160,6 @@ export function useAutosave<T>(
       setErrors({});
       events.onSaved();
     }, 1000);
-    return () => clearTimeout(timer);
   }, [value]);
 
   return { errors, pending };

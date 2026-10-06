@@ -13,8 +13,9 @@ export default async function ClientLayout({
 }>) {
   // Forward the CSP nonce (set by proxy.ts) to Clerk so its injected
   // scripts/styles carry it and aren't blocked by the policy.
-  const nonce = (await headers()).get("x-nonce") ?? undefined;
-  const preview = (await headers()).get("x-preview") === "1";
+  const requestHeaders = await headers();
+  const nonce = requestHeaders.get("x-nonce") ?? undefined;
+  const preview = requestHeaders.get("x-preview") === "1";
 
   return (
     <ClientClerkProvider nonce={nonce}>
