@@ -121,8 +121,9 @@ export const draftSaves = createSaveQueue();
 
 // Saves a section 1 s after the last change. Invalid input shows field errors and is not sent.
 // Compares with the last value sent, so mounting (or React's dev double-mount) never saves.
-export function useAutosave<T>(
-  value: T,
+// The form value (V) can differ from the validated value sent to the server (T).
+export function useAutosave<T, V = T>(
+  value: V,
   validate: (input: unknown) => ValidationResult<T>,
   action: (value: T) => Promise<ActionResult<null>>,
   events: AutosaveEvents
