@@ -4,8 +4,16 @@ import { useState } from "react";
 import { savePage } from "@/actions/brand";
 import type { PageContent } from "@/lib/brand";
 import { PAGE_KEYS, PAGE_LABELS, validatePage, type PageKey } from "@/lib/validation";
-import { INPUT, SectionCard, TextField, useSave } from "../brand/fields";
+import { SectionCard, TextField, useSave } from "../brand/fields";
 import BlockEditor from "./BlockEditor";
+
+const PAGE_PATHS: Record<PageKey, string> = {
+  about: "/about",
+  terms: "/terms",
+  privacy: "/privacy",
+  faqs: "/faqs",
+  help: "/help",
+};
 
 const PagesTab = ({ initialPages }: { initialPages: Record<PageKey, PageContent> }) => {
   const [saved, setSaved] = useState(initialPages);
@@ -35,23 +43,33 @@ const PagesTab = ({ initialPages }: { initialPages: Record<PageKey, PageContent>
   };
 
   return (
-    <div className="flex flex-col gap-4">
-      <label className="block">
-        <span className="text-xs font-semibold text-gray-700">Página</span>
-        {/* Locked while saving: a late save must not land on another page's draft. */}
-        <select
-          value={key}
-          disabled={pending}
-          onChange={(e) => choose(e.target.value as PageKey)}
-          className={`${INPUT} mt-1`}
+    <div className="grid gap-6 md:grid-cols-[220px_1fr] items-start">
+      {/* Locked while saving: a late save must not land on another page's draft. */}
+      <nav className="bg-white rounded-2xl shadow-sm p-2 flex md:flex-col gap-1 overflow-x-auto" aria-label="Páginas">
+        {PAGE_KEYS.map((k) => (
+          <button
+            key={k}
+            type="button"
+            disabled={pending}
+            onClick={() => choose(k)}
+            aria-current={k === key ? "page" : undefined}
+            className={`text-left whitespace-nowrap px-3 py-2 rounded-lg text-sm disabled:opacity-60 ${
+              k === key ? "bg-shop_dark_green text-white font-semibold" : "text-gray-700 hover:bg-gray-50"
+            }`}
+          >
+            {PAGE_LABELS[k]}
+          </button>
+        ))}
+      </nav>
+      <div className="flex flex-col gap-4 bg-white rounded-2xl shadow-sm p-5">
+        <a
+          href={PAGE_PATHS[key]}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="self-end text-sm font-medium text-shop_orange hover:underline"
         >
-          {PAGE_KEYS.map((k) => (
-            <option key={k} value={k}>
-              {PAGE_LABELS[k]}
-            </option>
-          ))}
-        </select>
-      </label>
+          Ver página
+        </a>
       {askDiscard && (
         <div role="alert" className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
           Tienes cambios sin guardar. ¿Descartarlos?
@@ -86,6 +104,7 @@ const PagesTab = ({ initialPages }: { initialPages: Record<PageKey, PageContent>
         <p className="text-xs text-gray-500 -mt-2">Separa los párrafos con una línea en blanco.</p>
         <BlockEditor blocks={draft.blocks} onChange={(blocks) => setDraft((d) => ({ ...d, blocks }))} errors={errors} />
       </SectionCard>
+      </div>
     </div>
   );
 };
