@@ -1,7 +1,9 @@
+"use client";
+
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import React from "react";
-import Image from "next/image";
+import { useBrand } from "./StoreSettingsProvider";
 
 const Logo = ({
   className,
@@ -10,33 +12,37 @@ const Logo = ({
   className?: string;
   spanDesign?: string;
 }) => {
+  const { storeName, logoType, logoText, logoSubtext, logoImage } = useBrand();
+
+  if (logoType === "image" && logoImage) {
+    return (
+      <Link href={"/"} className="inline-flex items-center group">
+        {/* eslint-disable-next-line @next/next/no-img-element -- store logos can be SVG */}
+        <img src={logoImage.url} alt={storeName} className="h-10 w-auto max-w-44 object-contain" />
+      </Link>
+    );
+  }
+
   return (
-    <Link href={"/"} className="inline-flex items-center gap-2 group">
-      <Image
-        src="/logo.svg"
-        alt="Ecom by Yeison"
-        width={40}
-        height={40}
-        className="w-10 h-10 object-contain group-hover:scale-105 transition-transform duration-300"
-      />
-      <div className="flex items-baseline gap-1">
-        <h2
-          className={cn(
-            "text-2xl font-black tracking-tight text-shop_dark_green group-hover:text-shop_dark_green/80 hoverEffect font-sans",
-            className
-          )}
-        >
-          Ecom
-        </h2>
+    <Link href={"/"} className="inline-flex items-baseline gap-1 group">
+      <h2
+        className={cn(
+          "text-2xl font-black tracking-tight text-shop_dark_green group-hover:text-shop_dark_green/80 hoverEffect font-sans",
+          className
+        )}
+      >
+        {logoText}
+      </h2>
+      {logoSubtext && (
         <span
           className={cn(
             "text-xs font-semibold text-shop_light_green group-hover:text-shop_dark_green hoverEffect tracking-widest uppercase",
             spanDesign
           )}
         >
-          by Yeison
+          {logoSubtext}
         </span>
-      </div>
+      )}
     </Link>
   );
 };

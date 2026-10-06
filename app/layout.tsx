@@ -2,7 +2,6 @@ import "./globals.css";
 import type { Metadata, Viewport } from "next";
 import { Toaster } from "react-hot-toast";
 import { Poppins } from "next/font/google";
-import ThemeInitializer from "@/components/ThemeInitializer";
 import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 import { getServerLocale } from "@/lib/locale";
 import { splashScreens } from "@/lib/splashScreens";
@@ -176,7 +175,6 @@ const RootLayout = async ({ children }: { children: React.ReactNode }) => {
         ))}
       </head>
       <body className="font-poppins antialiased overflow-x-hidden">
-        <ThemeInitializer />
         <ServiceWorkerRegister />
         {children}
         <Toaster

@@ -99,6 +99,7 @@ const OrderDetailDialog: React.FC<OrderDetailsDialogProps> = ({
                     {t(locale, "ordersQuantity")}: {product?.quantity}
                   </p>
                   <PriceFormatter
+                    currency={order?.currency}
                     amount={product?.product?.price}
                     className="text-black font-semibold"
                   />
@@ -135,6 +136,7 @@ const OrderDetailDialog: React.FC<OrderDetailsDialogProps> = ({
                   <TableCell>{product?.quantity}</TableCell>
                   <TableCell>
                     <PriceFormatter
+                      currency={order?.currency}
                       amount={product?.product?.price}
                       className="text-black font-medium"
                     />
@@ -151,6 +153,7 @@ const OrderDetailDialog: React.FC<OrderDetailsDialogProps> = ({
               <div className="w-full flex items-center justify-between">
                 <strong>{t(locale, "ordersDiscount")}: </strong>
                 <PriceFormatter
+                  currency={order?.currency}
                   amount={order?.amountDiscount}
                   className="text-black font-bold"
                 />
@@ -160,6 +163,7 @@ const OrderDetailDialog: React.FC<OrderDetailsDialogProps> = ({
               <div className="w-full flex items-center justify-between">
                 <strong>{t(locale, "ordersSubtotal")}: </strong>
                 <PriceFormatter
+                  currency={order?.currency}
                   amount={
                     (order?.totalPrice as number) +
                     (order?.amountDiscount as number)
@@ -171,6 +175,7 @@ const OrderDetailDialog: React.FC<OrderDetailsDialogProps> = ({
             <div className="w-full flex items-center justify-between">
               <strong>{t(locale, "ordersTotal")}: </strong>
               <PriceFormatter
+                currency={order?.currency}
                 amount={order?.totalPrice}
                 className="text-black font-bold"
               />

@@ -42,6 +42,10 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+  experimental: {
+    // Brand images up to 4 MB plus form overhead.
+    serverActions: { bodySizeLimit: "5mb" },
+  },
 };
 
 export default nextConfig;

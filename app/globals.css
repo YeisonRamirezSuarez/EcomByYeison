@@ -245,3 +245,8 @@ body {
     height: 2.8rem !important;
   }
 }
+
+/* Hide Clerk "Secured by" branding, keep sign-up/sign-in link */
+.cl-footer > :not(.cl-footerAction) {
+  display: none;
+}
