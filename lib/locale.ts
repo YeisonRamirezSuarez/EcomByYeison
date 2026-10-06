@@ -1,7 +1,7 @@
 import { cookies } from "next/headers";
-import { Locale } from "@/lib/i18n";
+import { LOCALE_COOKIE, type Locale } from "@/lib/i18n";
 
-export const LOCALE_COOKIE = "app-locale";
+export { LOCALE_COOKIE };
 
 export function normalizeLocale(value?: string | null): Locale {
   return value === "en" ? "en" : "es";

@@ -9,6 +9,7 @@ import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import useStore from "@/store";
 import { t } from "@/lib/i18n";
+import { useBrand } from "./StoreSettingsProvider";
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -18,6 +19,7 @@ interface AuthModalProps {
 export const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
   const { isSignedIn } = useAuth();
   const { locale } = useStore();
+  const { storeName } = useBrand();
   const [mounted, setMounted] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [authView, setAuthView] = useState<"signIn" | "signUp">("signIn");
@@ -119,8 +121,8 @@ export const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
             </h2>
             <p className="text-gray-600 text-sm">
               {authView === "signIn"
-                ? t(locale, "authSignInSubtitle")
-                : t(locale, "authSignUpSubtitle")}
+                ? t(locale, "authSignInSubtitle", { store: storeName })
+                : t(locale, "authSignUpSubtitle", { store: storeName })}
             </p>
           </div>
 

@@ -7,26 +7,34 @@ import CartIcon from "./CartIcon";
 import FavoriteButton from "./FavoriteButton";
 import SignIn from "./SignIn";
 import MobileMenu from "./MobileMenu";
+import LanguageToggle from "./LanguageToggle";
+import AdminButton from "./admin/AdminButton";
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { ClerkLoaded, UserButton } from "@clerk/nextjs";
 import Link from "next/link";
-import { ClipboardList, Truck, ShieldCheck, HeadphonesIcon, BarChart3 } from "lucide-react";
+import { ClipboardList, Truck, ShieldCheck, HeadphonesIcon } from "lucide-react";
 import { getMyOrders } from "@/sanity/queries";
 import { getServerLocale } from "@/lib/locale";
 import { t } from "@/lib/i18n";
-import { isAdminEmail } from "@/lib/admin";
+import { adminTabs, roleFromMetadata } from "@/lib/permissions";
+import { getSiteSettings } from "@/sanity/queries/siteSettings";
+import { CURRENCIES, formatPrice } from "@/constants/currencies";
 
 const Header = async () => {
   const locale = await getServerLocale();
   const user = await currentUser();
   const { userId } = await auth();
-  const userEmail = user?.primaryEmailAddress?.emailAddress;
-  const isAdmin = isAdminEmail(userEmail);
-  
   let orders = null;
   if (userId) {
     orders = await getMyOrders(userId);
   }
+  const tabs = user ? adminTabs(roleFromMetadata(user.publicMetadata)) : [];
+  const settings = await getSiteSettings();
+  const freeShippingFrom = formatPrice(
+    CURRENCIES[settings.currency].freeShippingFrom,
+    settings.currency,
+    0
+  );
 
   return (
     <header className="sticky top-0 z-50">
@@ -36,7 +44,7 @@ const Header = async () => {
           <div className="flex items-center gap-6">
             <span className="flex items-center gap-1.5">
               <Truck size={12} />
-              {t(locale, "headerFreeShipping")}
+              {t(locale, "headerFreeShipping", { amount: freeShippingFrom })}
             </span>
             <span className="flex items-center gap-1.5">
               <ShieldCheck size={12} />
@@ -47,7 +55,9 @@ const Header = async () => {
               {t(locale, "headerSupport")}
             </span>
           </div>
-          <span className="font-semibold tracking-wide">{t(locale, "headerWelcome")}</span>
+          <span className="font-semibold tracking-wide">
+            {t(locale, "headerWelcome", { store: settings.storeName })}
+          </span>
         </div>
       </div>
 
@@ -62,6 +72,7 @@ const Header = async () => {
           <div className="w-auto md:w-1/3 flex items-center justify-end gap-4">
             <SearchBar placeholder={t(locale, "searchPlaceholder")} />
             <div className="flex items-center gap-3">
+              <LanguageToggle initialLocale={locale} />
               <CartIcon />
               <FavoriteButton />
               {user && (
@@ -76,22 +87,12 @@ const Header = async () => {
                   </span>
                 </Link>
               )}
-              {isAdmin && (
-                <Link
-                  href={"/admin/orders"}
-                  className="group relative hover:text-shop_light_green hoverEffect"
-                  title="Admin Panel"
-                >
-                  <BarChart3 size={20} />
-                </Link>
-              )}
-              <ClerkLoaded>
-                {user ? <UserButton /> : <SignIn />}
-              </ClerkLoaded>
+              <ClerkLoaded>{user ? <UserButton /> : <SignIn />}</ClerkLoaded>
             </div>
           </div>
         </Container>
       </div>
+      {tabs.length > 0 && <AdminButton tabs={tabs} settings={settings} />}
     </header>
   );
 };

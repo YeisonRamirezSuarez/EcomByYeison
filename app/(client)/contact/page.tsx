@@ -3,25 +3,26 @@ import ContactForm from "@/components/ContactForm";
 import { Title } from "@/components/ui/text";
 import { Clock, Mail, MapPin, Phone } from "lucide-react";
 import { getSiteSettings } from "@/sanity/queries/siteSettings";
+import { getServerLocale } from "@/lib/locale";
+import { t } from "@/lib/i18n";
+import { isEmail } from "@/lib/validation";
 
 export default async function ContactPage() {
+  const locale = await getServerLocale();
   const { contact, storeName } = await getSiteSettings();
   const items = [
-    { title: "Escríbenos", value: contact.email, Icon: Mail },
-    { title: "Llámenos", value: contact.phone, Icon: Phone },
-    { title: "Ubicación", value: contact.address, Icon: MapPin },
-    { title: "Horario", value: contact.hours, Icon: Clock },
+    { title: t(locale, "footerWriteUs"), value: contact.email, Icon: Mail },
+    { title: t(locale, "footerCallUs"), value: contact.phone, Icon: Phone },
+    { title: t(locale, "footerVisitUs"), value: contact.address, Icon: MapPin },
+    { title: t(locale, "footerSchedule"), value: contact.hours, Icon: Clock },
   ].filter((item) => item.value);
 
   return (
     <Container className="py-16">
-      <Title className="mb-6">Contáctanos</Title>
+      <Title className="mb-6">{t(locale, "contactTitle")}</Title>
       <div className="max-w-3xl grid md:grid-cols-2 gap-10">
         <div className="space-y-4">
-          <p className="text-gray-500 text-sm leading-relaxed mb-6">
-            ¿Tienes alguna duda, sugerencia o necesitas ayuda con tu pedido?
-            Escríbenos y te responderemos a la brevedad.
-          </p>
+          <p className="text-gray-500 text-sm leading-relaxed mb-6">{t(locale, "contactIntro")}</p>
           {items.map(({ title, value, Icon }) => (
             <div
               key={title}
@@ -37,7 +38,9 @@ export default async function ContactPage() {
             </div>
           ))}
         </div>
-        {contact.email && <ContactForm email={contact.email} storeName={storeName} />}
+        {isEmail(contact.email) && (
+          <ContactForm email={contact.email} storeName={storeName} locale={locale} />
+        )}
       </div>
     </Container>
   );

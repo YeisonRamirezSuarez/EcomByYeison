@@ -63,15 +63,20 @@ export function formatPrice(
   }).format(amount ?? 0);
 }
 
-export function priceRanges(code: string): { title: string; value: string }[] {
+export type PriceRangeLabels = { under: string; over: string };
+
+export function priceRanges(
+  code: string,
+  labels: PriceRangeLabels = { under: "Menos de", over: "Más de" }
+): { title: string; value: string }[] {
   const currency = isCurrencyCode(code) ? code : DEFAULT_CURRENCY;
   const f = (amount: number) => formatPrice(amount, currency, 0);
   return CURRENCIES[currency].priceRanges.map(([min, max]) => ({
     title:
       max === null
-        ? `Más de ${f(min)}`
+        ? `${labels.over} ${f(min)}`
         : min === 0
-          ? `Menos de ${f(max)}`
+          ? `${labels.under} ${f(max)}`
           : `${f(min)} - ${f(max)}`,
     value: `${min}-${max ?? ""}`,
   }));

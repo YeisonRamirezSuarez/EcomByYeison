@@ -313,4 +313,26 @@ const full = {
 };
 assert.deepEqual(withDefaults(full, BRAND_DEFAULTS), full);
 
+// i18n
+const i18n = await import("../lib/i18n.ts");
+assert.equal(i18n.t("es", "headerWelcome", { store: "Nike" }), "Bienvenido a Nike");
+assert.equal(i18n.t("en", "headerWelcome", { store: "Nike" }), "Welcome to Nike");
+assert.equal(i18n.t("en", "headerFreeShipping", { amount: "$99" }), "Free shipping on orders over $99");
+assert.equal(i18n.t("es", "newsletterConsent", { store: "Adidas" }), "Acepto recibir correos de Adidas");
+assert.equal(i18n.t("es", "navHome"), "Inicio");
+assert.equal(i18n.t("es", "headerWelcome"), "Bienvenido a {store}");
+assert.equal(i18n.t("es", "headerWelcome", {}), "Bienvenido a {store}");
+assert.equal(i18n.LOCALE_COOKIE, "app-locale");
+assert.equal(JSON.stringify(i18n.MESSAGES).includes("Yeison"), false);
+assert.deepEqual(Object.keys(i18n.MESSAGES.en).sort(), Object.keys(i18n.MESSAGES.es).sort());
+
+// Price range labels per language
+assert.deepEqual(priceRanges("USD", { under: "Under", over: "Over" }).map((r) => r.title), [
+  "Under $100",
+  "$100 - $200",
+  "$200 - $300",
+  "$300 - $500",
+  "Over $500",
+]);
+
 console.log("check-permissions: ok");

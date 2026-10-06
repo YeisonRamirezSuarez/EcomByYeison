@@ -3,9 +3,11 @@ import Link from "next/link";
 import React from "react";
 import { getServerLocale } from "@/lib/locale";
 import { t } from "@/lib/i18n";
+import { getSiteSettings } from "@/sanity/queries/siteSettings";
 
 const NotFoundPage = async () => {
   const locale = await getServerLocale();
+  const { storeName } = await getSiteSettings();
 
   return (
     <div className="bg-white flex flex-col items-center justify-center px-4 sm:px-6 lg:px-8 py-10 md:py-32">
@@ -26,7 +28,7 @@ const NotFoundPage = async () => {
               href="/"
               className="w-full flex items-center justify-center px-4 py-2 border border-transparent text-sm font-semibold rounded-md text-white bg-shop_dark_green/80 hover:bg-shop_dark_green focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amazonOrangeDark hoverEffect"
             >
-              {t(locale, "notFoundGoHome")}
+              {t(locale, "notFoundGoHome", { store: storeName })}
             </Link>
             <Link
               href="/help"

@@ -3,10 +3,11 @@
 import React, { useState, useTransition } from "react";
 import toast from "react-hot-toast";
 import { subscribe } from "@/actions/newsletter";
+import { t, type Locale } from "@/lib/i18n";
 import { Input } from "./ui/input";
 import { Button } from "./ui/button";
 
-const NewsletterForm = ({ storeName }: { storeName: string }) => {
+const NewsletterForm = ({ storeName, locale }: { storeName: string; locale: Locale }) => {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [pending, startTransition] = useTransition();
 
@@ -22,30 +23,31 @@ const NewsletterForm = ({ storeName }: { storeName: string }) => {
       });
       if (!result.ok) {
         setErrors(result.errors);
-        if (result.errors.form) toast.error(result.errors.form);
+        if (result.errors.form) toast.error(t(locale, "newsletterFailed"));
         return;
       }
       setErrors({});
       form.reset();
-      toast.success(result.message);
+      toast.success(t(locale, "newsletterSuccess"));
     });
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-3" noValidate>
+    <form onSubmit={handleSubmit} className="space-y-2.5" noValidate>
       <Input
         name="email"
         type="email"
-        placeholder="Tu correo electrónico"
-        aria-label="Tu correo electrónico"
+        className="h-10"
+        placeholder={t(locale, "footerEmailPlaceholder")}
+        aria-label={t(locale, "footerEmailPlaceholder")}
         aria-invalid={Boolean(errors.email)}
       />
-      {errors.email && <p className="text-xs text-red-600">{errors.email}</p>}
+      {errors.email && <p className="text-xs text-red-600">{t(locale, "newsletterInvalidEmail")}</p>}
       <label className="flex items-start gap-2 text-xs text-gray-600">
         <input type="checkbox" name="consent" className="mt-0.5" />
-        Acepto recibir correos de {storeName}
+        {t(locale, "newsletterConsent", { store: storeName })}
       </label>
-      {errors.consent && <p className="text-xs text-red-600">{errors.consent}</p>}
+      {errors.consent && <p className="text-xs text-red-600">{t(locale, "newsletterConsentRequired")}</p>}
       {/* Honeypot: hidden from people, filled by bots. */}
       <input
         type="text"
@@ -58,9 +60,9 @@ const NewsletterForm = ({ storeName }: { storeName: string }) => {
       <Button
         type="submit"
         disabled={pending}
-        className="w-full bg-shop_dark_green hover:bg-shop_dark_green/90 text-white"
+        className="w-full h-10 bg-shop_dark_green hover:bg-shop_dark_green/90 text-white font-semibold"
       >
-        {pending ? "Enviando…" : "Suscribirme"}
+        {pending ? t(locale, "newsletterSending") : t(locale, "footerSubscribe")}
       </Button>
     </form>
   );

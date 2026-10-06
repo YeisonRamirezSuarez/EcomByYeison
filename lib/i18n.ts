@@ -1,5 +1,7 @@
 export type Locale = "es" | "en";
 
+export const LOCALE_COOKIE = "app-locale";
+
 type Messages = {
   themePanelTitle: string;
   themePanelSubtitle: string;
@@ -30,7 +32,6 @@ type Messages = {
   footerCallUs: string;
   footerSchedule: string;
   footerWriteUs: string;
-  footerScheduleValue: string;
   categoryMobiles: string;
   categoryAppliances: string;
   categorySmartphones: string;
@@ -120,17 +121,11 @@ type Messages = {
   shopBrands: string;
   shopPrice: string;
   shopResetSelection: string;
-  shopPriceUnder100: string;
-  shopPrice100To200: string;
-  shopPrice200To300: string;
-  shopPrice300To500: string;
-  shopPriceOver500: string;
   shopFilters: string;
   shopResults: string;
   shopProductsCount: string;
   dealWeekTitle: string;
   categoryProductsBy: string;
-  footerBrandDescription: string;
   footerNewsletterNote: string;
   footerPrivacy: string;
   footerTerms: string;
@@ -219,6 +214,30 @@ type Messages = {
   installButton: string;
   installIosHint: string;
   installDismiss: string;
+  languageToggle: string;
+  newsletterConsent: string;
+  newsletterSuccess: string;
+  newsletterInvalidEmail: string;
+  newsletterConsentRequired: string;
+  newsletterFailed: string;
+  newsletterSending: string;
+  contactTitle: string;
+  contactIntro: string;
+  contactName: string;
+  contactMessage: string;
+  contactSend: string;
+  contactSubject: string;
+  contactBodyName: string;
+  contactBodyEmail: string;
+  pageAboutTitle: string;
+  pageTermsTitle: string;
+  pagePrivacyTitle: string;
+  pageFaqsTitle: string;
+  pageHelpTitle: string;
+  helpNotFoundTitle: string;
+  helpNotFoundBody: string;
+  shopPriceUnder: string;
+  shopPriceOver: string;
 };
 
 export const MESSAGES: Record<Locale, Messages> = {
@@ -229,8 +248,8 @@ export const MESSAGES: Record<Locale, Messages> = {
     languageLabel: "Idioma",
     authSignInTitle: "Inicia sesión",
     authSignUpTitle: "Regístrate",
-    authSignInSubtitle: "Accede a tu cuenta de Ecom by Yeison",
-    authSignUpSubtitle: "Crea tu cuenta en Ecom by Yeison",
+    authSignInSubtitle: "Accede a tu cuenta de {store}",
+    authSignUpSubtitle: "Crea tu cuenta en {store}",
     authSuccessTitle: "Inicio exitoso",
     authSuccessBody: "Bienvenido de nuevo. Estamos actualizando tu sesión...",
     authNoAccount: "¿No tienes cuenta?",
@@ -252,7 +271,6 @@ export const MESSAGES: Record<Locale, Messages> = {
     footerCallUs: "Llámanos",
     footerSchedule: "Horario de atencion",
     footerWriteUs: "Escríbenos",
-    footerScheduleValue: "Lun - Sáb: 9:00 AM - 7:00 PM",
     categoryMobiles: "Móviles",
     categoryAppliances: "Electrodomésticos",
     categorySmartphones: "Smartphones",
@@ -268,10 +286,10 @@ export const MESSAGES: Record<Locale, Messages> = {
     noAccessSignIn: "Iniciar sesión",
     noAccessNoAccount: "¿No tienes cuenta?",
     noAccessCreateAccount: "Crear cuenta",
-    headerFreeShipping: "Envío gratis en pedidos superiores a $99",
+    headerFreeShipping: "Envío gratis en pedidos superiores a {amount}",
     headerSecurePurchase: "Compra 100% segura",
     headerSupport: "Soporte 24/7",
-    headerWelcome: "Bienvenido a Ecom by Yeison",
+    headerWelcome: "Bienvenido a {store}",
     headerMyOrders: "Mis pedidos",
     cartTitle: "Carrito de compras",
     cartConfirmReset: "¿Seguro que deseas vaciar tu carrito?",
@@ -298,7 +316,7 @@ export const MESSAGES: Record<Locale, Messages> = {
     addToCartButton: "Agregar al carrito",
     notFoundTitle: "¿Buscas algo?",
     notFoundDescription: "Lo sentimos. La dirección web que ingresaste no corresponde a una página funcional en nuestro sitio.",
-    notFoundGoHome: "Ir a la página principal de Ecom by Yeison",
+    notFoundGoHome: "Ir al inicio de {store}",
     notFoundHelp: "Ayuda",
     notFoundNeedHelp: "¿Necesitas ayuda? Visita la sección",
     notFoundHelpSection: "Ayuda",
@@ -342,17 +360,11 @@ export const MESSAGES: Record<Locale, Messages> = {
     shopBrands: "Marcas",
     shopPrice: "Precio",
     shopResetSelection: "Restablecer selección",
-    shopPriceUnder100: "Menos de $100",
-    shopPrice100To200: "$100 - $200",
-    shopPrice200To300: "$200 - $300",
-    shopPrice300To500: "$300 - $500",
-    shopPriceOver500: "Más de $500",
     shopFilters: "Filtros",
     shopResults: "Ver resultados",
     shopProductsCount: "productos",
     dealWeekTitle: "Ofertas de la semana",
     categoryProductsBy: "Productos por categoría",
-    footerBrandDescription: "Ecom by Yeison es tu destino de tecnología premium. Descubre gadgets, electrónica y accesorios seleccionados con calidad y buen precio.",
     footerNewsletterNote: "Sin spam. Solo lanzamientos, ofertas y novedades relevantes.",
     footerPrivacy: "Privacidad",
     footerTerms: "Términos",
@@ -436,11 +448,35 @@ export const MESSAGES: Record<Locale, Messages> = {
     addrSaving: "Guardando…",
     addrCancel: "Cancelar",
     addrError: "No se pudo guardar la dirección. Inténtalo de nuevo.",
-    installTitle: "Instala Ecom by Yeison",
+    installTitle: "Instala {store}",
     installBody: "Añádela a tu pantalla de inicio para una experiencia más rápida.",
     installButton: "Instalar app",
     installIosHint: "Toca Compartir y luego «Añadir a inicio».",
     installDismiss: "Ahora no",
+    languageToggle: "Cambiar idioma",
+    newsletterConsent: "Acepto recibir correos de {store}",
+    newsletterSuccess: "¡Listo! Te suscribiste",
+    newsletterInvalidEmail: "Ingresa un correo válido",
+    newsletterConsentRequired: "Debes aceptar para suscribirte",
+    newsletterFailed: "No pudimos suscribirte, intenta de nuevo",
+    newsletterSending: "Enviando…",
+    contactTitle: "Contáctanos",
+    contactIntro: "¿Tienes alguna duda, sugerencia o necesitas ayuda con tu pedido? Escríbenos y te responderemos a la brevedad.",
+    contactName: "Tu nombre",
+    contactMessage: "Tu mensaje",
+    contactSend: "Enviar mensaje",
+    contactSubject: "Mensaje desde {store}",
+    contactBodyName: "Nombre",
+    contactBodyEmail: "Correo",
+    pageAboutTitle: "Sobre Nosotros",
+    pageTermsTitle: "Términos y Condiciones",
+    pagePrivacyTitle: "Política de Privacidad",
+    pageFaqsTitle: "Preguntas Frecuentes",
+    pageHelpTitle: "Centro de Ayuda",
+    helpNotFoundTitle: "¿No encontraste lo que buscas?",
+    helpNotFoundBody: "Nuestro equipo está disponible para ayudarte.",
+    shopPriceUnder: "Menos de",
+    shopPriceOver: "Más de",
   },
   en: {
     themePanelTitle: "Customize theme",
@@ -449,8 +485,8 @@ export const MESSAGES: Record<Locale, Messages> = {
     languageLabel: "Language",
     authSignInTitle: "Sign in",
     authSignUpTitle: "Sign up",
-    authSignInSubtitle: "Access your Ecom by Yeison account",
-    authSignUpSubtitle: "Create your Ecom by Yeison account",
+    authSignInSubtitle: "Access your {store} account",
+    authSignUpSubtitle: "Create your {store} account",
     authSuccessTitle: "Signed in successfully",
     authSuccessBody: "Welcome back. We are updating your session...",
     authNoAccount: "Don't have an account?",
@@ -472,7 +508,6 @@ export const MESSAGES: Record<Locale, Messages> = {
     footerCallUs: "Call us",
     footerSchedule: "Business hours",
     footerWriteUs: "Write to us",
-    footerScheduleValue: "Mon - Sat: 9:00 AM - 7:00 PM",
     categoryMobiles: "Mobiles",
     categoryAppliances: "Appliances",
     categorySmartphones: "Smartphones",
@@ -488,10 +523,10 @@ export const MESSAGES: Record<Locale, Messages> = {
     noAccessSignIn: "Sign in",
     noAccessNoAccount: "Don't have an account?",
     noAccessCreateAccount: "Create an account",
-    headerFreeShipping: "Free shipping on orders over $99",
+    headerFreeShipping: "Free shipping on orders over {amount}",
     headerSecurePurchase: "100% secure purchase",
     headerSupport: "24/7 support",
-    headerWelcome: "Welcome to Ecom by Yeison",
+    headerWelcome: "Welcome to {store}",
     headerMyOrders: "My orders",
     cartTitle: "Shopping Cart",
     cartConfirmReset: "Are you sure you want to reset your cart?",
@@ -518,7 +553,7 @@ export const MESSAGES: Record<Locale, Messages> = {
     addToCartButton: "Add to Cart",
     notFoundTitle: "Looking for something?",
     notFoundDescription: "We're sorry. The web address you entered is not a functioning page on our site.",
-    notFoundGoHome: "Go to Ecom by Yeison's home page",
+    notFoundGoHome: "Go to {store}'s home page",
     notFoundHelp: "Help",
     notFoundNeedHelp: "Need help? Visit the",
     notFoundHelpSection: "Help section",
@@ -562,17 +597,11 @@ export const MESSAGES: Record<Locale, Messages> = {
     shopBrands: "Brands",
     shopPrice: "Price",
     shopResetSelection: "Reset selection",
-    shopPriceUnder100: "Under $100",
-    shopPrice100To200: "$100 - $200",
-    shopPrice200To300: "$200 - $300",
-    shopPrice300To500: "$300 - $500",
-    shopPriceOver500: "Over $500",
     shopFilters: "Filters",
     shopResults: "Show results",
     shopProductsCount: "products",
     dealWeekTitle: "Hot Deals of the Week",
     categoryProductsBy: "Products by Category",
-    footerBrandDescription: "Ecom by Yeison is your premium technology destination. Discover curated gadgets, electronics, and accessories at fair prices.",
     footerNewsletterNote: "No spam. Only launches, offers, and relevant updates.",
     footerPrivacy: "Privacy",
     footerTerms: "Terms",
@@ -656,14 +685,40 @@ export const MESSAGES: Record<Locale, Messages> = {
     addrSaving: "Saving…",
     addrCancel: "Cancel",
     addrError: "Could not save the address. Please try again.",
-    installTitle: "Install Ecom by Yeison",
+    installTitle: "Install {store}",
     installBody: "Add it to your home screen for a faster experience.",
     installButton: "Install app",
     installIosHint: "Tap Share, then “Add to Home Screen”.",
     installDismiss: "Not now",
+    languageToggle: "Change language",
+    newsletterConsent: "I agree to receive emails from {store}",
+    newsletterSuccess: "Done! You're subscribed",
+    newsletterInvalidEmail: "Enter a valid email",
+    newsletterConsentRequired: "You must agree to subscribe",
+    newsletterFailed: "We couldn't subscribe you, please try again",
+    newsletterSending: "Sending…",
+    contactTitle: "Contact us",
+    contactIntro: "Have a question, a suggestion or need help with your order? Write to us and we'll get back to you soon.",
+    contactName: "Your name",
+    contactMessage: "Your message",
+    contactSend: "Send message",
+    contactSubject: "Message from {store}",
+    contactBodyName: "Name",
+    contactBodyEmail: "Email",
+    pageAboutTitle: "About Us",
+    pageTermsTitle: "Terms & Conditions",
+    pagePrivacyTitle: "Privacy Policy",
+    pageFaqsTitle: "FAQs",
+    pageHelpTitle: "Help Center",
+    helpNotFoundTitle: "Didn't find what you were looking for?",
+    helpNotFoundBody: "Our team is here to help you.",
+    shopPriceUnder: "Under",
+    shopPriceOver: "Over",
   },
 };
 
-export function t(locale: Locale, key: keyof Messages): string {
-  return MESSAGES[locale]?.[key] ?? MESSAGES.es[key];
+// `{name}` placeholders are filled from vars; unknown placeholders stay as written.
+export function t(locale: Locale, key: keyof Messages, vars?: Record<string, string>): string {
+  const message = MESSAGES[locale]?.[key] ?? MESSAGES.es[key];
+  return vars ? message.replace(/\{(\w+)\}/g, (match, name: string) => vars[name] ?? match) : message;
 }

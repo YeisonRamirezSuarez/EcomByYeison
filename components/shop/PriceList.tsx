@@ -4,16 +4,22 @@ import { RadioGroup, RadioGroupItem } from "../ui/radio-group";
 import { Label } from "../ui/label";
 import { priceRanges } from "@/constants/currencies";
 import { useCurrency } from "../StoreSettingsProvider";
+import useStore from "@/store";
+import { t } from "@/lib/i18n";
 
 interface Props {
   selectedPrice?: string | null;
   setSelectedPrice: React.Dispatch<React.SetStateAction<string | null>>;
 }
 const PriceList = ({ selectedPrice, setSelectedPrice }: Props) => {
-  const priceArray = priceRanges(useCurrency());
+  const { locale } = useStore();
+  const priceArray = priceRanges(useCurrency(), {
+    under: t(locale, "shopPriceUnder"),
+    over: t(locale, "shopPriceOver"),
+  });
   return (
     <div className="w-full bg-white p-5">
-      <Title className="text-base font-black">Precio</Title>
+      <Title className="text-base font-black">{t(locale, "shopPrice")}</Title>
       <RadioGroup className="mt-2 space-y-1" value={selectedPrice || ""}>
         {priceArray?.map((price, index) => (
           <div
@@ -40,7 +46,7 @@ const PriceList = ({ selectedPrice, setSelectedPrice }: Props) => {
           onClick={() => setSelectedPrice(null)}
           className="text-sm font-medium mt-2 underline underline-offset-2 decoration-[1px] hover:text-shop_dark_green hoverEffect"
         >
-          Reset selection
+          {t(locale, "shopResetSelection")}
         </button>
       )}
     </div>

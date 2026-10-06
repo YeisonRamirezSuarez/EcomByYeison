@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import { Download, X } from "lucide-react";
 import useStore from "@/store";
 import { t } from "@/lib/i18n";
+import { useBrand } from "./StoreSettingsProvider";
 
 /** Chrome/Android fire this; it isn't in the TS DOM lib yet. */
 interface BeforeInstallPromptEvent extends Event {
@@ -28,6 +29,7 @@ const DISMISS_DAYS = 7;
  */
 const InstallPrompt = () => {
   const { locale } = useStore();
+  const { storeName } = useBrand();
   const [mounted, setMounted] = useState(false);
   const [deferred, setDeferred] = useState<BeforeInstallPromptEvent | null>(
     null
@@ -105,7 +107,7 @@ const InstallPrompt = () => {
         </div>
         <div className="min-w-0 flex-1">
           <p className="text-sm font-semibold text-darkColor">
-            {t(locale, "installTitle")}
+            {t(locale, "installTitle", { store: storeName })}
           </p>
           <p className="mt-0.5 text-xs text-lightColor">
             {isIos ? t(locale, "installIosHint") : t(locale, "installBody")}
