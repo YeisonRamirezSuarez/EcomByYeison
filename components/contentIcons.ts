@@ -1,0 +1,37 @@
+import {
+  ClipboardList,
+  Cookie,
+  CreditCard,
+  FileText,
+  Headset,
+  HelpCircle,
+  Lock,
+  Mail,
+  Package,
+  RotateCcw,
+  ShieldCheck,
+  ShoppingCart,
+  Star,
+  Truck,
+  UserCheck,
+  type LucideIcon,
+} from "lucide-react";
+import type { ContentIconKey } from "@/lib/validation";
+
+export const CONTENT_ICON_COMPONENTS: Record<ContentIconKey, LucideIcon> = {
+  truck: Truck,
+  "shield-check": ShieldCheck,
+  headset: Headset,
+  star: Star,
+  "shopping-cart": ShoppingCart,
+  "credit-card": CreditCard,
+  package: Package,
+  "rotate-ccw": RotateCcw,
+  "clipboard-list": ClipboardList,
+  "help-circle": HelpCircle,
+  "file-text": FileText,
+  mail: Mail,
+  "user-check": UserCheck,
+  lock: Lock,
+  cookie: Cookie,
+};
