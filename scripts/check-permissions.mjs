@@ -727,4 +727,58 @@ assert.equal(ck.checkoutLines([{ id: "p1", quantity: 1 }], [{ ...SERVER[0], pric
   assert.deepEqual(hs.categoryErrors("nope", ["gone"]), {});
 }
 
+// Store styles (Apariencia → Estilos)
+{
+  const st = await import("../lib/styles.ts");
+  assert.deepEqual(st.validateStyles({}).value, st.DEFAULT_STYLES);
+  assert.deepEqual(st.validateStyles(undefined).value, st.DEFAULT_STYLES);
+  assert.deepEqual(st.DEFAULT_STYLES, { colors: {}, headingFont: "poppins", bodyFont: "poppins", corners: "soft", buttons: "filled" });
+  const full = { colors: { primary: "#112233", button: "#AABBCC" }, headingFont: "playfair", bodyFont: "inter", corners: "round", buttons: "outline" };
+  assert.deepEqual(st.validateStyles(full).value, { ...full, colors: { primary: "#112233", button: "#aabbcc" } });
+  assert.ok(st.validateStyles({ colors: { primary: "red" } }).errors["colors.primary"]);
+  assert.ok(st.validateStyles({ colors: { primary: "#12345" } }).errors["colors.primary"]);
+  assert.ok(st.validateStyles({ headingFont: "comic" }).errors.headingFont);
+  assert.ok(st.validateStyles({ bodyFont: "toString" }).errors.bodyFont);
+  assert.ok(st.validateStyles({ corners: "x" }).errors.corners);
+  assert.ok(st.validateStyles({ buttons: "x" }).errors.buttons);
+  // Lenient read: bad fields fall back, good ones stay
+  assert.deepEqual(st.readStyles({ headingFont: "comic", colors: { primary: "red", accent: "#FF0000" } }), { ...st.DEFAULT_STYLES, colors: { accent: "#ff0000" } });
+  assert.deepEqual(st.readStyles(null), st.DEFAULT_STYLES);
+  assert.equal(st.fontVar("dmSans"), "var(--font-f-dmSans)");
+
+  // Palette only = today's colors, radius and Poppins
+  const base = themeCssVars("coral");
+  const pure = st.styleCssVars(base, st.DEFAULT_STYLES);
+  for (const [key, val] of Object.entries(base)) assert.equal(pure[key], val, key);
+  assert.equal(pure["--radius"], "0.625rem");
+  assert.equal(pure["--radius-2xl"], "1rem");
+  assert.equal(pure["--store-font-heading"], "var(--font-f-poppins)");
+  assert.equal(pure["--store-font-body"], "var(--font-f-poppins)");
+  // Own colors override; soft tones are derived from them
+  const own = st.styleCssVars(base, {
+    ...st.DEFAULT_STYLES,
+    colors: { accent: "#000000", background: "#ffffff", primary: "#000000" },
+    corners: "square",
+    headingFont: "playfair",
+  });
+  assert.equal(own["--color-shop_orange"], "#000000");
+  assert.equal(own["--color-lightOrange"], "#b3b3b3");
+  assert.equal(own["--color-deal-bg"], "#b3b3b3");
+  assert.equal(own["--color-shop_light_pink"], "#ffffff");
+  assert.equal(own["--color-shop_light_bg"], "#f0f0f0");
+  assert.equal(own["--color-shop_btn_dark_green"], base["--color-shop_btn_dark_green"]);
+  assert.equal(own["--radius"], "0rem");
+  assert.equal(own["--radius-3xl"], "0rem");
+  assert.equal(own["--store-font-heading"], "var(--font-f-playfair)");
+  assert.equal(st.styleCssVars(base, { ...st.DEFAULT_STYLES, corners: "round" })["--radius"], "1rem");
+
+  // Colors math
+  assert.equal(st.mixHex("#000000", "#ffffff", 0.5), "#808080");
+  assert.equal(Math.round(st.contrastRatio("#ffffff", "#000000")), 21);
+  assert.equal(st.contrastRatio("#9a3412", "#9a3412"), 1);
+  assert.equal(st.contrastRatio("#000000", "#ffffff"), st.contrastRatio("#ffffff", "#000000"));
+  assert.ok(st.contrastRatio("#ffffff", "#9a3412") >= st.MIN_CONTRAST);
+  assert.ok(st.contrastRatio("#ffffff", "#fde68a") < st.MIN_CONTRAST);
+}
+
 console.log("check-permissions: ok");
