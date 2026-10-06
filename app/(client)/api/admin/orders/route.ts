@@ -1,20 +1,14 @@
-import { currentUser } from "@clerk/nextjs/server";
-import { isAdminEmail } from "@/lib/admin";
+import { getActor } from "@/lib/roles";
+import { can } from "@/lib/permissions";
 import { GET_ALL_ORDERS_QUERY } from "@/sanity/queries/query";
 import { backendClient } from "@/sanity/lib/backendClient";
 import { NextResponse } from "next/server";
 
 export async function GET() {
   try {
-    const user = await currentUser();
-    const userEmail = user?.primaryEmailAddress?.emailAddress;
-
-    // Verify user is admin
-    if (!isAdminEmail(userEmail)) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 403 }
-      );
+    const actor = await getActor();
+    if (!actor || !can(actor.role, "pedidos")) {
+      return NextResponse.json({ error: "No autorizado" }, { status: 403 });
     }
 
     // Use backendClient directly to bypass caching

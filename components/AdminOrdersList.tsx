@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 import useStore from "@/store";
 import { t, MESSAGES } from "@/lib/i18n";
 import type { Locale } from "@/lib/i18n";
@@ -50,50 +50,26 @@ export default function AdminOrdersList() {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [filter, setFilter] = useState<string>("all");
-  
-  // Use ref to track if we're updating to prevent polling interference
-  const isUpdatingRef = useRef(false);
-  const updateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  const fetchOrders = async () => {
-    // Don't fetch if update is in progress
-    if (isUpdatingRef.current) {
-      console.log(`⏭️ [fetchOrders] Skipped - update in progress`);
-      return;
-    }
-    
+
+  const fetchOrders = useCallback(async () => {
     try {
-      console.log(`📡 [fetchOrders] Fetching orders...`);
-      const response = await fetch("/api/admin/orders");
+      const response = await fetch("/api/admin/orders", { cache: "no-store" });
       if (!response.ok) throw new Error("Failed to fetch orders");
-      const data = await response.json();
-      console.log(`📡 [fetchOrders] Received ${data.length} orders`);
-      setOrders(data);
+      setOrders(await response.json());
     } catch (error) {
-      console.error("❌ [fetchOrders] Error:", error);
+      console.error("Error fetching orders:", error);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    console.log(`🚀 [useEffect] Component mounted - initial fetch`);
     fetchOrders();
-
-    // Set up polling every 10 seconds
-    pollingIntervalRef.current = setInterval(() => {
-      console.log(`⏱️ [polling] 10-second interval triggered`);
-      fetchOrders();
-    }, 10000);
-
-    return () => {
-      console.log(`🧹 [useEffect] Component unmounting - clearing polling`);
-      if (pollingIntervalRef.current) {
-        clearInterval(pollingIntervalRef.current);
-      }
-    };
-  }, []);
+    // ponytail: 10 s polling; switch to Sanity listen() if admins need instant updates.
+    const interval = setInterval(fetchOrders, 10000);
+    return () => clearInterval(interval);
+  }, [fetchOrders]);
 
   const getStatusColor = (status: string) => {
     const colors: Record<string, string> = {
@@ -128,64 +104,12 @@ export default function AdminOrdersList() {
   });
   
 
-  const handleStatusChange = async (updatedOrder: Order, newStatus: string) => {
-    console.log(`🔄 [handleStatusChange] Received updated order from server:`, updatedOrder.orderNumber, updatedOrder.status);
-    
-    // Mark as updating - this blocks polling completely
-    isUpdatingRef.current = true;
-    console.log(`🔒 [handleStatusChange] Locked polling - isUpdatingRef = true`);
-    
-    // Clear any pending timeout to prevent double-fetches
-    if (updateTimeoutRef.current) {
-      clearTimeout(updateTimeoutRef.current);
-      console.log(`🧹 [handleStatusChange] Cleared previous timeout`);
-    }
-
-    // Update local state with the server response immediately
-    setOrders((prevOrders) =>
-      prevOrders.map((o) => (o._id === updatedOrder._id ? updatedOrder : o))
-    );
-    console.log(`✅ [handleStatusChange] Local state updated with status: ${updatedOrder.status}`);
-
-    // Switch filter to "all" if current filter wouldn't show the updated order
-    if (filter !== "all" && updatedOrder.status !== filter) {
-      console.log(`🔀 [handleStatusChange] Switching filter from "${filter}" to "all"`);
-      setFilter("all");
-    }
-
-    // Close modal after successful update
+  // The API answers with the saved order and reads without CDN, so no verification refetch is needed.
+  const handleStatusChange = (updatedOrder: Order) => {
+    setOrders((prev) => prev.map((o) => (o._id === updatedOrder._id ? updatedOrder : o)));
+    if (filter !== "all" && updatedOrder.status !== filter) setFilter("all");
     setIsModalOpen(false);
     setSelectedOrder(null);
-
-    // Wait 1 second, then do a single verification fetch and unlock
-    updateTimeoutRef.current = setTimeout(async () => {
-      console.log(`🔍 [handleStatusChange] Starting verification fetch after 1s...`);
-      
-      try {
-        const verifyResponse = await fetch("/api/admin/orders");
-        if (verifyResponse.ok) {
-          const allOrders = await verifyResponse.json();
-          const verifiedOrder = allOrders.find((o: Order) => o._id === updatedOrder._id);
-          
-          if (verifiedOrder && verifiedOrder.status === newStatus) {
-            console.log(`✅ [handleStatusChange] Verification PASSED - Status confirmed: ${newStatus}`);
-          } else {
-            console.warn(`⚠️ [handleStatusChange] Verification FAILED - Expected ${newStatus}, got ${verifiedOrder?.status}`);
-          }
-          
-          setOrders(allOrders);
-          console.log(`✅ [handleStatusChange] Orders refreshed from server`);
-        } else {
-          console.error(`❌ [handleStatusChange] Verification fetch failed: ${verifyResponse.status}`);
-        }
-      } catch (error) {
-        console.error(`❌ [handleStatusChange] Verification error:`, error);
-      } finally {
-        // IMPORTANT: Unlock ONLY after verification completes
-        isUpdatingRef.current = false;
-        console.log(`🔓 [handleStatusChange] Unlocked polling - isUpdatingRef = false`);
-      }
-    }, 1000);
   };
 
   if (loading) {

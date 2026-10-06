@@ -58,9 +58,9 @@ assert.equal(canAssignRole(superadmin, cliente, "superadmin"), false);
 assert.equal(canAssignRole(admin, admin, "cliente"), false);
 
 // Admin tabs
-assert.deepEqual(adminTabs("superadmin"), ["tienda", "marca", "paginas", "usuarios"]);
-assert.deepEqual(adminTabs("admin"), ["tienda", "marca", "paginas", "usuarios"]);
-assert.deepEqual(adminTabs("empleado"), []);
+assert.deepEqual(adminTabs("superadmin"), ["tienda", "marca", "paginas", "pedidos", "usuarios"]);
+assert.deepEqual(adminTabs("admin"), ["tienda", "marca", "paginas", "pedidos", "usuarios"]);
+assert.deepEqual(adminTabs("empleado"), ["pedidos"]);
 assert.deepEqual(adminTabs("cliente"), []);
 
 // Themes

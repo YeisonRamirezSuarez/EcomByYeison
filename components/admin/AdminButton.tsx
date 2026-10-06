@@ -14,6 +14,7 @@ import type { AdminTab } from "@/lib/permissions";
 import type { SiteSettings } from "@/sanity/queries/siteSettings";
 import BrandTab from "./brand/BrandTab";
 import PagesTab from "./pages/PagesTab";
+import OrdersTab from "./OrdersTab";
 import AppearanceTab from "./AppearanceTab";
 import CurrencySection from "./CurrencySection";
 import UsersTab from "./UsersTab";
@@ -22,6 +23,7 @@ const TAB_LABELS: Record<AdminTab, string> = {
   tienda: "Tienda",
   marca: "Marca",
   paginas: "Páginas",
+  pedidos: "Pedidos",
   usuarios: "Usuarios",
 };
 
@@ -81,6 +83,7 @@ const AdminButton = ({ tabs, settings }: { tabs: AdminTab[]; settings: SiteSetti
             )}
             {active === "marca" && <BrandTab initial={settings} />}
             {active === "paginas" && <PagesTab initialPages={settings.pages} />}
+            {active === "pedidos" && <OrdersTab />}
             {active === "usuarios" && <UsersTab />}
           </div>
         </DialogPrimitive.Content>

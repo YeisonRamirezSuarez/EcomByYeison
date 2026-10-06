@@ -1,20 +1,10 @@
-import { currentUser } from "@clerk/nextjs/server";
-import { isAdminEmail } from "@/lib/admin";
-import { redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import React from "react";
+import { getActor } from "@/lib/roles";
+import { can } from "@/lib/permissions";
 
-export default async function AdminLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  const user = await currentUser();
-  const userEmail = user?.primaryEmailAddress?.emailAddress;
-
-  // Check if user is admin
-  if (!isAdminEmail(userEmail)) {
-    return redirect("/");
-  }
-
+export default async function AdminLayout({ children }: { children: React.ReactNode }) {
+  const actor = await getActor();
+  if (!actor || !can(actor.role, "pedidos")) notFound();
   return <>{children}</>;
 }

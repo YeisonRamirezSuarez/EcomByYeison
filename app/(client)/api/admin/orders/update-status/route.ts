@@ -1,5 +1,5 @@
-import { currentUser } from "@clerk/nextjs/server";
-import { isAdminEmail } from "@/lib/admin";
+import { getActor } from "@/lib/roles";
+import { can } from "@/lib/permissions";
 import { backendClient } from "@/sanity/lib/backendClient";
 import stripe from "@/lib/stripe";
 import { sendInvoiceEmail } from "@/lib/email";
@@ -18,12 +18,9 @@ const validStatuses = [
 
 export async function PATCH(req: NextRequest) {
   try {
-    const user = await currentUser();
-    const userEmail = user?.primaryEmailAddress?.emailAddress;
-
-    // Verify user is admin
-    if (!isAdminEmail(userEmail)) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+    const actor = await getActor();
+    if (!actor || !can(actor.role, "pedidos")) {
+      return NextResponse.json({ error: "No autorizado" }, { status: 403 });
     }
 
     const { orderId, newStatus } = await req.json();
