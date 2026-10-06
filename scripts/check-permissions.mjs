@@ -454,5 +454,7 @@ assert.equal(sf.shopHref("category=audio&price=0-100", "brand", "sony"), "/shop?
 assert.equal(sf.shopHref("category=audio&brand=sony", "brand", null), "/shop?category=audio");
 assert.equal(sf.shopHref("category=audio&brand=sony&price=1-&utm=x", "all", null), "/shop?utm=x");
 assert.equal(sf.shopHref("category=audio", "all", null), "/shop");
+// Two quick clicks: the second builds on the first query, not on the URL still on screen.
+assert.equal(sf.shopQuery(sf.shopQuery("", "category", "headphones"), "price", "0-100"), "category=headphones&price=0-100");
 
 console.log("check-permissions: ok");

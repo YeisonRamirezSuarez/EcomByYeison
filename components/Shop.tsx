@@ -1,6 +1,6 @@
 "use client";
 import { BRANDS_QUERYResult, Category, Product } from "@/sanity.types";
-import React, { useEffect, useState, useTransition } from "react";
+import React, { useEffect, useRef, useState, useTransition } from "react";
 import Container from "./Container";
 import CategoryList from "./shop/CategoryList";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -11,7 +11,7 @@ import NoProductAvailable from "./NoProductAvailable";
 import ProductCard from "./ProductCard";
 import useStore from "@/store";
 import { t } from "@/lib/i18n";
-import { readShopFilters, shopHref, type ShopFilterKey } from "@/lib/shopFilters";
+import { readShopFilters, shopQuery, type ShopFilterKey } from "@/lib/shopFilters";
 
 interface Props {
   categories: Category[];
@@ -28,8 +28,17 @@ const Shop = ({ categories, brands, products }: Props) => {
     Object.fromEntries(searchParams)
   );
   // The server renders the products for the URL; while it answers, the spinner shows.
-  const go = (key: ShopFilterKey | "all", value: string | null) =>
-    startTransition(() => router.push(shopHref(searchParams.toString(), key, value), { scroll: false }));
+  // searchParams stays on the old URL during the transition, so a second quick click
+  // builds on the query just requested.
+  const requested = useRef<string | null>(null);
+  useEffect(() => {
+    requested.current = null;
+  }, [searchParams]);
+  const go = (key: ShopFilterKey | "all", value: string | null) => {
+    const query = shopQuery(requested.current ?? searchParams.toString(), key, value);
+    requested.current = query;
+    startTransition(() => router.push(query ? `/shop?${query}` : "/shop", { scroll: false }));
+  };
   const setSelectedCategory = (value: string | null) => go("category", value);
   const setSelectedBrand = (value: string | null) => go("brand", value);
   const setSelectedPrice = (value: string | null) => go("price", value);
