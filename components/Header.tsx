@@ -91,7 +91,7 @@ const Header = async () => {
         </Container>
       </div>
       {tabs.length > 0 && (
-        <AdminButton tabs={tabs} theme={settings.theme} currency={settings.currency} />
+        <AdminButton tabs={tabs} settings={settings} />
       )}
     </header>
   );

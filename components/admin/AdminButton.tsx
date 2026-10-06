@@ -11,26 +11,19 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import type { AdminTab } from "@/lib/permissions";
-import type { ThemeKey } from "@/constants/themes";
-import type { CurrencyCode } from "@/constants/currencies";
+import type { SiteSettings } from "@/sanity/queries/siteSettings";
+import BrandTab from "./brand/BrandTab";
 import AppearanceTab from "./AppearanceTab";
 import CurrencySection from "./CurrencySection";
 import UsersTab from "./UsersTab";
 
 const TAB_LABELS: Record<AdminTab, string> = {
   tienda: "Tienda",
+  marca: "Marca",
   usuarios: "Usuarios",
 };
 
-const AdminButton = ({
-  tabs,
-  theme,
-  currency,
-}: {
-  tabs: AdminTab[];
-  theme: ThemeKey;
-  currency: CurrencyCode;
-}) => {
+const AdminButton = ({ tabs, settings }: { tabs: AdminTab[]; settings: SiteSettings }) => {
   const [active, setActive] = useState<AdminTab>(tabs[0]);
 
   return (
@@ -80,10 +73,11 @@ const AdminButton = ({
           <div className="flex-1 overflow-y-auto p-5" role="tabpanel">
             {active === "tienda" && (
               <div className="flex flex-col gap-6">
-                <AppearanceTab initialTheme={theme} />
-                <CurrencySection initialCurrency={currency} />
+                <AppearanceTab initialTheme={settings.theme} />
+                <CurrencySection initialCurrency={settings.currency} />
               </div>
             )}
+            {active === "marca" && <BrandTab initial={settings} />}
             {active === "usuarios" && <UsersTab />}
           </div>
         </DialogPrimitive.Content>

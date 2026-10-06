@@ -58,8 +58,8 @@ assert.equal(canAssignRole(superadmin, cliente, "superadmin"), false);
 assert.equal(canAssignRole(admin, admin, "cliente"), false);
 
 // Admin tabs
-assert.deepEqual(adminTabs("superadmin"), ["tienda", "usuarios"]);
-assert.deepEqual(adminTabs("admin"), ["tienda", "usuarios"]);
+assert.deepEqual(adminTabs("superadmin"), ["tienda", "marca", "usuarios"]);
+assert.deepEqual(adminTabs("admin"), ["tienda", "marca", "usuarios"]);
 assert.deepEqual(adminTabs("empleado"), []);
 assert.deepEqual(adminTabs("cliente"), []);
 
