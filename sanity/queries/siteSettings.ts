@@ -1,4 +1,6 @@
+import { headers } from "next/headers";
 import { client } from "../lib/client";
+import { backendClient } from "../lib/backendClient";
 import { DEFAULT_THEME, isThemeKey, type ThemeKey } from "@/constants/themes";
 import {
   DEFAULT_CURRENCY,
@@ -7,9 +9,14 @@ import {
 } from "@/constants/currencies";
 import { BRAND_DEFAULTS } from "@/constants/brandDefaults";
 import { withDefaults, type Brand } from "@/lib/brand";
+import { getActor } from "@/lib/roles";
+import { can } from "@/lib/permissions";
 
 export const SITE_SETTINGS_ID = "siteSettings";
+export const SITE_SETTINGS_DRAFT_ID = `drafts.${SITE_SETTINGS_ID}`;
 export const SITE_SETTINGS_TAG = "siteSettings";
+// Set by proxy.ts when the URL has ?vista-previa=1.
+export const PREVIEW_HEADER = "x-preview";
 
 // Image fields come back as { assetId, url }, or null when no asset is set.
 const image = (path: string) =>
@@ -25,22 +32,54 @@ const SITE_SETTINGS_QUERY = `*[_id == "siteSettings"][0]{
 
 export type SiteSettings = { theme: ThemeKey; currency: CurrencyCode } & Brand;
 
-export async function getSiteSettings(): Promise<SiteSettings> {
+function normalize(data: Record<string, unknown> | null): SiteSettings {
+  const theme = data?.theme;
+  const currency = data?.currency;
+  return {
+    ...withDefaults(data, BRAND_DEFAULTS),
+    theme: isThemeKey(theme) ? theme : DEFAULT_THEME,
+    currency: isCurrencyCode(currency) ? currency : DEFAULT_CURRENCY,
+  };
+}
+
+// The draft is shown only to people who may configure the store: the editor (draft: true)
+// or a ?vista-previa=1 request. Everyone else gets the published settings.
+async function canSeeDraft(draft: boolean): Promise<boolean> {
+  if (!draft) {
+    try {
+      if ((await headers()).get(PREVIEW_HEADER) !== "1") return false;
+    } catch {
+      return false; // outside a request (scripts)
+    }
+  }
+  const actor = await getActor();
+  return Boolean(actor && can(actor.role, "configurar"));
+}
+
+export async function getSiteSettings({ draft = false }: { draft?: boolean } = {}): Promise<SiteSettings> {
   try {
-    const data = await client.fetch<Record<string, unknown> | null>(
-      SITE_SETTINGS_QUERY,
-      {},
-      { useCdn: false, next: { revalidate: 3600, tags: [SITE_SETTINGS_TAG] } }
-    );
-    const theme = data?.theme;
-    const currency = data?.currency;
-    return {
-      ...withDefaults(data, BRAND_DEFAULTS),
-      theme: isThemeKey(theme) ? theme : DEFAULT_THEME,
-      currency: isCurrencyCode(currency) ? currency : DEFAULT_CURRENCY,
-    };
+    const data = (await canSeeDraft(draft))
+      ? await backendClient.fetch<Record<string, unknown> | null>(
+          SITE_SETTINGS_QUERY,
+          {},
+          { perspective: "drafts", useCdn: false, cache: "no-store" }
+        )
+      : await client.fetch<Record<string, unknown> | null>(
+          SITE_SETTINGS_QUERY,
+          {},
+          { useCdn: false, next: { revalidate: 3600, tags: [SITE_SETTINGS_TAG] } }
+        );
+    return normalize(data);
   } catch (error) {
     console.log("Error fetching site settings", error);
     return { ...BRAND_DEFAULTS, theme: DEFAULT_THEME, currency: DEFAULT_CURRENCY };
   }
+}
+
+export async function hasAppearanceDraft(): Promise<boolean> {
+  return backendClient.fetch<boolean>(
+    `defined(*[_id == $id][0]._id)`,
+    { id: SITE_SETTINGS_DRAFT_ID },
+    { perspective: "raw", useCdn: false, cache: "no-store" }
+  );
 }

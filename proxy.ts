@@ -71,6 +71,13 @@ export default clerkMiddleware(async (_auth, req) => {
   requestHeaders.set("x-nonce", nonce);
   requestHeaders.set("content-security-policy", csp);
 
+  // Preview mode for the appearance editor. Never trust a client-sent header:
+  // getSiteSettings() also checks the configurar permission before reading drafts.
+  requestHeaders.delete("x-preview");
+  if (req.nextUrl.searchParams.get("vista-previa") === "1") {
+    requestHeaders.set("x-preview", "1");
+  }
+
   const res = NextResponse.next({ request: { headers: requestHeaders } });
   res.headers.set("content-security-policy", csp);
   return res;
