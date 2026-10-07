@@ -2,16 +2,18 @@
 
 import { useEffect } from "react";
 import useStore from "@/store";
-import { LOCALE_COOKIE } from "@/lib/i18n";
+import type { Locale } from "@/lib/i18n";
 
-// Keeps <html lang> and the locale cookie (read by server components) in sync with the saved choice.
-const LocaleSync = () => {
-  const { locale, hasHydrated } = useStore();
+// The server decides the language (cookie + the store's languages). The language saved in the
+// browser follows it, so one the store no longer offers never comes back from localStorage.
+const LocaleSync = ({ locale }: { locale: Locale }) => {
+  const hasHydrated = useStore((state) => state.hasHydrated);
 
   useEffect(() => {
     if (!hasHydrated) return;
     document.documentElement.lang = locale;
-    document.cookie = `${LOCALE_COOKIE}=${locale}; path=/; max-age=31536000; samesite=lax`;
+    const store = useStore.getState();
+    if (store.locale !== locale) store.setLocale(locale);
   }, [locale, hasHydrated]);
 
   return null;

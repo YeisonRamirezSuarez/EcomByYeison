@@ -4,6 +4,7 @@ import { Address } from "@/sanity.types";
 import { urlFor } from "@/sanity/lib/image";
 import { CartItem } from "@/store";
 import Stripe from "stripe";
+import { resolveLocale } from "@/lib/localize";
 import { getSiteSettings } from "@/sanity/queries/siteSettings";
 import { backendClient } from "@/sanity/lib/backendClient";
 import { checkoutLines, type CheckoutProduct } from "@/lib/checkout";
@@ -28,7 +29,9 @@ export async function createCheckoutSession(
   items: GroupedCartItems[],
   metadata: Metadata
 ): Promise<ActionResult<string>> {
-  const locale = metadata.locale === "en" ? "en" : "es";
+  // Store settings never throw (defaults when Sanity is down). The browser's language counts only if the store offers it.
+  const settings = await getSiteSettings();
+  const locale = resolveLocale(metadata.locale, settings);
   try {
     // Only ids and quantities come from the browser: name, price and photo are read from Sanity.
     const wanted = (items ?? []).map((item) => ({ id: String(item?.product?._id ?? ""), quantity: item?.quantity }));
@@ -49,17 +52,17 @@ export async function createCheckoutSession(
     });
     const customerId = customers?.data?.length > 0 ? customers.data[0].id : "";
     // Store currency comes from the server, never from the browser.
-    const { currency } = await getSiteSettings();
+    const { currency } = settings;
 
     const sessionPayload: Stripe.Checkout.SessionCreateParams = {
-      locale: metadata.locale === "en" ? "en" : "es",
+      locale,
       metadata: {
         orderNumber: metadata.orderNumber,
         customerName: metadata.customerName,
         customerEmail: metadata.customerEmail,
         clerkUserId: metadata.clerkUserId!,
         address: JSON.stringify(metadata.address),
-        locale: metadata.locale || "es",
+        locale,
       },
       mode: "payment",
       allow_promotion_codes: true,

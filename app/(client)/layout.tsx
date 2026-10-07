@@ -5,6 +5,7 @@ import Footer from "@/components/Footer";
 import ClientClerkProvider from "@/components/ClientClerkProvider";
 import InstallPrompt from "@/components/InstallPrompt";
 import PreviewBridge from "@/components/PreviewBridge";
+import { getServerLocale } from "@/lib/locale";
 import { getSiteSettings } from "@/sanity/queries/siteSettings";
 
 export default async function ClientLayout({
@@ -18,9 +19,10 @@ export default async function ClientLayout({
   const nonce = requestHeaders.get("x-nonce") ?? undefined;
   const preview = requestHeaders.get("x-preview") === "1";
   const { styles } = await getSiteSettings();
+  const locale = await getServerLocale();
 
   return (
-    <ClientClerkProvider nonce={nonce}>
+    <ClientClerkProvider nonce={nonce} locale={locale}>
       <div className="flex flex-col min-h-screen overflow-x-hidden" data-store-root="" data-buttons={styles.buttons}>
         <Header />
         <main className="flex-1">{children}</main>

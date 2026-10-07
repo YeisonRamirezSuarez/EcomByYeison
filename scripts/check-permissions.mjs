@@ -1003,4 +1003,55 @@ assert.equal(ck.checkoutLines([{ id: "p1", quantity: 1 }], [{ ...SERVER[0], pric
   assert.match(id, /^subscriber\.[a-f0-9]{32}$/);
 }
 
+// Store languages (lib/localize.ts)
+{
+  const lz = await import("../lib/localize.ts");
+  const BOTH_ES = { languages: ["es", "en"], primary: "es" };
+  assert.deepEqual(lz.readLanguages(undefined), BOTH_ES);
+  assert.deepEqual(lz.readLanguages({}), BOTH_ES);
+  assert.deepEqual(lz.readLanguages({ languages: ["en"] }), { languages: ["en"], primary: "en" });
+  assert.deepEqual(lz.readLanguages({ languages: ["es"], defaultLocale: "en" }), { languages: ["es"], primary: "es" });
+  assert.deepEqual(lz.readLanguages({ languages: ["en", "es"], defaultLocale: "en" }), { languages: ["es", "en"], primary: "en" });
+  assert.deepEqual(lz.readLanguages({ languages: ["es", "en"], defaultLocale: "fr" }), BOTH_ES);
+  for (const bad of [[], ["fr"], ["es", "es"], ["es", "en", "es"], "es", null]) {
+    assert.deepEqual(lz.readLanguages({ languages: bad, defaultLocale: "en" }), BOTH_ES, String(bad));
+  }
+
+  // A cookie the store does not offer is ignored
+  assert.equal(lz.resolveLocale("en", { languages: ["es"], primary: "es" }), "es");
+  assert.equal(lz.resolveLocale("es", { languages: ["en"], primary: "en" }), "en");
+  assert.equal(lz.resolveLocale("en", BOTH_ES), "en");
+  assert.equal(lz.resolveLocale("fr", { languages: ["es", "en"], primary: "en" }), "en");
+  assert.equal(lz.resolveLocale(undefined, { languages: ["es", "en"], primary: "en" }), "en");
+  assert.equal(lz.resolveLocale(null, { languages: ["en"], primary: "en" }), "en"); // campaign saved before languages existed
+  assert.equal(lz.resolveLocale("", BOTH_ES), "es");
+
+  assert.deepEqual(lz.languagesFromChoice("en", "es"), { languages: ["en"], primary: "en" });
+  assert.deepEqual(lz.languagesFromChoice("both", "en"), { languages: ["es", "en"], primary: "en" });
+  assert.equal(lz.languagesFromChoice("both", "fr"), null);
+  assert.equal(lz.languagesFromChoice("todos", "es"), null);
+  assert.equal(lz.choiceOf({ languages: ["es"], primary: "es" }), "es");
+  assert.equal(lz.choiceOf(BOTH_ES), "both");
+
+  // Empty or blank translations fall back to the other language
+  assert.equal(lz.pickText("Hola", "Hello", "en"), "Hello");
+  assert.equal(lz.pickText("Hola", "Hello", "es"), "Hola");
+  assert.equal(lz.pickText("Hola", "", "en"), "Hola");
+  assert.equal(lz.pickText("Hola", "   ", "en"), "Hola");
+  assert.equal(lz.pickText("Hola", undefined, "en"), "Hola");
+  assert.equal(lz.pickText("", "Hello", "es"), "Hello");
+  assert.equal(lz.pickText(null, "Hello", "es"), "Hello");
+  assert.equal(lz.pickText(5, "Hello", "es"), "Hello");
+  assert.equal(lz.pickText("", "", "es"), "");
+  assert.equal(lz.pickText(undefined, undefined, "en"), "");
+
+  assert.equal(lz.localeKey("title", "es"), "title");
+  assert.equal(lz.localeKey("title", "en"), "titleEn");
+  assert.equal(lz.requiredIn("es"), "Campo obligatorio (español)");
+  assert.equal(lz.requiredIn("en"), "Campo obligatorio (inglés)");
+  assert.equal(lz.lacksLanguage({ ok: false, errors: { nameEn: "Campo obligatorio (inglés)" } }, "en"), true);
+  assert.equal(lz.lacksLanguage({ ok: false, errors: { price: "Número inválido" } }, "en"), false);
+  assert.equal(lz.lacksLanguage({ ok: true, value: {} }, "en"), false);
+}
+
 console.log("check-permissions: ok");

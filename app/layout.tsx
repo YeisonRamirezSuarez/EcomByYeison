@@ -65,7 +65,7 @@ const RootLayout = async ({ children }: { children: React.ReactNode }) => {
         ))}
       </head>
       <body className="antialiased overflow-x-hidden">
-        <LocaleSync />
+        <LocaleSync locale={locale} />
         <ServiceWorkerRegister />
         <StoreSettingsProvider currency={settings.currency} brand={toClientBrand(settings)}>
           {children}

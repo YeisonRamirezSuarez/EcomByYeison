@@ -12,6 +12,7 @@ import { BRAND_DEFAULTS } from "@/constants/brandDefaults";
 import { withDefaults, type Brand } from "@/lib/brand";
 import { readHomeSections, type HomeSection } from "@/lib/homeSections";
 import { DEFAULT_STYLES, readStyles, type Styles } from "@/lib/styles";
+import { DEFAULT_LANGUAGES, readLanguages, type StoreLanguages } from "@/lib/localize";
 import { getActor } from "@/lib/roles";
 import { can } from "@/lib/permissions";
 
@@ -26,7 +27,7 @@ const image = (path: string) =>
   `select(defined(${path}.asset) => { "assetId": ${path}.asset._ref, "url": ${path}.asset->url })`;
 
 const SITE_SETTINGS_QUERY = `*[_id == "siteSettings"][0]{
-  theme, currency, storeName, tagline, description, logoType, logoText, logoSubtext,
+  theme, currency, languages, defaultLocale, storeName, tagline, description, logoType, logoText, logoSubtext,
   "logoImage": ${image("logoImage")},
   "favicon": ${image("favicon")},
   banner{ badge, title, highlight, subtitle, description, primaryCta, secondaryCta, stats, "image": ${image("image")} },
@@ -40,13 +41,14 @@ const SITE_SETTINGS_QUERY = `*[_id == "siteSettings"][0]{
   styles
 }`;
 
-export type SiteSettings = { theme: ThemeKey; currency: CurrencyCode; homeSections: HomeSection[] | null; styles: Styles } & Brand;
+export type SiteSettings = { theme: ThemeKey; currency: CurrencyCode; homeSections: HomeSection[] | null; styles: Styles } & Brand & StoreLanguages;
 
 function normalize(data: Record<string, unknown> | null): SiteSettings {
   const theme = data?.theme;
   const currency = data?.currency;
   return {
     ...withDefaults(data, BRAND_DEFAULTS),
+    ...readLanguages(data),
     theme: isThemeKey(theme) ? theme : DEFAULT_THEME,
     currency: isCurrencyCode(currency) ? currency : DEFAULT_CURRENCY,
     homeSections: readHomeSections(data?.homeSections),
@@ -85,7 +87,7 @@ const loadSiteSettings = cache(async (draft: boolean): Promise<SiteSettings> => 
     return normalize(data);
   } catch (error) {
     console.log("Error fetching site settings", error);
-    return { ...BRAND_DEFAULTS, theme: DEFAULT_THEME, currency: DEFAULT_CURRENCY, homeSections: null, styles: DEFAULT_STYLES };
+    return { ...BRAND_DEFAULTS, ...DEFAULT_LANGUAGES, theme: DEFAULT_THEME, currency: DEFAULT_CURRENCY, homeSections: null, styles: DEFAULT_STYLES };
   }
 });
 

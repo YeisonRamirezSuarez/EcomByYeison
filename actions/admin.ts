@@ -3,6 +3,7 @@
 import { clerkClient } from "@clerk/nextjs/server";
 import { updateTag } from "next/cache";
 import { isCurrencyCode } from "@/constants/currencies";
+import { languagesFromChoice } from "@/lib/localize";
 import {
   assignableRoles,
   canAssignRole,
@@ -13,7 +14,7 @@ import {
 import { NOT_AUTHORIZED, requirePermission } from "@/lib/roles";
 import { run, type ActionResult } from "@/lib/actionResult";
 import { backendClient } from "@/sanity/lib/backendClient";
-import { SITE_SETTINGS_ID, SITE_SETTINGS_TAG } from "@/sanity/queries/siteSettings";
+import { SITE_SETTINGS_DRAFT_ID, SITE_SETTINGS_ID, SITE_SETTINGS_TAG, hasAppearanceDraft } from "@/sanity/queries/siteSettings";
 
 export type AdminUser = {
   id: string;
@@ -41,6 +42,25 @@ export async function saveCurrency(currency: string): Promise<ActionResult<null>
     await requirePermission("configurar");
     if (!isCurrencyCode(currency)) throw new Error("Moneda inválida");
     await saveSetting("currency", currency);
+    return null;
+  });
+}
+
+// Saved like the currency (not through the appearance draft). Also copied onto the draft when
+// there is one, so the appearance editor and its preview see the new languages.
+export async function saveLanguages(choice: string, primary: string): Promise<ActionResult<null>> {
+  return run(async () => {
+    await requirePermission("configurar");
+    const picked = languagesFromChoice(choice, primary);
+    if (!picked) throw new Error("Idiomas inválidos");
+    const fields = { languages: picked.languages, defaultLocale: picked.primary };
+    const tx = backendClient
+      .transaction()
+      .createIfNotExists({ _id: SITE_SETTINGS_ID, _type: "siteSettings" })
+      .patch(SITE_SETTINGS_ID, { set: fields });
+    if (await hasAppearanceDraft()) tx.patch(SITE_SETTINGS_DRAFT_ID, { set: fields });
+    await tx.commit();
+    updateTag(SITE_SETTINGS_TAG);
     return null;
   });
 }
