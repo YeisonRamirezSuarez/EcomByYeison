@@ -1,7 +1,14 @@
+import Link from "next/link";
 import PageHeader from "@/components/admin/shell/PageHeader";
+import CampaignsTab from "@/components/admin/newsletter/CampaignsTab";
 import SubscribersTab from "@/components/admin/newsletter/SubscribersTab";
 import { requireSection } from "@/lib/adminAccess";
 import { readSubscriberFilters } from "@/lib/newsletter";
+
+const TABS = [
+  ["suscriptores", "Suscriptores"],
+  ["campanas", "Campañas"],
+] as const;
 
 export default async function NewsletterPage({
   searchParams,
@@ -10,10 +17,23 @@ export default async function NewsletterPage({
 }) {
   await requireSection("boletin");
   const params = await searchParams;
+  const tab = params.tab === "campanas" ? "campanas" : "suscriptores";
   return (
     <>
       <PageHeader title="Boletín" description="Tus suscriptores y las campañas que les envías." />
-      <SubscribersTab filters={readSubscriberFilters(params)} />
+      <nav aria-label="Partes del boletín" className="flex gap-1 mb-4">
+        {TABS.map(([key, label]) => (
+          <Link
+            key={key}
+            href={`/admin/boletin?tab=${key}`}
+            aria-current={tab === key ? "page" : undefined}
+            className={`px-3 py-1.5 rounded-full text-sm font-semibold ${tab === key ? "bg-shop_dark_green text-white" : "text-gray-600 hover:bg-gray-100"}`}
+          >
+            {label}
+          </Link>
+        ))}
+      </nav>
+      {tab === "campanas" ? <CampaignsTab /> : <SubscribersTab filters={readSubscriberFilters(params)} />}
     </>
   );
 }

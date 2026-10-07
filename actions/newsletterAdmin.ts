@@ -2,13 +2,16 @@
 
 import { currentUser } from "@clerk/nextjs/server";
 import { ActionError, run, type ActionResult } from "@/lib/actionResult";
+import { renderCampaignEmail } from "@/lib/campaignEmail";
+import { getEmailBrand, loadEmailProducts, toPickerProduct, type PickerProduct } from "@/lib/campaignSend";
 import { addUsage, getMailer } from "@/lib/mailer";
-import { errorDetail, isEmail, isSubscriberId, MAX_IMPORT_ROWS, planImport, smtpErrorMessage, subscribersCsv, validateSmtpSettings, type SmtpErrorInfo } from "@/lib/newsletter";
+import { EMPTY_CAMPAIGN, errorDetail, isCampaignId, isEmail, isSubscriberId, MAX_IMPORT_ROWS, planImport, smtpErrorMessage, subscribersCsv, validateCampaign, validateSmtpSettings, type CampaignContent, type SmtpErrorInfo } from "@/lib/newsletter";
 import { requirePermission } from "@/lib/roles";
 import { encryptSecret, subscriberDocId } from "@/lib/secrets";
+import { siteUrl } from "@/lib/unsubscribe";
 import { INVALID_FORM } from "@/lib/validation";
 import { backendClient } from "@/sanity/lib/backendClient";
-import { getAllSubscribers, getSmtpDoc, getSubscriberStatus, getSubscriberStatuses, SMTP_ID } from "@/sanity/queries/newsletter";
+import { getAllSubscribers, getCampaign, getSmtpDoc, getSubscriberStatus, getSubscriberStatuses, searchProductDocs, SMTP_ID, type CampaignDoc } from "@/sanity/queries/newsletter";
 import { getSiteSettings } from "@/sanity/queries/siteSettings";
 
 const KEY_MISSING = "Falta la clave de cifrado en el servidor (EMAIL_ENCRYPTION_KEY)";
@@ -171,5 +174,110 @@ export async function exportSubscribers(): Promise<ActionResult<string>> {
   return run(async () => {
     await requirePermission("configurar");
     return subscribersCsv(await getAllSubscribers());
+  });
+}
+
+const CAMPAIGN_NOT_FOUND = "Campaña no encontrada";
+
+async function findCampaign(id: string): Promise<CampaignDoc> {
+  if (!isCampaignId(id)) throw new ActionError(CAMPAIGN_NOT_FOUND);
+  const campaign = await getCampaign(`campaign.${id}`);
+  if (!campaign) throw new ActionError(CAMPAIGN_NOT_FOUND);
+  return campaign;
+}
+
+// How content is stored: products as weak references, so deleting a product never fails.
+function campaignFields(content: CampaignContent) {
+  return {
+    subject: content.subject,
+    preheader: content.preheader,
+    image: content.image,
+    title: content.title,
+    text: content.text,
+    button: content.button,
+    products: content.products.map((id) => ({ _key: id, _type: "reference", _ref: id, _weak: true })),
+  };
+}
+
+async function createDraft(content: CampaignContent): Promise<string> {
+  const id = crypto.randomUUID();
+  await backendClient.create({
+    _id: `campaign.${id}`,
+    _type: "campaign",
+    ...campaignFields(content),
+    status: "draft",
+    cursor: "",
+    total: 0,
+    sent: 0,
+    failed: 0,
+    failures: [],
+  });
+  return id;
+}
+
+export async function createCampaign(): Promise<ActionResult<{ id: string }>> {
+  return run(async () => {
+    await requirePermission("configurar");
+    return { id: await createDraft(EMPTY_CAMPAIGN) };
+  });
+}
+
+export async function saveCampaign(id: string, input: unknown): Promise<ActionResult<null>> {
+  const checked = validateCampaign(input);
+  if (!checked.ok) return { ok: false, error: INVALID_FORM, errors: checked.errors };
+  return run(async () => {
+    await requirePermission("configurar");
+    const campaign = await findCampaign(id);
+    if (campaign.progress.status !== "draft") throw new ActionError("Esta campaña ya no se puede editar; duplícala para cambiarla");
+    await backendClient.patch(campaign._id).set(campaignFields(checked.value)).commit();
+    return null;
+  });
+}
+
+export async function duplicateCampaign(id: string): Promise<ActionResult<{ id: string }>> {
+  return run(async () => {
+    await requirePermission("configurar");
+    const campaign = await findCampaign(id);
+    return { id: await createDraft(campaign.content) };
+  });
+}
+
+export async function deleteCampaign(id: string): Promise<ActionResult<null>> {
+  return run(async () => {
+    await requirePermission("configurar");
+    const campaign = await findCampaign(id);
+    if (campaign.progress.status === "sending") throw new ActionError("Pausa el envío antes de borrar la campaña");
+    await backendClient.delete(campaign._id);
+    return null;
+  });
+}
+
+export async function searchCampaignProducts(term: string): Promise<ActionResult<PickerProduct[]>> {
+  return run(async () => {
+    await requirePermission("configurar");
+    const clean = (typeof term === "string" ? term : "").trim().slice(0, 60);
+    const [{ currency }, docs] = await Promise.all([getEmailBrand(), searchProductDocs(clean)]);
+    return docs.map((doc) => toPickerProduct(doc, currency));
+  });
+}
+
+// The saved draft, to the owner's own email. Does not touch the campaign's state or progress.
+export async function sendCampaignTest(id: string): Promise<ActionResult<{ to: string }>> {
+  return run(async () => {
+    await requirePermission("configurar");
+    const campaign = await findCampaign(id);
+    const to = await sessionEmail();
+    const mailer = await getMailer().catch(() => null);
+    if (!mailer) throw new ActionError("Configura el correo de salida en Ajustes → Correo.");
+    const { brand, currency } = await getEmailBrand();
+    const products = await loadEmailProducts(campaign.content.products, currency);
+    const email = renderCampaignEmail({ content: campaign.content, products, brand, baseUrl: siteUrl(), unsubscribeUrl: `${siteUrl()}/boletin/baja` });
+    try {
+      await mailer.transporter.sendMail({ from: mailer.from, replyTo: mailer.replyTo, to, subject: `[Prueba] ${email.subject}`, html: email.html, text: email.text });
+    } catch (error) {
+      throw new ActionError(smtpErrorMessage(error as SmtpErrorInfo));
+    }
+    await addUsage(1);
+    return { to };
   });
 }
