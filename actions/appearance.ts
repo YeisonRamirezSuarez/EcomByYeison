@@ -13,6 +13,7 @@ import {
   SITE_SETTINGS_DRAFT_ID,
   SITE_SETTINGS_ID,
   SITE_SETTINGS_TAG,
+  getSiteSettings,
 } from "@/sanity/queries/siteSettings";
 
 const RAW = { perspective: "raw", useCdn: false } as const;
@@ -34,7 +35,8 @@ export async function saveAppearanceDraft(section: string, data: unknown): Promi
     if (!isThemeKey(data)) return { ok: false, error: INVALID_FORM };
     write = { set: { theme: data }, unset: [], images: [] };
   } else {
-    const planned = planSection(section, data);
+    const { primary } = await getSiteSettings();
+    const planned = planSection(section, data, primary);
     if (!planned.ok) return { ok: false, error: INVALID_FORM, errors: planned.errors };
     write = planned.write;
   }

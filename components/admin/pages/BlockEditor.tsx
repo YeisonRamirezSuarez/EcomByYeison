@@ -79,7 +79,7 @@ const BlockEditor = ({
           onClick={() =>
             onChange([
               ...blocks,
-              { _key: crypto.randomUUID(), icon: "help-circle", title: "", text: "", href: "" },
+              { _key: crypto.randomUUID(), icon: "help-circle", title: "", titleEn: "", text: "", textEn: "", href: "" },
             ])
           }
           className="self-start text-xs font-semibold text-shop_dark_green"

@@ -1,38 +1,57 @@
-// Store identity types. Only type imports: also run by scripts/check-permissions.mjs.
+// Store identity types. A text the visitor sees has an English twin ending in "En"; the base field
+// is Spanish. Only type imports: also run by scripts/check-permissions.mjs.
 import type { ContentIconKey, PageKey, SocialKey } from "./validation";
 
 export type ImageValue = { assetId: string; url: string };
 export type Cta = { label: string; href: string };
-export type Stat = { _key: string; value: string; label: string };
+// A button the store shows: its text in both languages.
+export type LocalizedCta = Cta & { labelEn: string };
+export type Stat = { _key: string; value: string; label: string; labelEn: string };
 
 export type BannerSettings = {
   badge: string;
+  badgeEn: string;
   title: string;
+  titleEn: string;
   highlight: string;
+  highlightEn: string;
   subtitle: string;
+  subtitleEn: string;
   description: string;
-  primaryCta: Cta;
-  secondaryCta: Cta;
+  descriptionEn: string;
+  primaryCta: LocalizedCta;
+  secondaryCta: LocalizedCta;
   image: ImageValue | null;
   stats: Stat[];
 };
 
-export type ContactSettings = { email: string; phone: string; address: string; hours: string };
+export type ContactSettings = {
+  email: string;
+  phone: string;
+  address: string;
+  addressEn: string;
+  hours: string;
+  hoursEn: string;
+};
 export type SocialSettings = Record<SocialKey, string>;
 
 export type ContentBlock = {
   _key: string;
   icon: ContentIconKey;
   title: string;
+  titleEn: string;
   text: string;
+  textEn: string;
   href: string;
 };
-export type PageContent = { intro: string; blocks: ContentBlock[] };
+export type PageContent = { intro: string; introEn: string; blocks: ContentBlock[] };
 
 export type IdentitySettings = {
   storeName: string;
   tagline: string;
+  taglineEn: string;
   description: string;
+  descriptionEn: string;
   logoType: "text" | "image";
   logoText: string;
   logoSubtext: string;
@@ -69,6 +88,8 @@ const isPlainObject = (value: unknown): value is Record<string, unknown> =>
 
 // A field missing in Sanity (undefined or null) takes the default; a stored value wins, even "" or [].
 // Objects merge field by field over the default's keys only; a value of the wrong type falls back.
+// An English twin ("taglineEn") missing next to a stored Spanish text stays empty, so the store
+// shows the owner's own text instead of the default English one.
 function merge<T>(raw: unknown, defaults: T): T {
   if (raw === undefined || raw === null) return defaults;
   if (defaults === null) {
@@ -79,7 +100,11 @@ function merge<T>(raw: unknown, defaults: T): T {
   if (isPlainObject(defaults)) {
     if (!isPlainObject(raw)) return defaults;
     const out: Record<string, unknown> = {};
-    for (const key of Object.keys(defaults)) out[key] = merge(raw[key], defaults[key]);
+    for (const key of Object.keys(defaults)) {
+      const base = key.endsWith("En") ? key.slice(0, -2) : "";
+      const ownSpanish = base !== "" && base in defaults && raw[key] == null && raw[base] != null;
+      out[key] = ownSpanish ? "" : merge(raw[key], defaults[key]);
+    }
     return out as T;
   }
   return (typeof raw === typeof defaults ? raw : defaults) as T;
@@ -93,7 +118,9 @@ export const APPEARANCE_FIELDS = [
   "theme",
   "storeName",
   "tagline",
+  "taglineEn",
   "description",
+  "descriptionEn",
   "logoType",
   "logoText",
   "logoSubtext",

@@ -27,16 +27,16 @@ const image = (path: string) =>
   `select(defined(${path}.asset) => { "assetId": ${path}.asset._ref, "url": ${path}.asset->url })`;
 
 const SITE_SETTINGS_QUERY = `*[_id == "siteSettings"][0]{
-  theme, currency, languages, defaultLocale, storeName, tagline, description, logoType, logoText, logoSubtext,
+  theme, currency, languages, defaultLocale, storeName, tagline, taglineEn, description, descriptionEn, logoType, logoText, logoSubtext,
   "logoImage": ${image("logoImage")},
   "favicon": ${image("favicon")},
-  banner{ badge, title, highlight, subtitle, description, primaryCta, secondaryCta, stats, "image": ${image("image")} },
+  banner{ badge, badgeEn, title, titleEn, highlight, highlightEn, subtitle, subtitleEn, description, descriptionEn, primaryCta, secondaryCta, stats, "image": ${image("image")} },
   contact, social, pages,
   homeSections[]{
-    _key, kind, hidden, title, text, count, button, imageSide, background, source, align,
+    _key, kind, hidden, title, titleEn, text, textEn, count, button, imageSide, background, source, align,
     "category": category._ref,
     "image": ${image("image")},
-    items[]{ _key, name, text, rating, "photo": ${image("photo")} }
+    items[]{ _key, name, text, textEn, rating, "photo": ${image("photo")} }
   },
   styles
 }`;

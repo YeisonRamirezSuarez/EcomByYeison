@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { X } from "lucide-react";
 import { saveAppearanceDraft } from "@/actions/appearance";
-import type { BannerSettings, Cta } from "@/lib/brand";
+import type { BannerSettings, LocalizedCta } from "@/lib/brand";
 import { MAX_STATS, validateBanner } from "@/lib/validation";
 import { TextField, useAutosave, SavingNote, type AutosaveEvents } from "./fields";
 import ImageField from "./ImageField";
@@ -15,7 +15,7 @@ const BannerSection = ({ initial, ...events }: { initial: BannerSettings } & Aut
   const { errors, pending } = useAutosave(value, validateBanner, (v) => saveAppearanceDraft("banner", v), events);
   const set = <K extends keyof BannerSettings>(key: K, v: BannerSettings[K]) =>
     setValue((prev) => ({ ...prev, [key]: v }));
-  const setCta = (key: keyof typeof CTA_LABELS, field: keyof Cta, v: string) =>
+  const setCta = (key: keyof typeof CTA_LABELS, field: keyof LocalizedCta, v: string) =>
     setValue((prev) => ({ ...prev, [key]: { ...prev[key], [field]: v } }));
   const setStat = (i: number, field: "value" | "label", v: string) =>
     setValue((prev) => ({
@@ -57,7 +57,7 @@ const BannerSection = ({ initial, ...events }: { initial: BannerSettings } & Aut
         {value.stats.length < MAX_STATS && (
           <button
             type="button"
-            onClick={() => set("stats", [...value.stats, { _key: crypto.randomUUID(), value: "", label: "" }])}
+            onClick={() => set("stats", [...value.stats, { _key: crypto.randomUUID(), value: "", label: "", labelEn: "" }])}
             className="block text-xs font-semibold text-shop_dark_green mt-2"
           >
             + Agregar cifra

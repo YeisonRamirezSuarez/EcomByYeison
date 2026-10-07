@@ -1,6 +1,7 @@
 // Home page sections edited in Apariencia → Inicio, and how they are stored in Sanity.
 // Pure: only type imports, so scripts/check-permissions.mjs can run it.
-import type { Cta, ImageValue } from "./brand";
+import type { ImageValue, LocalizedCta } from "./brand";
+import type { Locale } from "./i18n";
 import type { ValidationResult } from "./validation";
 
 export const BUILT_IN_KINDS = ["banner", "productTabs", "categories", "brands", "blog"] as const;
@@ -40,7 +41,7 @@ export const PROMO_BACKGROUNDS = { primary: "Principal", accent: "Acento", secon
 export type ProductSource = keyof typeof PRODUCT_SOURCES;
 export type PromoBackground = keyof typeof PROMO_BACKGROUNDS;
 
-export type Testimonial = { _key: string; name: string; text: string; rating: number; photo: ImageValue | null };
+export type Testimonial = { _key: string; name: string; text: string; textEn: string; rating: number; photo: ImageValue | null };
 
 // One flat shape for every kind; each kind uses only its own fields (see STORED).
 export type HomeSection = {
@@ -48,10 +49,12 @@ export type HomeSection = {
   kind: SectionKind;
   hidden: boolean;
   title: string;
+  titleEn: string;
   text: string;
+  textEn: string;
   count: number | null;
   image: ImageValue | null;
-  button: Cta;
+  button: LocalizedCta;
   imageSide: "left" | "right";
   background: PromoBackground;
   source: ProductSource;
@@ -64,16 +67,19 @@ const ALL_KINDS: readonly string[] = [...BUILT_IN_KINDS, ...NEW_KINDS];
 const isKind = (value: unknown): value is SectionKind => typeof value === "string" && ALL_KINDS.includes(value);
 export const isBuiltIn = (kind: SectionKind): kind is BuiltInKind => (BUILT_IN_KINDS as readonly string[]).includes(kind);
 
+// Built-in sections start with their title in both languages.
 export function newSection(kind: SectionKind, key: string): HomeSection {
   const base: HomeSection = {
     _key: key,
     kind,
     hidden: false,
     title: "",
+    titleEn: "",
     text: "",
+    textEn: "",
     count: null,
     image: null,
-    button: { label: "", href: "" },
+    button: { label: "", labelEn: "", href: "" },
     imageSide: "left",
     background: "primary",
     source: "featured",
@@ -83,11 +89,11 @@ export function newSection(kind: SectionKind, key: string): HomeSection {
   };
   switch (kind) {
     case "categories":
-      return { ...base, title: "Categorías populares", count: 6 };
+      return { ...base, title: "Categorías populares", titleEn: "Popular categories", count: 6 };
     case "brands":
-      return { ...base, title: "Compra por marca" };
+      return { ...base, title: "Compra por marca", titleEn: "Shop by brand" };
     case "blog":
-      return { ...base, title: "Últimas entradas" };
+      return { ...base, title: "Últimas entradas", titleEn: "Latest posts" };
     case "products":
       return { ...base, count: 8 };
     default:
@@ -114,11 +120,11 @@ export function isSectionComplete(s: HomeSection): boolean {
     case "imageText":
       return Boolean(s.image);
     case "promo":
-      return Boolean(s.title);
+      return Boolean(s.title || s.titleEn);
     case "products":
       return s.source !== "category" || Boolean(s.category);
     case "richText":
-      return Boolean(s.text);
+      return Boolean(s.text || s.textEn);
     case "testimonials":
       return s.items.length > 0;
     default:
@@ -128,6 +134,10 @@ export function isSectionComplete(s: HomeSection): boolean {
 
 type Errors = Record<string, string>;
 const REQUIRED = "Campo obligatorio";
+// Same text as requiredIn in lib/localize.ts (pure modules cannot import each other).
+const requiredIn = (locale: Locale) => `${REQUIRED} (${locale === "en" ? "inglés" : "español"})`;
+// Which language a required text needs: the main one when saving, "any" when reading Sanity.
+type Need = Locale | "any";
 const HREF_ERROR = "Usa una ruta que empiece por / o un enlace https://";
 const tooLong = (max: number) => `Máximo ${max} caracteres`;
 const KEY = /^[a-zA-Z0-9_-]{1,40}$/;
@@ -163,6 +173,19 @@ function str(errors: Errors, key: string, value: unknown, max: number, required 
   return s;
 }
 
+// A text with an English twin ("title" + "titleEn"), optionally required (see Need).
+function pair(errors: Errors, key: string, v: Record<string, unknown>, name: string, max: number, required?: Need): [string, string] {
+  const es = str(errors, `${key}.${name}`, v[name], max);
+  const en = str(errors, `${key}.${name}En`, v[`${name}En`], max);
+  if (required === "any") {
+    if (!es && !en && !errors[`${key}.${name}`]) errors[`${key}.${name}`] = REQUIRED;
+  } else if (required) {
+    const field = `${key}.${required === "en" ? `${name}En` : name}`;
+    if (!(required === "en" ? en : es) && !errors[field]) errors[field] = requiredIn(required);
+  }
+  return [es, en];
+}
+
 function int(errors: Errors, key: string, value: unknown, min: number, max: number): number | null {
   if (value === null || value === undefined || value === "") return null;
   if (typeof value === "number" && Number.isInteger(value) && value >= min && value <= max) return value;
@@ -187,17 +210,18 @@ function image(errors: Errors, key: string, value: unknown): ImageValue | null {
   return null;
 }
 
-function button(errors: Errors, key: string, value: unknown): Cta {
+function button(errors: Errors, key: string, value: unknown): LocalizedCta {
   const v = asObject(value);
   const label = str(errors, `${key}.label`, v.label, 30);
+  const labelEn = str(errors, `${key}.labelEn`, v.labelEn, 30);
   const href = typeof v.href === "string" ? v.href.trim() : "";
   if (href.length > 200) errors[`${key}.href`] = tooLong(200);
   else if (href && !isValidHref(href)) errors[`${key}.href`] = HREF_ERROR;
-  else if (label && !href) errors[`${key}.href`] = REQUIRED;
-  return { label, href };
+  else if ((label || labelEn) && !href) errors[`${key}.href`] = REQUIRED;
+  return { label, labelEn, href };
 }
 
-function testimonials(errors: Errors, p: string, value: unknown): Testimonial[] {
+function testimonials(errors: Errors, p: string, value: unknown, need: Need): Testimonial[] {
   const raw = asArray(value);
   if (raw.length > MAX_TESTIMONIALS) errors[`${p}.items`] = `Máximo ${MAX_TESTIMONIALS} testimonios`;
   const used = new Set<string>();
@@ -207,51 +231,54 @@ function testimonials(errors: Errors, p: string, value: unknown): Testimonial[] 
     let key = typeof t._key === "string" && KEY.test(t._key) ? t._key : `t${j}`;
     while (used.has(key)) key = `${key}x`;
     used.add(key);
+    const [text, textEn] = pair(errors, q, t, "text", 300, need);
     return {
       _key: key,
       name: str(errors, `${q}.name`, t.name, 60, true),
-      text: str(errors, `${q}.text`, t.text, 300, true),
+      text,
+      textEn,
       rating: int(errors, `${q}.rating`, t.rating, 1, 5) ?? 5,
       photo: image(errors, `${q}.photo`, t.photo),
     };
   });
 }
 
-function parseSection(errors: Errors, p: string, kind: SectionKind, key: string, v: Record<string, unknown>): HomeSection {
+function parseSection(errors: Errors, p: string, kind: SectionKind, key: string, v: Record<string, unknown>, need: Need): HomeSection {
   const s = newSection(kind, key);
   s.hidden = v.hidden === true;
-  const title = () => str(errors, `${p}.title`, v.title, 80);
+  const setTitle = () => ([s.title, s.titleEn] = pair(errors, p, v, "title", 80));
+  const setText = (max: number) => ([s.text, s.textEn] = pair(errors, p, v, "text", max));
   switch (kind) {
     case "banner":
       break;
     case "productTabs":
     case "brands":
-      s.title = title();
+      setTitle();
       break;
     case "categories":
-      s.title = title();
+      setTitle();
       s.count = int(errors, `${p}.count`, v.count, 3, 12) ?? 6;
       break;
     case "blog":
-      s.title = title();
+      setTitle();
       s.count = int(errors, `${p}.count`, v.count, 1, 6);
       break;
     case "imageText":
       s.image = image(errors, `${p}.image`, v.image);
-      s.title = title();
-      s.text = str(errors, `${p}.text`, v.text, 500);
+      setTitle();
+      setText(500);
       s.button = button(errors, `${p}.button`, v.button);
       s.imageSide = option(errors, `${p}.imageSide`, v.imageSide, ["left", "right"] as const, "left");
       break;
     case "promo":
-      s.title = title();
-      s.text = str(errors, `${p}.text`, v.text, 300);
+      setTitle();
+      setText(300);
       s.button = button(errors, `${p}.button`, v.button);
       s.background = option(errors, `${p}.background`, v.background, Object.keys(PROMO_BACKGROUNDS) as PromoBackground[], "primary");
       s.image = image(errors, `${p}.image`, v.image);
       break;
     case "products": {
-      s.title = title();
+      setTitle();
       s.source = option(errors, `${p}.source`, v.source, Object.keys(PRODUCT_SOURCES) as ProductSource[], "featured");
       if (s.source === "category") {
         const id = typeof v.category === "string" ? v.category : "";
@@ -263,23 +290,23 @@ function parseSection(errors: Errors, p: string, kind: SectionKind, key: string,
       break;
     }
     case "richText":
-      s.title = title();
-      s.text = str(errors, `${p}.text`, v.text, 2000);
+      setTitle();
+      setText(2000);
       s.align = option(errors, `${p}.align`, v.align, ["left", "center"] as const, "left");
       break;
     case "testimonials":
-      s.title = title();
-      s.items = testimonials(errors, p, v.items);
+      setTitle();
+      s.items = testimonials(errors, p, v.items, need);
       break;
     case "newsletter":
-      s.title = title();
-      s.text = str(errors, `${p}.text`, v.text, 300);
+      setTitle();
+      setText(300);
       break;
   }
   return s;
 }
 
-function parseSections(input: unknown[], errors: Errors): HomeSection[] {
+function parseSections(input: unknown[], errors: Errors, need: Need): HomeSection[] {
   const keys = new Set<string>();
   const builtIns = new Set<SectionKind>();
   const sections: HomeSection[] = [];
@@ -297,16 +324,16 @@ function parseSections(input: unknown[], errors: Errors): HomeSection[] {
       if (builtIns.has(v.kind)) errors[`${p}.kind`] = "Esta sección ya está en el inicio";
       builtIns.add(v.kind);
     }
-    sections.push(parseSection(errors, p, v.kind, key, v));
+    sections.push(parseSection(errors, p, v.kind, key, v, need));
   });
   return sections;
 }
 
-export function validateHomeSections(input: unknown): ValidationResult<HomeSection[]> {
+export function validateHomeSections(input: unknown, primary: Locale = "es"): ValidationResult<HomeSection[]> {
   const errors: Errors = {};
   if (!Array.isArray(input)) return { ok: false, errors: { sections: "Lista de secciones inválida" } };
   if (input.length > MAX_SECTIONS) errors.sections = `Máximo ${MAX_SECTIONS} secciones`;
-  const sections = parseSections(input, errors);
+  const sections = parseSections(input, errors, primary);
   const missing = BUILT_IN_KINDS.filter((kind) => !sections.some((s) => s.kind === kind));
   if (missing.length > 0) errors.sections = `Faltan secciones: ${missing.map((k) => SECTION_LABELS[k]).join(", ")}`;
   return Object.keys(errors).length > 0 ? { ok: false, errors } : { ok: true, value: sections };
@@ -321,7 +348,7 @@ export function readHomeSections(raw: unknown): HomeSection[] | null {
   const out: HomeSection[] = [];
   for (const item of raw.slice(0, MAX_SECTIONS)) {
     const errors: Errors = {};
-    const [section] = parseSections([item], errors);
+    const [section] = parseSections([item], errors, "any");
     if (!section || Object.keys(errors).length > 0 || keys.has(section._key)) continue;
     if (isBuiltIn(section.kind) && builtIns.has(section.kind)) continue;
     keys.add(section._key);
@@ -334,16 +361,16 @@ export function readHomeSections(raw: unknown): HomeSection[] | null {
 // Fields each kind stores in Sanity.
 const STORED: Record<SectionKind, (keyof HomeSection)[]> = {
   banner: [],
-  productTabs: ["title"],
-  brands: ["title"],
-  categories: ["title", "count"],
-  blog: ["title", "count"],
-  imageText: ["image", "title", "text", "button", "imageSide"],
-  promo: ["title", "text", "button", "background", "image"],
-  products: ["title", "source", "category", "count"],
-  richText: ["title", "text", "align"],
-  testimonials: ["title", "items"],
-  newsletter: ["title", "text"],
+  productTabs: ["title", "titleEn"],
+  brands: ["title", "titleEn"],
+  categories: ["title", "titleEn", "count"],
+  blog: ["title", "titleEn", "count"],
+  imageText: ["image", "title", "titleEn", "text", "textEn", "button", "imageSide"],
+  promo: ["title", "titleEn", "text", "textEn", "button", "background", "image"],
+  products: ["title", "titleEn", "source", "category", "count"],
+  richText: ["title", "titleEn", "text", "textEn", "align"],
+  testimonials: ["title", "titleEn", "items"],
+  newsletter: ["title", "titleEn", "text", "textEn"],
 };
 
 const sanityImage = (img: ImageValue) => ({ _type: "image", asset: { _type: "reference", _ref: img.assetId } });

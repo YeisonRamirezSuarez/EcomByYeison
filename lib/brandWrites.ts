@@ -1,5 +1,6 @@
 import "server-only";
 import type { ImageValue } from "@/lib/brand";
+import type { Locale } from "@/lib/i18n";
 import {
   validateBanner,
   validateContact,
@@ -20,7 +21,7 @@ const sanityImage = (image: ImageValue) => ({
 
 // Validated section -> Sanity patch. Removed images are unset, never stored as null.
 // Array items get the _type Studio expects.
-export function planSection(section: string, data: unknown): Planned {
+export function planSection(section: string, data: unknown, primary: Locale = "es"): Planned {
   switch (section) {
     case "identity": {
       const r = validateIdentity(data);
@@ -41,7 +42,7 @@ export function planSection(section: string, data: unknown): Planned {
       return { ok: true, write };
     }
     case "banner": {
-      const r = validateBanner(data);
+      const r = validateBanner(data, primary);
       if (!r.ok) return r;
       const { image, stats, ...texts } = r.value;
       const banner = {
@@ -62,7 +63,7 @@ export function planSection(section: string, data: unknown): Planned {
       return { ok: true, write: { set: { social: r.value }, unset: [], images: [] } };
     }
     case "homeSections": {
-      const r = validateHomeSections(data);
+      const r = validateHomeSections(data, primary);
       if (!r.ok) return r;
       const { homeSections, images, categories } = homeSectionsWrite(r.value);
       return { ok: true, write: { set: { homeSections }, unset: [], images, categories } };

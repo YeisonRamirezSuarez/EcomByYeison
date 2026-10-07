@@ -98,7 +98,7 @@ const Testimonials = ({ items, errors, onChange }: { items: Testimonial[]; error
       {items.length < MAX_TESTIMONIALS && (
         <button
           type="button"
-          onClick={() => onChange([...items, { _key: crypto.randomUUID(), name: "", text: "", rating: 5, photo: null }])}
+          onClick={() => onChange([...items, { _key: crypto.randomUUID(), name: "", text: "", textEn: "", rating: 5, photo: null }])}
           className="self-start text-xs font-semibold text-shop_dark_green"
         >
           + Agregar testimonio

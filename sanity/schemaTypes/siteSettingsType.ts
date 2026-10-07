@@ -18,7 +18,7 @@ const longText = (name: string, title: string) =>
   defineField({ name, title, type: "text", rows: 3 });
 const image = (name: string, title: string) => defineField({ name, title, type: "image" });
 const cta = (name: string, title: string) =>
-  defineField({ name, title, type: "object", fields: [text("label", "Texto"), text("href", "Enlace")] });
+  defineField({ name, title, type: "object", fields: [text("label", "Texto"), text("labelEn", "Texto (inglés)"), text("href", "Enlace")] });
 
 const pageFields = PAGE_KEYS.map((key) =>
   defineField({
@@ -27,6 +27,7 @@ const pageFields = PAGE_KEYS.map((key) =>
     type: "object",
     fields: [
       longText("intro", "Introducción"),
+      longText("introEn", "Introducción (inglés)"),
       defineField({
         name: "blocks",
         title: "Bloques",
@@ -46,7 +47,9 @@ const pageFields = PAGE_KEYS.map((key) =>
                 },
               }),
               text("title", "Título"),
+              text("titleEn", "Título (inglés)"),
               longText("text", "Texto"),
+              longText("textEn", "Texto (inglés)"),
               text("href", "Enlace"),
             ],
           }),
@@ -97,7 +100,9 @@ export const siteSettingsType = defineType({
     defineField({ name: "defaultLocale", title: "Idioma principal", type: "string", readOnly: true }),
     text("storeName", "Nombre de la tienda"),
     text("tagline", "Eslogan"),
+    text("taglineEn", "Eslogan (inglés)"),
     longText("description", "Descripción"),
+    longText("descriptionEn", "Descripción (inglés)"),
     defineField({
       name: "logoType",
       title: "Tipo de logo",
@@ -120,10 +125,15 @@ export const siteSettingsType = defineType({
       type: "object",
       fields: [
         text("badge", "Etiqueta"),
+        text("badgeEn", "Etiqueta (inglés)"),
         text("title", "Título"),
+        text("titleEn", "Título (inglés)"),
         text("highlight", "Parte resaltada"),
+        text("highlightEn", "Parte resaltada (inglés)"),
         text("subtitle", "Subtítulo"),
+        text("subtitleEn", "Subtítulo (inglés)"),
         longText("description", "Descripción"),
+        longText("descriptionEn", "Descripción (inglés)"),
         cta("primaryCta", "Botón principal"),
         cta("secondaryCta", "Botón secundario"),
         image("image", "Imagen"),
@@ -136,7 +146,7 @@ export const siteSettingsType = defineType({
               type: "object",
               name: "bannerStat",
               title: "Cifra",
-              fields: [text("value", "Valor"), text("label", "Etiqueta")],
+              fields: [text("value", "Valor"), text("label", "Etiqueta"), text("labelEn", "Etiqueta (inglés)")],
             }),
           ],
         }),
@@ -150,7 +160,9 @@ export const siteSettingsType = defineType({
         text("email", "Correo"),
         text("phone", "Teléfono"),
         text("address", "Dirección"),
+        text("addressEn", "Dirección (inglés)"),
         text("hours", "Horario"),
+        text("hoursEn", "Horario (inglés)"),
       ],
     }),
     defineField({
@@ -179,7 +191,9 @@ export const siteSettingsType = defineType({
             }),
             defineField({ name: "hidden", title: "Oculta", type: "boolean" }),
             text("title", "Título"),
+            text("titleEn", "Título (inglés)"),
             longText("text", "Texto"),
+            longText("textEn", "Texto (inglés)"),
             defineField({ name: "count", title: "Cantidad", type: "number" }),
             image("image", "Imagen"),
             cta("button", "Botón"),
@@ -200,6 +214,7 @@ export const siteSettingsType = defineType({
                   fields: [
                     text("name", "Nombre"),
                     longText("text", "Opinión"),
+                    longText("textEn", "Opinión (inglés)"),
                     defineField({ name: "rating", title: "Estrellas", type: "number" }),
                     image("photo", "Foto"),
                   ],

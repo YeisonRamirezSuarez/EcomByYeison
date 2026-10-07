@@ -45,7 +45,7 @@ const Row = ({
       </button>
       <button type="button" id={`section-${section._key}-open`} onClick={onOpen} className={`flex-1 min-w-0 truncate text-left font-semibold ${section.hidden ? "text-gray-400" : "text-gray-800"}`}>
         {SECTION_LABELS[section.kind]}
-        {section.title && <span className="font-normal text-gray-500"> · {section.title}</span>}
+        {(section.title || section.titleEn) && <span className="font-normal text-gray-500"> · {section.title || section.titleEn}</span>}
       </button>
       {warning && (
         <span title="Incompleta: no se muestra en la tienda" className="text-amber-500">

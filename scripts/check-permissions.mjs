@@ -225,7 +225,7 @@ const block = (i) => ({ _key: `b${i}`, icon: "truck", title: `Bloque ${i}`, text
 const many = (n) => Array.from({ length: n }, (_, i) => block(i));
 assert.equal(v.validatePage({ intro: "", blocks: many(20) }).ok, true);
 assert.equal(v.validatePage({ intro: "", blocks: many(21) }).errors.blocks, "Máximo 20 bloques");
-assert.equal(v.validatePage({ blocks: [{ ...block(0), title: "" }] }).errors["blocks.0.title"], "Campo obligatorio");
+assert.equal(v.validatePage({ blocks: [{ ...block(0), title: "" }] }).errors["blocks.0.title"], "Campo obligatorio (español)");
 assert.equal(v.validatePage({ blocks: [{ ...block(0), icon: "bomba" }] }).errors["blocks.0.icon"], "Ícono inválido");
 assert.equal(v.validatePage({ blocks: [{ ...block(0), icon: "toString" }] }).errors["blocks.0.icon"], "Ícono inválido");
 assert.equal(
@@ -239,6 +239,19 @@ assert.equal(keyed.ok, true);
 assert.equal(new Set(keyed.value.blocks.map((b) => b._key)).size, 3);
 assert.ok(keyed.value.blocks.every((b) => /^[a-zA-Z0-9_-]{1,40}$/.test(b._key)));
 assert.equal(v.validatePage({ intro: "a".repeat(2001) }).errors.intro, "Máximo 2000 caracteres");
+// English twins: required texts only in the store's main language
+assert.equal(v.validatePage({ blocks: [{ ...block(0), title: "", titleEn: "Block" }] }).errors["blocks.0.title"], "Campo obligatorio (español)");
+const enPage = v.validatePage({ blocks: [{ ...block(0), title: "", titleEn: "Shipping" }] }, "en");
+assert.equal(enPage.ok, true);
+assert.equal(enPage.value.blocks[0].titleEn, "Shipping");
+assert.equal(v.validatePage({ blocks: [block(0)] }, "en").errors["blocks.0.titleEn"], "Campo obligatorio (inglés)");
+assert.equal(v.validatePage({ introEn: "a".repeat(2001) }).errors.introEn, "Máximo 2000 caracteres");
+assert.equal(v.validateBanner({ ...banner, stats: [{ _key: "a", value: "1", label: "", labelEn: "Sold" }] }, "en").ok, true);
+assert.equal(v.validateBanner({ ...banner, stats: [{ _key: "a", value: "1", label: "Vendidos" }] }, "en").errors["stats.0.labelEn"], "Campo obligatorio (inglés)");
+assert.equal(v.validateBanner({ ...banner, secondaryCta: { label: "", labelEn: "Deals", href: "" } }).errors["secondaryCta.href"], "Campo obligatorio");
+assert.equal(v.validateBanner({ ...banner, titleEn: "Up to" }).value.titleEn, "Up to");
+assert.equal(v.validateIdentity({ ...identity, taglineEn: "a".repeat(81) }).errors.taglineEn, "Máximo 80 caracteres");
+assert.equal(v.validateContact({ addressEn: " 1 Main St " }).value.addressEn, "1 Main St");
 
 assert.deepEqual(v.validateSubscription({ email: "  Ana@Mail.COM ", consent: true }), {
   ok: true,
@@ -267,6 +280,25 @@ for (const key of v.PAGE_KEYS) {
   assert.equal(v.validatePage(BRAND_DEFAULTS.pages[key]).ok, true, key);
   assert.ok(BRAND_DEFAULTS.pages[key].blocks.length > 0, key);
 }
+assert.equal(v.validateBanner(BRAND_DEFAULTS.banner, "en").ok, true);
+for (const key of v.PAGE_KEYS) {
+  assert.equal(v.validatePage(BRAND_DEFAULTS.pages[key], "en").ok, true, key);
+  for (const b of BRAND_DEFAULTS.pages[key].blocks) assert.ok(b.titleEn && b.textEn, `${key}.${b._key}`);
+}
+assert.ok(BRAND_DEFAULTS.taglineEn && BRAND_DEFAULTS.descriptionEn && BRAND_DEFAULTS.banner.titleEn && BRAND_DEFAULTS.pages.about.introEn);
+// A stored Spanish text without its English twin shows the owner's text, not the default English one
+const twins = withDefaults(
+  { tagline: "Lo mejor", banner: { title: "Hola", primaryCta: { label: "Ver", href: "/shop" } }, contact: { address: "Calle 1" }, pages: { about: { intro: "Somos" } } },
+  BRAND_DEFAULTS
+);
+assert.equal(twins.taglineEn, "");
+assert.equal(twins.descriptionEn, BRAND_DEFAULTS.descriptionEn); // description not stored: both defaults
+assert.equal(twins.banner.titleEn, "");
+assert.equal(twins.banner.badgeEn, BRAND_DEFAULTS.banner.badgeEn);
+assert.equal(twins.banner.primaryCta.labelEn, "");
+assert.equal(twins.contact.addressEn, "");
+assert.equal(twins.pages.about.introEn, "");
+assert.equal(withDefaults({ tagline: "Lo mejor", taglineEn: "The best" }, BRAND_DEFAULTS).taglineEn, "The best");
 
 assert.deepEqual(withDefaults(null, BRAND_DEFAULTS), BRAND_DEFAULTS);
 assert.deepEqual(withDefaults({}, BRAND_DEFAULTS), BRAND_DEFAULTS);
@@ -374,6 +406,8 @@ assert.equal(patch.unset.includes("currency"), false);
 // The editor's new fields travel with the appearance draft
 assert.ok(brandMod.APPEARANCE_FIELDS.includes("homeSections"));
 assert.ok(brandMod.APPEARANCE_FIELDS.includes("styles"));
+assert.ok(brandMod.APPEARANCE_FIELDS.includes("taglineEn"));
+assert.ok(brandMod.APPEARANCE_FIELDS.includes("descriptionEn"));
 // A draft from before the editor (no homeSections/styles) publishes the defaults back
 const oldDraft = brandMod.appearancePatch({ theme: "sand" });
 assert.ok(oldDraft.unset.includes("homeSections"));
@@ -618,6 +652,9 @@ assert.equal(ck.checkoutLines([{ id: "p1", quantity: 1 }], [{ ...SERVER[0], pric
   assert.equal(DEF[2].count, 6);
   assert.equal(DEF[3].title, "Compra por marca");
   assert.equal(DEF[4].title, "Últimas entradas");
+  assert.equal(DEF[2].titleEn, "Popular categories");
+  assert.equal(DEF[3].titleEn, "Shop by brand");
+  assert.equal(DEF[4].titleEn, "Latest posts");
   assert.equal(DEF[4].count, null);
   assert.ok(hs.validateHomeSections(DEF).ok);
 
@@ -634,7 +671,7 @@ assert.equal(ck.checkoutLines([{ id: "p1", quantity: 1 }], [{ ...SERVER[0], pric
   assert.ok(hs.validateHomeSections(many).errors.sections);
 
   const withSection = (s) => hs.validateHomeSections([...DEF, s]);
-  const it = { ...hs.newSection("imageText", "it1"), image: IMG, title: "Nueva", text: "Hola", button: { label: "Ver", href: "/shop" }, imageSide: "right" };
+  const it = { ...hs.newSection("imageText", "it1"), image: IMG, title: "Nueva", text: "Hola", button: { label: "Ver", labelEn: "", href: "/shop" }, imageSide: "right" };
   const okIt = withSection(it);
   assert.ok(okIt.ok);
   assert.deepEqual(okIt.value[5], it);
@@ -721,7 +758,7 @@ assert.equal(ck.checkoutLines([{ id: "p1", quantity: 1 }], [{ ...SERVER[0], pric
   assert.deepEqual(w.homeSections[0], {
     _key: "it1", _type: "homeSection", kind: "imageText", hidden: false,
     image: { _type: "image", asset: { _type: "reference", _ref: IMG.assetId } },
-    title: "Nueva", text: "Hola", button: { label: "Ver", href: "/shop" }, imageSide: "right",
+    title: "Nueva", titleEn: "", text: "Hola", textEn: "", button: { label: "Ver", labelEn: "", href: "/shop" }, imageSide: "right",
   });
   assert.deepEqual(w.homeSections[1].category, { _type: "reference", _ref: "cat1", _weak: true });
   assert.equal(w.homeSections[2].items[0]._type, "testimonial");
@@ -730,6 +767,21 @@ assert.equal(ck.checkoutLines([{ id: "p1", quantity: 1 }], [{ ...SERVER[0], pric
   assert.deepEqual(w.homeSections[4], { _key: "banner", _type: "homeSection", kind: "banner", hidden: false });
   assert.deepEqual(w.images, [IMG]);
   assert.deepEqual(w.categories, ["cat1"]);
+
+  // English twins: the testimonial text is required in the main language when saving,
+  // in either language when reading Sanity (content is never dropped by a language change)
+  const tmEn = { ...tm, items: [{ ...tm.items[0], text: "", textEn: "Great" }] };
+  assert.equal(withSection(tmEn).errors["sections.5.items.0.text"], "Campo obligatorio (español)");
+  assert.ok(hs.validateHomeSections([...DEF, tmEn], "en").ok);
+  assert.equal(hs.validateHomeSections([...DEF, tm], "en").errors["sections.5.items.0.textEn"], "Campo obligatorio (inglés)");
+  assert.deepEqual(hs.readHomeSections([tmEn]).map((s) => s.items[0].textEn), ["Great"]);
+  assert.equal(hs.readHomeSections([{ ...tm, items: [{ ...tm.items[0], text: "" }] }]), null);
+  assert.equal(hs.isSectionComplete({ ...hs.newSection("promo", "a"), titleEn: "Sale" }), true);
+  assert.equal(hs.isSectionComplete({ ...hs.newSection("richText", "a"), textEn: "Hi" }), true);
+  assert.ok(withSection({ ...it, titleEn: "x".repeat(81) }).errors["sections.5.titleEn"]);
+  assert.ok(withSection({ ...it, button: { label: "", labelEn: "See", href: "" } }).errors["sections.5.button.href"]);
+  assert.equal(hs.homeSectionsWrite([{ ...it, titleEn: "New" }]).homeSections[0].titleEn, "New");
+  assert.equal(hs.homeSectionsWrite([tmEn]).homeSections[0].items[0].textEn, "Great");
 
   // Deleted category → error on that section's field
   assert.deepEqual(hs.categoryErrors([DEF[0], { ...prod, category: "gone" }, { ...prod, _key: "p2", category: "cat1" }], ["gone"]), {

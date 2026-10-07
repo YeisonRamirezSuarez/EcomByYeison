@@ -4,13 +4,14 @@ import type {
   BannerSettings,
   ContactSettings,
   ContentBlock,
-  Cta,
   IdentitySettings,
   ImageValue,
+  LocalizedCta,
   PageContent,
   SocialSettings,
   Stat,
 } from "./brand";
+import type { Locale } from "./i18n";
 
 export type ValidationResult<T> =
   | { ok: true; value: T }
@@ -77,6 +78,8 @@ export const MAX_BLOCKS = 20;
 export const MAX_STATS = 3;
 
 const REQUIRED = "Campo obligatorio";
+// Same text as requiredIn in lib/localize.ts (pure modules cannot import each other).
+const requiredIn = (locale: Locale) => `${REQUIRED} (${locale === "en" ? "inglés" : "español"})`;
 const HREF_ERROR = "Usa una ruta que empiece por / o un enlace https://";
 const tooLong = (max: number) => `Máximo ${max} caracteres`;
 
@@ -127,6 +130,25 @@ function text(errors: Errors, key: string, value: unknown, max: number, required
   return s;
 }
 
+// A text with an English twin ("title" + "titleEn"). When required, only the store's main
+// language must be filled; the error goes on that field.
+function texts(
+  errors: Errors,
+  prefix: string,
+  v: Record<string, unknown>,
+  name: string,
+  max: number,
+  required: Locale | null = null
+): [string, string] {
+  const es = text(errors, `${prefix}${name}`, v[name], max);
+  const en = text(errors, `${prefix}${name}En`, v[`${name}En`], max);
+  if (required) {
+    const field = `${prefix}${required === "en" ? `${name}En` : name}`;
+    if (!(required === "en" ? en : es) && !errors[field]) errors[field] = requiredIn(required);
+  }
+  return [es, en];
+}
+
 function link(errors: Errors, key: string, value: unknown) {
   const s = typeof value === "string" ? value.trim() : "";
   if (s && !isValidHref(s)) errors[key] = HREF_ERROR;
@@ -161,10 +183,14 @@ export function validateIdentity(input: unknown): ValidationResult<IdentitySetti
   const errors: Errors = {};
   const logoType = v.logoType === "text" || v.logoType === "image" ? v.logoType : null;
   if (!logoType) errors.logoType = "Elige texto o imagen";
+  const [tagline, taglineEn] = texts(errors, "", v, "tagline", 80);
+  const [description, descriptionEn] = texts(errors, "", v, "description", 300);
   const value: IdentitySettings = {
     storeName: text(errors, "storeName", v.storeName, 60, true),
-    tagline: text(errors, "tagline", v.tagline, 80),
-    description: text(errors, "description", v.description, 300),
+    tagline,
+    taglineEn,
+    description,
+    descriptionEn,
     logoType: logoType ?? "text",
     logoText: text(errors, "logoText", v.logoText, 30, logoType === "text"),
     logoSubtext: text(errors, "logoSubtext", v.logoSubtext, 30),
@@ -177,15 +203,15 @@ export function validateIdentity(input: unknown): ValidationResult<IdentitySetti
   return result(errors, value);
 }
 
-function cta(errors: Errors, key: string, input: unknown): Cta {
+function cta(errors: Errors, key: string, input: unknown): LocalizedCta {
   const v = asObject(input);
-  const label = text(errors, `${key}.label`, v.label, 30);
+  const [label, labelEn] = texts(errors, `${key}.`, v, "label", 30);
   const href = link(errors, `${key}.href`, v.href);
-  if (label && !href && !errors[`${key}.href`]) errors[`${key}.href`] = REQUIRED;
-  return { label, href };
+  if ((label || labelEn) && !href && !errors[`${key}.href`]) errors[`${key}.href`] = REQUIRED;
+  return { label, labelEn, href };
 }
 
-export function validateBanner(input: unknown): ValidationResult<BannerSettings> {
+export function validateBanner(input: unknown, primary: Locale = "es"): ValidationResult<BannerSettings> {
   const v = asObject(input);
   const errors: Errors = {};
   const rawStats = asArray(v.stats);
@@ -193,18 +219,25 @@ export function validateBanner(input: unknown): ValidationResult<BannerSettings>
   const used = new Set<string>();
   const stats: Stat[] = rawStats.slice(0, MAX_STATS).map((item, i) => {
     const s = asObject(item);
-    return {
-      _key: uniqueKey(s._key, i, used),
-      value: text(errors, `stats.${i}.value`, s.value, 10, true),
-      label: text(errors, `stats.${i}.label`, s.label, 20, true),
-    };
+    const [label, labelEn] = texts(errors, `stats.${i}.`, s, "label", 20, primary);
+    return { _key: uniqueKey(s._key, i, used), value: text(errors, `stats.${i}.value`, s.value, 10, true), label, labelEn };
   });
+  const [badge, badgeEn] = texts(errors, "", v, "badge", 40);
+  const [title, titleEn] = texts(errors, "", v, "title", 60);
+  const [highlight, highlightEn] = texts(errors, "", v, "highlight", 30);
+  const [subtitle, subtitleEn] = texts(errors, "", v, "subtitle", 80);
+  const [description, descriptionEn] = texts(errors, "", v, "description", 200);
   return result(errors, {
-    badge: text(errors, "badge", v.badge, 40),
-    title: text(errors, "title", v.title, 60),
-    highlight: text(errors, "highlight", v.highlight, 30),
-    subtitle: text(errors, "subtitle", v.subtitle, 80),
-    description: text(errors, "description", v.description, 200),
+    badge,
+    badgeEn,
+    title,
+    titleEn,
+    highlight,
+    highlightEn,
+    subtitle,
+    subtitleEn,
+    description,
+    descriptionEn,
     primaryCta: cta(errors, "primaryCta", v.primaryCta),
     secondaryCta: cta(errors, "secondaryCta", v.secondaryCta),
     image: image(errors, "image", v.image),
@@ -217,12 +250,9 @@ export function validateContact(input: unknown): ValidationResult<ContactSetting
   const errors: Errors = {};
   const email = text(errors, "email", v.email, 254);
   if (email && !isEmail(email)) errors.email = "Correo inválido";
-  return result(errors, {
-    email,
-    phone: text(errors, "phone", v.phone, 80),
-    address: text(errors, "address", v.address, 80),
-    hours: text(errors, "hours", v.hours, 80),
-  });
+  const [address, addressEn] = texts(errors, "", v, "address", 80);
+  const [hours, hoursEn] = texts(errors, "", v, "hours", 80);
+  return result(errors, { email, phone: text(errors, "phone", v.phone, 80), address, addressEn, hours, hoursEn });
 }
 
 export function validateSocial(input: unknown): ValidationResult<SocialSettings> {
@@ -237,7 +267,7 @@ export function validateSocial(input: unknown): ValidationResult<SocialSettings>
   return result(errors, value);
 }
 
-export function validatePage(input: unknown): ValidationResult<PageContent> {
+export function validatePage(input: unknown, primary: Locale = "es"): ValidationResult<PageContent> {
   const v = asObject(input);
   const errors: Errors = {};
   const raw = asArray(v.blocks);
@@ -246,15 +276,20 @@ export function validatePage(input: unknown): ValidationResult<PageContent> {
   const blocks: ContentBlock[] = raw.slice(0, MAX_BLOCKS).map((item, i) => {
     const b = asObject(item);
     if (!isContentIcon(b.icon)) errors[`blocks.${i}.icon`] = "Ícono inválido";
+    const [title, titleEn] = texts(errors, `blocks.${i}.`, b, "title", 120, primary);
+    const [body, bodyEn] = texts(errors, `blocks.${i}.`, b, "text", 1000);
     return {
       _key: uniqueKey(b._key, i, used),
       icon: isContentIcon(b.icon) ? b.icon : "help-circle",
-      title: text(errors, `blocks.${i}.title`, b.title, 120, true),
-      text: text(errors, `blocks.${i}.text`, b.text, 1000),
+      title,
+      titleEn,
+      text: body,
+      textEn: bodyEn,
       href: link(errors, `blocks.${i}.href`, b.href),
     };
   });
-  return result(errors, { intro: text(errors, "intro", v.intro, 2000), blocks });
+  const [intro, introEn] = texts(errors, "", v, "intro", 2000);
+  return result(errors, { intro, introEn, blocks });
 }
 
 export function validateSubscription(input: unknown): ValidationResult<{ email: string }> {

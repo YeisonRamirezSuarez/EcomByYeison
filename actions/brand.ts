@@ -12,7 +12,7 @@ import {
   validatePage,
 } from "@/lib/validation";
 import { backendClient } from "@/sanity/lib/backendClient";
-import { SITE_SETTINGS_ID, SITE_SETTINGS_TAG } from "@/sanity/queries/siteSettings";
+import { SITE_SETTINGS_ID, SITE_SETTINGS_TAG, getSiteSettings } from "@/sanity/queries/siteSettings";
 
 async function ensureSettings() {
   await backendClient.createIfNotExists({ _id: SITE_SETTINGS_ID, _type: "siteSettings" });
@@ -22,7 +22,8 @@ export async function savePage(pageKey: string, data: unknown): Promise<ActionRe
   if (!(PAGE_KEYS as readonly string[]).includes(pageKey)) {
     return { ok: false, error: INVALID_FORM };
   }
-  const r = validatePage(data);
+  const { primary } = await getSiteSettings();
+  const r = validatePage(data, primary);
   if (!r.ok) return { ok: false, error: INVALID_FORM, errors: r.errors };
   const page = {
     ...r.value,

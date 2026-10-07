@@ -63,7 +63,7 @@ const AppearanceEditor = ({ initial, initialHasDraft, categories }: { initial: S
   };
 
   const stylesSave = useAutosave(styles, validateStyles, (v) => saveAppearanceDraft("styles", v), events);
-  const sectionsSave = useAutosave(sections, validateHomeSections, (v) => saveAppearanceDraft("homeSections", v), events);
+  const sectionsSave = useAutosave(sections, (input) => validateHomeSections(input, initial.primary), (v) => saveAppearanceDraft("homeSections", v), events);
 
   const categoryGone = (s: HomeSection) =>
     s.kind === "products" && s.source === "category" && Boolean(s.category) && !categories.some((c) => c._id === s.category);
@@ -151,7 +151,7 @@ const AppearanceEditor = ({ initial, initialHasDraft, categories }: { initial: S
       window.location.reload();
     });
 
-  const { storeName, tagline, description, logoType, logoText, logoSubtext, logoImage, favicon } = initial;
+  const { storeName, tagline, taglineEn, description, descriptionEn, logoType, logoText, logoSubtext, logoImage, favicon } = initial;
 
   return (
     <div className="flex flex-col gap-3 lg:h-[calc(100dvh-4rem)]">
@@ -269,7 +269,7 @@ const AppearanceEditor = ({ initial, initialHasDraft, categories }: { initial: S
           <div role="tabpanel" className={tab === "datos" ? "flex flex-col gap-6" : "hidden"}>
             <section className="flex flex-col gap-3">
               <h2 className="font-bold text-gray-900">Logo y nombre</h2>
-              <IdentitySection initial={{ storeName, tagline, description, logoType, logoText, logoSubtext, logoImage, favicon }} {...events} />
+              <IdentitySection initial={{ storeName, tagline, taglineEn, description, descriptionEn, logoType, logoText, logoSubtext, logoImage, favicon }} {...events} />
             </section>
             <section className="flex flex-col gap-3">
               <h2 className="font-bold text-gray-900">Contacto</h2>
