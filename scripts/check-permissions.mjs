@@ -694,6 +694,9 @@ assert.equal(ck.checkoutLines([{ id: "p1", quantity: 1 }], [{ ...SERVER[0], pric
   // Lenient read of what Sanity has (Studio edits skip validation)
   assert.equal(hs.readHomeSections(undefined), null);
   assert.equal(hs.readHomeSections(null), null);
+  // Nothing usable stored (empty or all invalid) reads as "never saved": the store shows the defaults
+  assert.equal(hs.readHomeSections([]), null);
+  assert.equal(hs.readHomeSections([{ _key: "x1", kind: "html" }]), null);
   const stored = [
     { _key: "banner", kind: "banner", hidden: null, title: null, items: null, button: null },
     { _key: "x1", kind: "html" },

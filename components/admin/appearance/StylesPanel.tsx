@@ -80,7 +80,10 @@ const StylesPanel = ({
 }) => {
   const color = (field: ColorField) => styles.colors[field] ?? PALETTE[field](theme);
   const custom = Object.keys(styles.colors).length > 0;
-  const unreadable = contrastRatio("#ffffff", color("button")) < MIN_CONTRAST || contrastRatio("#ffffff", color("primary")) < MIN_CONTRAST;
+  // White text sits on these two colors; name the ones where it reads badly.
+  const unreadable = (["button", "primary"] as const)
+    .filter((field) => contrastRatio("#ffffff", color(field)) < MIN_CONTRAST)
+    .map((field) => COLOR_FIELDS[field].split(" · ")[0]);
 
   return (
     <div className="flex flex-col gap-6">
@@ -112,10 +115,10 @@ const StylesPanel = ({
             {errors[`colors.${field}`] && <span className="text-xs text-red-600">{errors[`colors.${field}`]}</span>}
           </label>
         ))}
-        {unreadable && (
+        {unreadable.length > 0 && (
           <p role="status" className="flex gap-2 rounded-lg bg-amber-50 border border-amber-200 px-3 py-2 text-xs text-amber-900">
             <AlertTriangle size={14} className="shrink-0 mt-0.5" />
-            El texto de los botones puede leerse mal con este color.
+            El texto blanco puede leerse mal sobre: {unreadable.join(", ")}.
           </p>
         )}
       </section>

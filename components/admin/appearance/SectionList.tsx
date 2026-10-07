@@ -32,7 +32,15 @@ const Row = ({
       dragControls={controls}
       className="flex items-center gap-1 rounded-xl border border-gray-200 bg-white px-1.5 py-1.5 text-sm"
     >
-      <button type="button" aria-label="Arrastrar para mover" onPointerDown={(e) => controls.start(e)} className="touch-none cursor-grab p-1 text-gray-400">
+      {/* Mouse/touch only: keyboard and screen readers use Subir/Bajar. */}
+      <button
+        type="button"
+        tabIndex={-1}
+        aria-hidden="true"
+        title="Arrastrar para mover"
+        onPointerDown={(e) => controls.start(e)}
+        className="touch-none cursor-grab p-1 text-gray-400"
+      >
         <GripVertical size={16} />
       </button>
       <button type="button" id={`section-${section._key}-open`} onClick={onOpen} className={`flex-1 min-w-0 truncate text-left font-semibold ${section.hidden ? "text-gray-400" : "text-gray-800"}`}>

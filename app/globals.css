@@ -154,15 +154,27 @@ body {
 }
 
 /* Apariencia → Estilos → Botones "Con borde". data-buttons is set on the store wrapper only,
-   so the admin panel keeps filled buttons. */
-[data-buttons="outline"] .btn-primary {
+   so the admin panel keeps filled buttons. body:has() also reaches dialogs, which portal
+   outside the wrapper. */
+body:has([data-store-root][data-buttons="outline"]) .btn-primary {
   background-color: transparent;
   color: var(--color-shop_btn_dark_green);
   box-shadow: inset 0 0 0 2px var(--color-shop_btn_dark_green);
 }
-[data-buttons="outline"] .btn-primary:hover {
+body:has([data-store-root][data-buttons="outline"]) .btn-primary:hover {
   background-color: var(--color-shop_btn_dark_green);
   color: #fff;
+}
+
+/* The store's fonts and corners (Apariencia → Estilos) live on <html>; the admin panel keeps its
+   own. Set on body so the panel's dialogs and toasts (portaled to body) get them too. */
+body:has([data-admin-shell]) {
+  /* A real property keeps the rule: the dev CSS pipeline dropped it with only custom properties. */
+  font-family: var(--font-f-poppins), sans-serif;
+  --store-font-heading: var(--font-f-poppins);
+  --radius: 0.625rem;
+  --radius-2xl: 1rem;
+  --radius-3xl: 1.5rem;
 }
 
 @keyframes shrink {

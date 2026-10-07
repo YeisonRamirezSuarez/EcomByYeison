@@ -313,7 +313,7 @@ export function validateHomeSections(input: unknown): ValidationResult<HomeSecti
 }
 
 // Lenient read of what Sanity has (Studio edits skip validation): sections that do not pass
-// are dropped. null = never saved; the store then shows DEFAULT_HOME_SECTIONS.
+// are dropped. null = never saved, or nothing usable left; the store then shows DEFAULT_HOME_SECTIONS.
 export function readHomeSections(raw: unknown): HomeSection[] | null {
   if (!Array.isArray(raw)) return null;
   const keys = new Set<string>();
@@ -328,7 +328,7 @@ export function readHomeSections(raw: unknown): HomeSection[] | null {
     if (isBuiltIn(section.kind)) builtIns.add(section.kind);
     out.push(section);
   }
-  return out;
+  return out.length > 0 ? out : null;
 }
 
 // Fields each kind stores in Sanity.

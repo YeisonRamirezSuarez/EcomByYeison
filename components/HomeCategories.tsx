@@ -37,8 +37,12 @@ const HomeCategories = ({ categories, title = "Categorías populares" }: { categ
     <div className="my-10 md:my-16">
       <div className="flex items-center justify-between mb-6">
         <div>
-          {title && <h2 className="text-2xl font-bold text-darkColor">{title}</h2>}
-          <p className="text-gray-500 text-sm mt-1">Explora por tipo de producto</p>
+          {title && (
+            <>
+              <h2 className="text-2xl font-bold text-darkColor">{title}</h2>
+              <p className="text-gray-500 text-sm mt-1">Explora por tipo de producto</p>
+            </>
+          )}
         </div>
         <Link
           href="/shop"
