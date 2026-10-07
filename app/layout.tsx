@@ -4,7 +4,7 @@ import { Toaster } from "react-hot-toast";
 import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 import LocaleSync from "@/components/LocaleSync";
 import StoreSettingsProvider from "@/components/StoreSettingsProvider";
-import { getServerLocale } from "@/lib/locale";
+import { getServerLocale, getLocalizedSettings } from "@/lib/locale";
 import { splashScreens } from "@/lib/splashScreens";
 import { getSiteSettings } from "@/sanity/queries/siteSettings";
 import { THEMES, themeCssVars } from "@/constants/themes";
@@ -13,7 +13,7 @@ import { fontVariables } from "./fonts";
 import { styleCssVars } from "@/lib/styles";
 
 export async function generateMetadata(): Promise<Metadata> {
-  const { storeName, tagline, description, favicon } = await getSiteSettings();
+  const { storeName, tagline, description, favicon } = await getLocalizedSettings();
   return {
     metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"),
     title: {

@@ -31,7 +31,7 @@ const HomeTabbar = ({ selectedTab, onTabSelect }: Props) => {
         href={"/shop"}
         className="border border-darkColor px-4 py-1 rounded-full hover:bg-shop_light_green hover:text-white hover:border-shop_light_green hoverEffect"
       >
-        {locale === "en" ? "See all" : "Ver todo"}
+        {t(locale, "seeAll")}
       </Link>
     </div>
   );

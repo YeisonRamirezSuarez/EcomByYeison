@@ -8,12 +8,12 @@ export const getHeaderData = (locale: Locale) => [
 ];
 
 export const getQuickLinksData = (locale: Locale) => [
-  { title: locale === "en" ? "About us" : "Sobre nosotros", href: "/about" },
-  { title: locale === "en" ? "Contact us" : "Contáctanos", href: "/contact" },
-  { title: locale === "en" ? "Terms & Conditions" : "Términos y condiciones", href: "/terms" },
-  { title: locale === "en" ? "Privacy Policy" : "Política de privacidad", href: "/privacy" },
-  { title: locale === "en" ? "FAQs" : "Preguntas frecuentes", href: "/faqs" },
-  { title: locale === "en" ? "Help" : "Ayuda", href: "/help" },
+  { title: t(locale, "linkAbout"), href: "/about" },
+  { title: t(locale, "linkContact"), href: "/contact" },
+  { title: t(locale, "linkTerms"), href: "/terms" },
+  { title: t(locale, "linkPrivacy"), href: "/privacy" },
+  { title: t(locale, "linkFaqs"), href: "/faqs" },
+  { title: t(locale, "linkHelp"), href: "/help" },
 ];
 
 export const getProductType = (locale: Locale) => [

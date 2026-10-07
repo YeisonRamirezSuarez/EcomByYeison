@@ -4,12 +4,15 @@ import Image from "next/image";
 import { urlFor } from "@/sanity/lib/image";
 import Link from "next/link";
 import { Calendar, ArrowRight, BookOpen } from "lucide-react";
+import { getServerLocale } from "@/lib/locale";
+import { t } from "@/lib/i18n";
 import dayjs from "dayjs";
 import "dayjs/locale/es";
 
 dayjs.locale("es");
 
 const LatestBlog = async ({ title = "Últimas entradas", count = null }: { title?: string; count?: number | null }) => {
+  const locale = await getServerLocale();
   const blogs = await getLatestBlogs();
   if (!blogs?.length) return null;
   const shown = count ? blogs.slice(0, count) : blogs;
@@ -28,7 +31,7 @@ const LatestBlog = async ({ title = "Últimas entradas", count = null }: { title
           href="/blog"
           className="hidden md:flex items-center gap-1.5 text-sm font-semibold text-shop_dark_green hover:text-shop_light_green hoverEffect"
         >
-          Ver todo <ArrowRight size={15} />
+          {t(locale, "seeAll")} <ArrowRight size={15} />
         </Link>
       </div>
 

@@ -47,7 +47,7 @@ const NotFoundPage = async () => {
             >
               {t(locale, "notFoundHelpSection")}
             </Link>{" "}
-            {locale === "en" ? "or" : "o"}{" "}
+            {t(locale, "notFoundOr")}{" "}
             <Link
               href="/contact"
               className="font-medium text-amazon-blue hover:text-amazon-blue-dark"

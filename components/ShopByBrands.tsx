@@ -3,30 +3,11 @@ import Link from "next/link";
 import { getAllBrands } from "@/sanity/queries";
 import Image from "next/image";
 import { urlFor } from "@/sanity/lib/image";
+import { getServerLocale } from "@/lib/locale";
+import { t } from "@/lib/i18n";
+import { getSiteSettings } from "@/sanity/queries/siteSettings";
+import { CURRENCIES, formatPrice } from "@/constants/currencies";
 import { GitCompareArrows, Headset, ShieldCheck, Truck, ArrowRight } from "lucide-react";
-
-const extraData = [
-  {
-    title: "Envío gratis",
-    description: "En pedidos superiores a $99",
-    icon: <Truck size={28} />,
-  },
-  {
-    title: "Devoluciones",
-    description: "30 días sin preguntas",
-    icon: <GitCompareArrows size={28} />,
-  },
-  {
-    title: "Soporte 24/7",
-    description: "Atención al cliente siempre disponible",
-    icon: <Headset size={28} />,
-  },
-  {
-    title: "Garantía total",
-    description: "Calidad verificada por nuestro equipo",
-    icon: <ShieldCheck size={28} />,
-  },
-];
 
 const brandColors: Record<string, { bg: string; text: string; border: string }> = {
   samsung:  { bg: "#1428A0", text: "#fff",     border: "#1428A0" },
@@ -36,8 +17,16 @@ const brandColors: Record<string, { bg: string; text: string; border: string }> 
   dell:     { bg: "#007DB8", text: "#fff",     border: "#007DB8" },
 };
 
-const ShopByBrands = async ({ title = "Compra por marca" }: { title?: string }) => {
+const ShopByBrands = async ({ title }: { title?: string }) => {
+  const [locale, { currency }] = await Promise.all([getServerLocale(), getSiteSettings()]);
+  const amount = formatPrice(CURRENCIES[currency].freeShippingFrom, currency, 0);
   const brands = await getAllBrands();
+  const extraData = [
+    { title: t(locale, "perksShippingTitle"), description: t(locale, "perksShippingText", { amount }), icon: <Truck size={28} /> },
+    { title: t(locale, "perksReturnsTitle"), description: t(locale, "perksReturnsText"), icon: <GitCompareArrows size={28} /> },
+    { title: t(locale, "perksSupportTitle"), description: t(locale, "perksSupportText"), icon: <Headset size={28} /> },
+    { title: t(locale, "perksWarrantyTitle"), description: t(locale, "perksWarrantyText"), icon: <ShieldCheck size={28} /> },
+  ];
   return (
     <div className="my-10 md:my-16">
       {/* Header */}
@@ -46,7 +35,7 @@ const ShopByBrands = async ({ title = "Compra por marca" }: { title?: string }) 
           {title && (
             <>
               <h2 className="text-2xl font-bold text-darkColor">{title}</h2>
-              <p className="text-gray-500 text-sm mt-1">Las mejores marcas del mercado</p>
+              <p className="text-gray-500 text-sm mt-1">{t(locale, "brandsSubtitle")}</p>
             </>
           )}
         </div>
@@ -54,7 +43,7 @@ const ShopByBrands = async ({ title = "Compra por marca" }: { title?: string }) 
           href="/shop"
           className="hidden md:flex items-center gap-1.5 text-sm font-semibold text-shop_dark_green hover:text-shop_light_green hoverEffect"
         >
-          Ver todo <ArrowRight size={15} />
+          {t(locale, "seeAll")} <ArrowRight size={15} />
         </Link>
       </div>
 
@@ -99,7 +88,7 @@ const ShopByBrands = async ({ title = "Compra por marca" }: { title?: string }) 
               {/* Name */}
               <div className="p-4 flex items-center justify-between">
                 <div>
-                  <p className="text-[10px] font-bold text-shop_dark_green uppercase tracking-wider mb-0.5">Marca</p>
+                  <p className="text-[10px] font-bold text-shop_dark_green uppercase tracking-wider mb-0.5">{t(locale, "brandLabel")}</p>
                   <h3 className="font-bold text-darkColor text-sm">{brand?.title}</h3>
                 </div>
               </div>

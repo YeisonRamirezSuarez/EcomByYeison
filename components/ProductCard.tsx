@@ -1,3 +1,4 @@
+"use client";
 import { Product } from "@/sanity.types";
 import { urlFor } from "@/sanity/lib/image";
 import Image from "next/image";
@@ -7,8 +8,11 @@ import { Flame, Star, ShoppingBag } from "lucide-react";
 import PriceView from "./PriceView";
 import ProductSideMenu from "./ProductSideMenu";
 import AddToCartButton from "./AddToCartButton";
+import useStore from "@/store";
+import { t } from "@/lib/i18n";
 
 const ProductCard = ({ product }: { product: Product }) => {
+  const { locale } = useStore();
   const isOutOfStock = (product?.stock ?? 0) === 0;
 
   return (
@@ -65,7 +69,7 @@ const ProductCard = ({ product }: { product: Product }) => {
         {isOutOfStock && (
           <div className="absolute inset-0 bg-white/50 flex items-center justify-center backdrop-blur-[1px]">
             <span className="bg-gray-800/80 text-white text-xs font-bold px-3 py-1.5 rounded-full uppercase tracking-wider">
-              Sin stock
+              {t(locale, "productOutOfStock")}
             </span>
           </div>
         )}
@@ -127,7 +131,7 @@ const ProductCard = ({ product }: { product: Product }) => {
                 : "bg-shop_light_green/10 text-shop_light_green"
             }`}
           >
-            {isOutOfStock ? "Agotado" : `${product?.stock} uds`}
+            {isOutOfStock ? t(locale, "productOutOfStock") : t(locale, "categoryUnits", { count: String(product?.stock ?? 0) })}
           </span>
         </div>
       </div>

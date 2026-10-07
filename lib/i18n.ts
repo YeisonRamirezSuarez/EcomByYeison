@@ -102,6 +102,30 @@ type Messages = {
   successLoading: string;
   productInStock: string;
   productOutOfStock: string;
+  seeAll: string;
+  brandsSubtitle: string;
+  brandLabel: string;
+  categoriesSubtitle: string;
+  categoryLabel: string;
+  categoryUnits: string;
+  perksShippingTitle: string;
+  perksShippingText: string;
+  perksReturnsTitle: string;
+  perksReturnsText: string;
+  perksSupportTitle: string;
+  perksSupportText: string;
+  perksWarrantyTitle: string;
+  perksWarrantyText: string;
+  quantityDecreased: string;
+  quantityIncreased: string;
+  productCharacteristics: string;
+  notFoundOr: string;
+  linkAbout: string;
+  linkContact: string;
+  linkTerms: string;
+  linkPrivacy: string;
+  linkFaqs: string;
+  linkHelp: string;
   productCompareColor: string;
   productAskQuestion: string;
   productDeliveryReturn: string;
@@ -352,6 +376,30 @@ export const MESSAGES: Record<Locale, Messages> = {
     successLoading: "Cargando...",
     productInStock: "En stock",
     productOutOfStock: "Sin stock",
+    seeAll: "Ver todo",
+    brandsSubtitle: "Las mejores marcas del mercado",
+    brandLabel: "Marca",
+    categoriesSubtitle: "Explora por tipo de producto",
+    categoryLabel: "Categoría",
+    categoryUnits: "{count} uds",
+    perksShippingTitle: "Envío gratis",
+    perksShippingText: "En pedidos superiores a {amount}",
+    perksReturnsTitle: "Devoluciones",
+    perksReturnsText: "30 días sin preguntas",
+    perksSupportTitle: "Soporte 24/7",
+    perksSupportText: "Atención al cliente siempre disponible",
+    perksWarrantyTitle: "Garantía total",
+    perksWarrantyText: "Calidad verificada por nuestro equipo",
+    quantityDecreased: "Cantidad reducida",
+    quantityIncreased: "Cantidad aumentada",
+    productCharacteristics: "{name}: características",
+    notFoundOr: "o",
+    linkAbout: "Sobre nosotros",
+    linkContact: "Contáctanos",
+    linkTerms: "Términos y condiciones",
+    linkPrivacy: "Política de privacidad",
+    linkFaqs: "Preguntas frecuentes",
+    linkHelp: "Ayuda",
     productCompareColor: "Comparar color",
     productAskQuestion: "Hacer una pregunta",
     productDeliveryReturn: "Envío y devoluciones",
@@ -600,6 +648,30 @@ export const MESSAGES: Record<Locale, Messages> = {
     successLoading: "Loading...",
     productInStock: "In Stock",
     productOutOfStock: "Out of Stock",
+    seeAll: "See all",
+    brandsSubtitle: "The best brands on the market",
+    brandLabel: "Brand",
+    categoriesSubtitle: "Browse by product type",
+    categoryLabel: "Category",
+    categoryUnits: "{count} items",
+    perksShippingTitle: "Free shipping",
+    perksShippingText: "On orders over {amount}",
+    perksReturnsTitle: "Returns",
+    perksReturnsText: "30 days, no questions asked",
+    perksSupportTitle: "24/7 support",
+    perksSupportText: "Customer service always available",
+    perksWarrantyTitle: "Full warranty",
+    perksWarrantyText: "Quality checked by our team",
+    quantityDecreased: "Quantity decreased",
+    quantityIncreased: "Quantity increased",
+    productCharacteristics: "{name}: characteristics",
+    notFoundOr: "or",
+    linkAbout: "About us",
+    linkContact: "Contact us",
+    linkTerms: "Terms & Conditions",
+    linkPrivacy: "Privacy Policy",
+    linkFaqs: "FAQs",
+    linkHelp: "Help",
     productCompareColor: "Compare color",
     productAskQuestion: "Ask a question",
     productDeliveryReturn: "Delivery & Return",

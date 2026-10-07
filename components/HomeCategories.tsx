@@ -16,6 +16,8 @@ import {
   Tag,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import { getServerLocale } from "@/lib/locale";
+import { t } from "@/lib/i18n";
 
 const categoryIcons: Record<string, LucideIcon> = {
   smartphones: Smartphone,
@@ -32,7 +34,8 @@ const categoryIcons: Record<string, LucideIcon> = {
 
 type CategoryWithCount = Category & { productCount?: number };
 
-const HomeCategories = ({ categories, title = "Categorías populares" }: { categories: CategoryWithCount[]; title?: string }) => {
+const HomeCategories = async ({ categories, title }: { categories: CategoryWithCount[]; title?: string }) => {
+  const locale = await getServerLocale();
   return (
     <div className="my-10 md:my-16">
       <div className="flex items-center justify-between mb-6">
@@ -40,7 +43,7 @@ const HomeCategories = ({ categories, title = "Categorías populares" }: { categ
           {title && (
             <>
               <h2 className="text-2xl font-bold text-darkColor">{title}</h2>
-              <p className="text-gray-500 text-sm mt-1">Explora por tipo de producto</p>
+              <p className="text-gray-500 text-sm mt-1">{t(locale, "categoriesSubtitle")}</p>
             </>
           )}
         </div>
@@ -48,7 +51,7 @@ const HomeCategories = ({ categories, title = "Categorías populares" }: { categ
           href="/shop"
           className="hidden md:flex items-center gap-1.5 text-sm font-semibold text-shop_dark_green hover:text-shop_light_green hoverEffect"
         >
-          Ver todo <ArrowRight size={15} />
+          {t(locale, "seeAll")} <ArrowRight size={15} />
         </Link>
       </div>
 
@@ -83,11 +86,11 @@ const HomeCategories = ({ categories, title = "Categorías populares" }: { categ
               {/* Text */}
               <div className="p-4 flex items-center justify-between">
                 <div>
-                  <p className="text-[10px] font-bold text-shop_dark_green uppercase tracking-wider mb-0.5">Categoría</p>
+                  <p className="text-[10px] font-bold text-shop_dark_green uppercase tracking-wider mb-0.5">{t(locale, "categoryLabel")}</p>
                   <h3 className="font-bold text-darkColor text-sm">{category?.title}</h3>
                 </div>
                 <span className="bg-shop_dark_green/10 text-shop_dark_green text-xs font-bold px-2 py-0.5 rounded-full">
-                  {category?.productCount ?? 0} uds
+                  {t(locale, "categoryUnits", { count: String(category?.productCount ?? 0) })}
                 </span>
               </div>
             </Link>
