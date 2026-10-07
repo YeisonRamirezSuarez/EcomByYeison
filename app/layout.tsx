@@ -1,7 +1,6 @@
 import "./globals.css";
 import type { Metadata, Viewport } from "next";
 import { Toaster } from "react-hot-toast";
-import { Poppins } from "next/font/google";
 import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 import LocaleSync from "@/components/LocaleSync";
 import StoreSettingsProvider from "@/components/StoreSettingsProvider";
@@ -10,13 +9,8 @@ import { splashScreens } from "@/lib/splashScreens";
 import { getSiteSettings } from "@/sanity/queries/siteSettings";
 import { THEMES, themeCssVars } from "@/constants/themes";
 import { toClientBrand } from "@/lib/brand";
-
-const poppins = Poppins({
-  subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700", "800", "900"],
-  variable: "--font-poppins",
-  display: "swap",
-});
+import { fontVariables } from "./fonts";
+import { styleCssVars } from "@/lib/styles";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { storeName, tagline, description, favicon } = await getSiteSettings();
@@ -43,9 +37,9 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export async function generateViewport(): Promise<Viewport> {
-  const { theme } = await getSiteSettings();
+  const { theme, styles } = await getSiteSettings();
   return {
-    themeColor: THEMES[theme].primary,
+    themeColor: styles.colors.primary ?? THEMES[theme].primary,
     width: "device-width",
     initialScale: 1,
     maximumScale: 5,
@@ -60,8 +54,8 @@ const RootLayout = async ({ children }: { children: React.ReactNode }) => {
   return (
     <html
       lang={locale}
-      className={poppins.variable}
-      style={themeCssVars(settings.theme) as React.CSSProperties}
+      className={fontVariables}
+      style={styleCssVars(themeCssVars(settings.theme), settings.styles) as React.CSSProperties}
     >
       <head>
         {/* iOS launch images — not supported by Next's Metadata API, so the
@@ -70,7 +64,7 @@ const RootLayout = async ({ children }: { children: React.ReactNode }) => {
           <link key={s.href} rel="apple-touch-startup-image" media={s.media} href={s.href} />
         ))}
       </head>
-      <body className="font-poppins antialiased overflow-x-hidden">
+      <body className="antialiased overflow-x-hidden">
         <LocaleSync />
         <ServiceWorkerRegister />
         <StoreSettingsProvider currency={settings.currency} brand={toClientBrand(settings)}>

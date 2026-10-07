@@ -10,7 +10,7 @@ const Title = ({
   return (
     <h2
       className={cn(
-        "text-3xl font-bold text-shop_dark_green capitalize tracking-wide font-sans",
+        "text-3xl font-bold text-shop_dark_green capitalize tracking-wide",
         className
       )}
     >
@@ -26,7 +26,7 @@ const SubTitle = ({
   className?: string;
 }) => {
   return (
-    <h3 className={cn("font-semibold text-gray-900 font-sans", className)}>
+    <h3 className={cn("font-semibold text-gray-900", className)}>
       {children}
     </h3>
   );
