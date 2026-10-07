@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Star, X } from "lucide-react";
 import type { Option } from "@/sanity/queries/adminCatalog";
 import {
@@ -235,12 +235,14 @@ const SectionForm = ({
   onRemove: () => void;
 }) => {
   const [confirm, setConfirm] = useState(false);
+  const heading = useRef<HTMLHeadingElement>(null);
+  useEffect(() => heading.current?.focus(), []);
   return (
     <div className="flex flex-col gap-3">
       <button type="button" onClick={onBack} className="self-start text-sm font-semibold text-shop_orange">
         ← Secciones
       </button>
-      <h2 className="font-bold text-gray-900">{SECTION_LABELS[section.kind]}</h2>
+      <h2 ref={heading} tabIndex={-1} className="font-bold text-gray-900 outline-none">{SECTION_LABELS[section.kind]}</h2>
       {!shown && (
         <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
           {categoryGone ? "La categoría elegida ya no existe; elige otra." : INCOMPLETE[section.kind]}

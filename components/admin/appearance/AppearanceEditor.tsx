@@ -88,9 +88,16 @@ const AppearanceEditor = ({ initial, initialHasDraft, categories }: { initial: S
     setSections((list) => [...list, section]);
     setSelectedKey(section._key);
   };
+  // The list remounts after the form closes: put keyboard focus back once it renders.
+  const focusId = (id: string) => requestAnimationFrame(() => requestAnimationFrame(() => document.getElementById(id)?.focus()));
+  const back = (key: string) => {
+    setSelectedKey(null);
+    focusId(`section-${key}-open`);
+  };
   const removeSection = (key: string) => {
     setSections((list) => list.filter((s) => s._key !== key));
     setSelectedKey(null);
+    focusId("add-section");
   };
 
   // A click on a section inside the preview opens it here.
@@ -233,7 +240,7 @@ const AppearanceEditor = ({ initial, initialHasDraft, categories }: { initial: S
                 errors={selectedErrors}
                 categories={categories}
                 onChange={updateSection}
-                onBack={() => setSelectedKey(null)}
+                onBack={() => back(selected._key)}
                 onRemove={() => removeSection(selected._key)}
               />
             ) : (

@@ -35,7 +35,7 @@ const Row = ({
       <button type="button" aria-label="Arrastrar para mover" onPointerDown={(e) => controls.start(e)} className="touch-none cursor-grab p-1 text-gray-400">
         <GripVertical size={16} />
       </button>
-      <button type="button" onClick={onOpen} className={`flex-1 min-w-0 truncate text-left font-semibold ${section.hidden ? "text-gray-400" : "text-gray-800"}`}>
+      <button type="button" id={`section-${section._key}-open`} onClick={onOpen} className={`flex-1 min-w-0 truncate text-left font-semibold ${section.hidden ? "text-gray-400" : "text-gray-800"}`}>
         {SECTION_LABELS[section.kind]}
         {section.title && <span className="font-normal text-gray-500"> · {section.title}</span>}
       </button>
@@ -44,10 +44,10 @@ const Row = ({
           <AlertTriangle size={15} aria-label="Incompleta" />
         </span>
       )}
-      <button type="button" aria-label="Subir" disabled={first} onClick={() => onMove(-1)} className={ICON}>
+      <button type="button" id={`section-${section._key}-up`} aria-label="Subir" disabled={first} onClick={() => onMove(-1)} className={ICON}>
         <ChevronUp size={15} />
       </button>
-      <button type="button" aria-label="Bajar" disabled={last} onClick={() => onMove(1)} className={ICON}>
+      <button type="button" id={`section-${section._key}-down`} aria-label="Bajar" disabled={last} onClick={() => onMove(1)} className={ICON}>
         <ChevronDown size={15} />
       </button>
       <button type="button" aria-label={section.hidden ? "Mostrar" : "Ocultar"} aria-pressed={section.hidden} onClick={onToggle} className={ICON}>
@@ -78,6 +78,11 @@ const SectionList = ({
     const [item] = next.splice(i, 1);
     next.splice(i + step, 0, item);
     onChange(next);
+    // Refocus the moved row's arrow once rendered; at the first/last place that arrow is disabled, so use the other one.
+    const edge = i + step === 0 || i + step === sections.length - 1;
+    const arrow = (step < 0) !== edge ? "up" : "down";
+    // two frames: the first can run before React has moved the row
+    requestAnimationFrame(() => requestAnimationFrame(() => document.getElementById(`section-${item._key}-${arrow}`)?.focus()));
   };
   const toggle = (key: string) => onChange(sections.map((s) => (s._key === key ? { ...s, hidden: !s.hidden } : s)));
 
@@ -124,6 +129,7 @@ const SectionList = ({
       ) : (
         <button
           type="button"
+          id="add-section"
           onClick={() => setAdding(true)}
           className="flex items-center justify-center gap-1.5 rounded-xl border-2 border-dashed border-shop_orange/50 py-2 text-sm font-semibold text-shop_orange hover:bg-shop_orange/5"
         >
