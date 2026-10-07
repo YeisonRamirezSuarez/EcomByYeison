@@ -16,8 +16,8 @@ export default async function CampaignPage({ params }: { params: Promise<{ id: s
   if (!isCampaignId(id)) notFound();
   const campaign = await getCampaign(`campaign.${id}`);
   if (!campaign) notFound();
-  const { brand, currency } = await getEmailBrand();
-  const [products, ready] = await Promise.all([loadEmailProducts(campaign.content.products, currency), sendReadiness(brand.address)]);
+  const { brand, currency, languages } = await getEmailBrand();
+  const [products, ready] = await Promise.all([loadEmailProducts(campaign.content.products, currency), sendReadiness(brand.address || brand.addressEn || "")]);
   const missing = campaign.content.products.filter((pid) => !products.some((p) => p._id === pid));
   return (
     <>
@@ -34,6 +34,7 @@ export default async function CampaignPage({ params }: { params: Promise<{ id: s
         brand={brand}
         baseUrl={ready.baseUrl}
         ready={ready}
+        languages={languages}
       />
     </>
   );

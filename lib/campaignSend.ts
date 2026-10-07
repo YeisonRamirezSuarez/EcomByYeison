@@ -2,6 +2,7 @@ import "server-only";
 import { formatPrice, type CurrencyCode } from "@/constants/currencies";
 import { THEMES } from "@/constants/themes";
 import { ActionError } from "@/lib/actionResult";
+import { localizeEmailBrand, localizeEmailProducts, resolveLocale, type StoreLanguages } from "@/lib/localize";
 import { renderCampaignEmail, type EmailBrand, type EmailProduct } from "@/lib/campaignEmail";
 import { addUsage, getMailer, remainingSendsToday, type Mailer } from "@/lib/mailer";
 import { batchSize, errorDetail, isEmail, isRecipientError, MAX_FAILURES, smtpErrorMessage, type CampaignProgress, type PauseReason, type SendReadiness, type SmtpErrorInfo } from "@/lib/newsletter";
@@ -13,7 +14,7 @@ import { getSiteSettings } from "@/sanity/queries/siteSettings";
 export type PickerProduct = EmailProduct & { _id: string };
 
 // The store's look for emails: published settings (logo, palette with custom colors, address).
-export async function getEmailBrand(): Promise<{ brand: EmailBrand; currency: CurrencyCode }> {
+export async function getEmailBrand(): Promise<{ brand: EmailBrand; currency: CurrencyCode; languages: StoreLanguages }> {
   const s = await getSiteSettings();
   const palette = THEMES[s.theme];
   return {
@@ -21,16 +22,19 @@ export async function getEmailBrand(): Promise<{ brand: EmailBrand; currency: Cu
       storeName: s.storeName,
       logoUrl: s.logoType === "image" && s.logoImage ? s.logoImage.url : null,
       address: s.contact.address,
+      addressEn: s.contact.addressEn,
       primary: s.styles.colors.primary ?? palette.primary,
       button: s.styles.colors.button ?? palette.primaryBtn,
     },
     currency: s.currency,
+    languages: { languages: s.languages, primary: s.primary },
   };
 }
 
 export const toPickerProduct = (doc: EmailProductDoc, currency: CurrencyCode): PickerProduct => ({
   _id: doc._id,
   name: doc.name,
+  nameEn: doc.nameEn ?? "",
   url: doc.slug ? `/product/${doc.slug}` : "/shop",
   imageUrl: doc.image,
   price: formatPrice(doc.price, currency),
@@ -106,8 +110,11 @@ export async function runBatch(campaign: CampaignDoc): Promise<CampaignProgress>
   }
 
   // Read everything the emails need before reserving, so a read error never skips people.
-  const { brand, currency } = await getEmailBrand();
-  const products = await loadEmailProducts(campaign.content.products, currency);
+  const { brand: storeBrand, currency, languages } = await getEmailBrand();
+  // Campaigns saved before languages existed, or in one the store dropped, go out in the main language.
+  const language = resolveLocale(campaign.content.language, languages);
+  const brand = localizeEmailBrand(storeBrand, language);
+  const products = localizeEmailProducts(await loadEmailProducts(campaign.content.products, currency), language);
   // The store's address is required in every email; settings fall back to empty when Sanity fails.
   if (!brand.address.trim()) return pauseWith(campaign, "address", "Agrega la dirección de la tienda en Apariencia → Datos de la tienda → Contacto.");
 
@@ -138,8 +145,8 @@ export async function runBatch(campaign: CampaignDoc): Promise<CampaignProgress>
       lastDone = subscriber._id;
       continue;
     }
-    const links = unsubscribeLinks(subscriber._id, secret, base);
-    const email = renderCampaignEmail({ content: campaign.content, products, brand, baseUrl: base, unsubscribeUrl: links.page });
+    const links = unsubscribeLinks(subscriber._id, secret, base, language);
+    const email = renderCampaignEmail({ content: campaign.content, products, brand, baseUrl: base, unsubscribeUrl: links.page, language });
     try {
       await mailer.transporter.sendMail({
         from: mailer.from,

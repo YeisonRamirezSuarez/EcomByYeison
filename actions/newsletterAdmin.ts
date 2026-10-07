@@ -4,6 +4,7 @@ import { currentUser } from "@clerk/nextjs/server";
 import { ActionError, run, type ActionResult } from "@/lib/actionResult";
 import { renderCampaignEmail } from "@/lib/campaignEmail";
 import { getEmailBrand, loadEmailProducts, runBatch, sendReadiness, toPickerProduct, type PickerProduct } from "@/lib/campaignSend";
+import { localizeEmailBrand, localizeEmailProducts, resolveLocale } from "@/lib/localize";
 import { addUsage, getMailer } from "@/lib/mailer";
 import { campaignSendProblems, EMPTY_CAMPAIGN, errorDetail, isCampaignId, isEmail, isSubscriberId, MAX_IMPORT_ROWS, planImport, SMTP_UNREADABLE, smtpErrorMessage, subscribersCsv, validateCampaign, validateSmtpSettings, type CampaignContent, type CampaignProgress, type SmtpErrorInfo } from "@/lib/newsletter";
 import { requirePermission } from "@/lib/roles";
@@ -198,6 +199,7 @@ function campaignFields(content: CampaignContent) {
     title: content.title,
     text: content.text,
     button: content.button,
+    ...(content.language ? { language: content.language } : {}),
     products: content.products.map((id) => ({ _key: id, _type: "reference", _ref: id, _weak: true })),
   };
 }
@@ -277,11 +279,19 @@ export async function sendCampaignTest(id: string): Promise<ActionResult<{ to: s
       throw new ActionError(SMTP_UNREADABLE);
     }
     if (!mailer) throw new ActionError("Configura el correo de salida en Ajustes → Correo.");
-    const { brand, currency } = await getEmailBrand();
-    const products = await loadEmailProducts(campaign.content.products, currency);
-    const email = renderCampaignEmail({ content: campaign.content, products, brand, baseUrl: siteUrl(), unsubscribeUrl: `${siteUrl()}/boletin/baja` });
+    const { brand, currency, languages } = await getEmailBrand();
+    const language = resolveLocale(campaign.content.language, languages);
+    const products = localizeEmailProducts(await loadEmailProducts(campaign.content.products, currency), language);
+    const email = renderCampaignEmail({
+      content: campaign.content,
+      products,
+      brand: localizeEmailBrand(brand, language),
+      baseUrl: siteUrl(),
+      unsubscribeUrl: `${siteUrl()}/boletin/baja?l=${language}`,
+      language,
+    });
     try {
-      await mailer.transporter.sendMail({ from: mailer.from, replyTo: mailer.replyTo, to, subject: `[Prueba] ${email.subject}`, html: email.html, text: email.text });
+      await mailer.transporter.sendMail({ from: mailer.from, replyTo: mailer.replyTo, to, subject: `${language === "en" ? "[Test]" : "[Prueba]"} ${email.subject}`, html: email.html, text: email.text });
     } catch (error) {
       throw new ActionError(smtpErrorMessage(error as SmtpErrorInfo));
     }
@@ -298,7 +308,7 @@ export async function startCampaign(id: string): Promise<ActionResult<CampaignPr
     const { status } = campaign.progress;
     if (status === "sent") throw new ActionError("Esta campaña ya se envió");
     const { brand } = await getEmailBrand();
-    const ready = await sendReadiness(brand.address);
+    const ready = await sendReadiness(brand.address || brand.addressEn || "");
     // On resume, an empty list just lets the next batch mark the campaign as sent.
     const problems = campaignSendProblems(campaign.content, status === "draft" ? ready : { ...ready, activeCount: Math.max(ready.activeCount, 1) });
     if (problems.length > 0) throw new ActionError(problems[0]);

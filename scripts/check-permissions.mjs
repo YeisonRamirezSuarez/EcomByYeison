@@ -907,6 +907,15 @@ assert.equal(ck.checkoutLines([{ id: "p1", quantity: 1 }], [{ ...SERVER[0], pric
   assert.ok(bare.html.includes("Darte de baja"));
   assert.ok(bare.html.includes("Recibes este correo porque te suscribiste en Tienda &amp; Co."));
   assert.equal(ce.renderCampaignEmail({ content: { ...content, subject: "" }, products: [], brand, baseUrl: "", unsubscribeUrl: "#" }).subject, content.title);
+
+  // Footer in the campaign's language; Spanish by default
+  assert.ok(out.html.includes('<html lang="es">'));
+  const enOut = ce.renderCampaignEmail({ content, products, brand, baseUrl: "https://tienda.com", unsubscribeUrl: "https://tienda.com/boletin/baja?l=en", language: "en" });
+  assert.ok(enOut.html.includes('<html lang="en">'));
+  assert.ok(enOut.html.includes("You&#39;re receiving this email because you subscribed at Tienda &amp; Co."));
+  assert.ok(enOut.html.includes(">Unsubscribe</a>"));
+  assert.ok(!enOut.html.includes("Darte de baja"));
+  assert.ok(enOut.text.includes("Unsubscribe: https://tienda.com/boletin/baja?l=en"));
 }
 
 // Newsletter rules
@@ -958,6 +967,10 @@ assert.equal(ck.checkoutLines([{ id: "p1", quantity: 1 }], [{ ...SERVER[0], pric
   for (const key of ["subject", "button.href", "image", "products"]) assert.ok(badCampaign.errors[key], `campaign error ${key}`);
   assert.ok(nl.validateCampaign({ ...content, products: ["drafts.p1"] }).errors.products);
   assert.ok(nl.validateCampaign({ ...content, subject: "", title: "" }).ok); // drafts may be empty
+  assert.equal(nl.EMPTY_CAMPAIGN.language, null);
+  assert.equal(nl.validateCampaign({ ...content, language: "en" }).value.language, "en");
+  assert.equal(nl.validateCampaign({ ...content, language: "fr" }).value.language, null);
+  assert.equal(nl.validateCampaign(content).value.language, null);
 
   // What blocks sending
   const ready = { smtpReady: true, keyReady: true, baseUrl: "https://tienda.com", address: "Calle 1", activeCount: 3 };

@@ -150,6 +150,14 @@ export const orderType = defineType({
       readOnly: true,
     }),
     defineField({
+      name: "locale",
+      title: "Idioma",
+      type: "string",
+      description: "Idioma en que el cliente compró; los correos del pedido salen en este idioma.",
+      readOnly: true,
+      options: { list: [{ title: "Español", value: "es" }, { title: "Inglés", value: "en" }] },
+    }),
+    defineField({
       name: "orderDate",
       title: "Order Date",
       type: "datetime",

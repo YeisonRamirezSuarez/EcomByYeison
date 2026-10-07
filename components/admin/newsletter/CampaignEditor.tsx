@@ -16,7 +16,9 @@ import {
   type CampaignProgress,
   type SendReadiness,
 } from "@/lib/newsletter";
+import { localizeEmailBrand, localizeEmailProducts, resolveLocale, type StoreLanguages } from "@/lib/localize";
 import CampaignSendPanel from "./CampaignSendPanel";
+import EditorLocale from "../EditorLocale";
 import ProductPicker from "./ProductPicker";
 
 export type EditorProps = {
@@ -29,9 +31,10 @@ export type EditorProps = {
   brand: EmailBrand;
   baseUrl: string;
   ready: SendReadiness & { remaining: number };
+  languages: StoreLanguages;
 };
 
-const CampaignEditor = ({ id, initial, initialProducts, missing: initialMissing, progress, failures, brand, baseUrl, ready }: EditorProps) => {
+const CampaignEditor = ({ id, initial, initialProducts, missing: initialMissing, progress, failures, brand, baseUrl, ready, languages }: EditorProps) => {
   const [content, setContent] = useState(initial);
   const [chosen, setChosen] = useState(initialProducts);
   const [missing, setMissing] = useState(initialMissing);
@@ -47,6 +50,7 @@ const CampaignEditor = ({ id, initial, initialProducts, missing: initialMissing,
     onError: () => setSaveFailed(true),
   });
   const set = <K extends keyof CampaignContent>(key: K, value: CampaignContent[K]) => setContent((c) => ({ ...c, [key]: value }));
+  const language = resolveLocale(content.language, languages);
   const setProducts = (nextChosen: PickerProduct[], nextMissing: string[]) => {
     setChosen(nextChosen);
     setMissing(nextMissing);
@@ -54,8 +58,16 @@ const CampaignEditor = ({ id, initial, initialProducts, missing: initialMissing,
   };
 
   const preview = useMemo(
-    () => renderCampaignEmail({ content, products: chosen, brand, baseUrl, unsubscribeUrl: `${baseUrl}/boletin/baja` }).html,
-    [content, chosen, brand, baseUrl]
+    () =>
+      renderCampaignEmail({
+        content,
+        products: localizeEmailProducts(chosen, language),
+        brand: localizeEmailBrand(brand, language),
+        baseUrl,
+        unsubscribeUrl: `${baseUrl}/boletin/baja`,
+        language,
+      }).html,
+    [content, chosen, brand, baseUrl, language]
   );
 
   const test = () =>
@@ -124,6 +136,14 @@ const CampaignEditor = ({ id, initial, initialProducts, missing: initialMissing,
       <div className="grid gap-3 lg:grid-cols-[380px_1fr]">
         <div className="bg-white rounded-2xl shadow-sm p-4 flex flex-col gap-3">
           <fieldset disabled={!editable} className="flex flex-col gap-3 disabled:opacity-70">
+            {languages.languages.length > 1 && (
+              <div>
+                <span className="text-xs font-semibold text-gray-700">Idioma de la campaña</span>
+                <div className="mt-1">
+                  <EditorLocale value={language} onChange={(locale) => set("language", locale)} label="Idioma de la campaña" />
+                </div>
+              </div>
+            )}
             <TextField label="Asunto" value={content.subject} onChange={(v) => set("subject", v)} error={save.errors.subject} max={150} />
             <TextField label="Texto de vista previa (bandeja de entrada)" value={content.preheader} onChange={(v) => set("preheader", v)} error={save.errors.preheader} max={150} />
             <ImageField label="Imagen principal (opcional)" value={content.image} onChange={(v) => set("image", v)} error={save.errors.image} />

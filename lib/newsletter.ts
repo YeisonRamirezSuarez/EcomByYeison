@@ -3,6 +3,7 @@
 // scripts/check-permissions.mjs can run it.
 import type { Cta, ImageValue } from "./brand";
 import type { ValidationResult } from "./validation";
+import type { Locale } from "./i18n";
 
 export const BATCH_SIZE = 20;
 export const MAX_IMPORT_ROWS = 5000;
@@ -61,6 +62,7 @@ export type CampaignContent = {
   text: string;
   button: Cta;
   products: string[];
+  language: Locale | null; // null: the store's main language
 };
 export const EMPTY_CAMPAIGN: CampaignContent = {
   subject: "",
@@ -70,6 +72,7 @@ export const EMPTY_CAMPAIGN: CampaignContent = {
   text: "",
   button: { label: "", href: "" },
   products: [],
+  language: null,
 };
 export type CampaignProgress = {
   status: CampaignStatus;
@@ -181,7 +184,7 @@ export function validateCampaign(input: unknown): ValidationResult<CampaignConte
   if (ids.length !== raw.length) errors.products = "Producto inválido";
   const products = [...new Set(ids)];
   if (products.length > MAX_CAMPAIGN_PRODUCTS) errors.products = `Máximo ${MAX_CAMPAIGN_PRODUCTS} productos`;
-  return result(errors, { subject, preheader, image, title, text: body, button: { label, href }, products });
+  return result(errors, { subject, preheader, image, title, text: body, button: { label, href }, products, language: v.language === "es" || v.language === "en" ? v.language : null });
 }
 
 export const SMTP_UNREADABLE = "No se pudo leer la contraseña guardada. Vuelve a escribirla en Ajustes → Correo.";

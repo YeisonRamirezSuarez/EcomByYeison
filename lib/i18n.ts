@@ -242,6 +242,13 @@ type Messages = {
   helpNotFoundBody: string;
   shopPriceUnder: string;
   shopPriceOver: string;
+  unsubscribePageTitle: string;
+  unsubscribeTitle: string;
+  unsubscribeButton: string;
+  unsubscribeProcessing: string;
+  unsubscribeDone: string;
+  unsubscribeFailed: string;
+  unsubscribeInvalid: string;
 };
 
 export const MESSAGES: Record<Locale, Messages> = {
@@ -485,6 +492,13 @@ export const MESSAGES: Record<Locale, Messages> = {
     helpNotFoundBody: "Nuestro equipo está disponible para ayudarte.",
     shopPriceUnder: "Menos de",
     shopPriceOver: "Más de",
+    unsubscribePageTitle: "Darse de baja",
+    unsubscribeTitle: "¿Dejar de recibir correos de {store}?",
+    unsubscribeButton: "Darme de baja",
+    unsubscribeProcessing: "Procesando…",
+    unsubscribeDone: "Listo, ya no recibirás correos de {store}.",
+    unsubscribeFailed: "No pudimos procesar la baja. Intenta de nuevo.",
+    unsubscribeInvalid: "Este enlace no es válido.",
   },
   en: {
     themePanelTitle: "Customize theme",
@@ -726,6 +740,13 @@ export const MESSAGES: Record<Locale, Messages> = {
     helpNotFoundBody: "Our team is here to help you.",
     shopPriceUnder: "Under",
     shopPriceOver: "Over",
+    unsubscribePageTitle: "Unsubscribe",
+    unsubscribeTitle: "Stop receiving emails from {store}?",
+    unsubscribeButton: "Unsubscribe",
+    unsubscribeProcessing: "Processing…",
+    unsubscribeDone: "Done. You won't receive emails from {store} anymore.",
+    unsubscribeFailed: "We couldn't process your request. Please try again.",
+    unsubscribeInvalid: "This link is not valid.",
   },
 };
 

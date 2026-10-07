@@ -1,4 +1,5 @@
 import "server-only";
+import type { Locale } from "@/lib/i18n";
 import { isSubscriberId } from "@/lib/newsletter";
 import { signUnsubscribe, verifyUnsubscribe } from "@/lib/secrets";
 import { backendClient } from "@/sanity/lib/backendClient";
@@ -6,10 +7,14 @@ import { getSubscriberStatus } from "@/sanity/queries/newsletter";
 
 export const siteUrl = (): string => (process.env.NEXT_PUBLIC_BASE_URL ?? "").replace(/\/+$/, "");
 
-// page: the store page with the "Darme de baja" button. oneClick: the List-Unsubscribe target.
-export function unsubscribeLinks(subscriberId: string, secret: string, base = siteUrl()) {
+// page: the store page with the "Darme de baja" button, in the email's language (l). l is not
+// signed: it only picks the page's language. oneClick: the List-Unsubscribe target.
+export function unsubscribeLinks(subscriberId: string, secret: string, base = siteUrl(), language?: Locale) {
   const query = `s=${encodeURIComponent(subscriberId)}&t=${signUnsubscribe(subscriberId, secret)}`;
-  return { page: `${base}/boletin/baja?${query}`, oneClick: `${base}/api/boletin/baja?${query}` };
+  return {
+    page: `${base}/boletin/baja?${query}${language ? `&l=${language}` : ""}`,
+    oneClick: `${base}/api/boletin/baja?${query}`,
+  };
 }
 
 export function isValidUnsubscribe(subscriberId: unknown, signature: unknown): boolean {

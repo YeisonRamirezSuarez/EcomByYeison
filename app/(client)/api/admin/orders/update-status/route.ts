@@ -2,6 +2,7 @@ import { getActor } from "@/lib/roles";
 import { can } from "@/lib/permissions";
 import { backendClient } from "@/sanity/lib/backendClient";
 import { sendInvoiceEmail } from "@/lib/email";
+import { getSiteSettings } from "@/sanity/queries/siteSettings";
 import { NextRequest, NextResponse } from "next/server";
 
 // Valid order status values.
@@ -41,7 +42,7 @@ export async function PATCH(req: NextRequest) {
     // Fetch the order first (parameterized query — never interpolate user input
     // into GROQ). Only the fields needed for the invoice email are projected.
     const orderBefore = await backendClient.fetch(
-      `*[_type == "order" && _id == $orderId][0]{ email, customerName, orderNumber, invoice }`,
+      `*[_type == "order" && _id == $orderId][0]{ email, customerName, orderNumber, invoice, locale }`,
       { orderId }
     );
 
@@ -62,12 +63,15 @@ export async function PATCH(req: NextRequest) {
         const invoice = await stripe.invoices.retrieve(orderBefore.invoice.id);
 
         if (invoice.hosted_invoice_url) {
+          // Orders from before the language was saved use the store's main language.
+          const locale = orderBefore.locale === "en" || orderBefore.locale === "es" ? orderBefore.locale : (await getSiteSettings()).primary;
           await sendInvoiceEmail(
             orderBefore.email,
             orderBefore.customerName,
             orderBefore.orderNumber,
             invoice.hosted_invoice_url,
-            orderBefore.invoice.number || orderBefore.invoice.id
+            orderBefore.invoice.number || orderBefore.invoice.id,
+            locale
           );
         }
       } catch (emailError) {

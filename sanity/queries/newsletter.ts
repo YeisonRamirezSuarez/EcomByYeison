@@ -1,6 +1,7 @@
 import "server-only";
 import { DEFAULT_DAILY_LIMIT, EMPTY_SMTP, PAGE_SIZE, type CampaignContent, type CampaignFailure, type CampaignProgress, type CampaignStatus, type PauseReason, type SmtpSecurity, type SmtpView, type SubscriberFilters, type SubscriberRow, type SubscriberStatus } from "@/lib/newsletter";
 import type { Cta, ImageValue } from "@/lib/brand";
+import type { Locale } from "@/lib/i18n";
 import { backendClient } from "../lib/backendClient";
 
 // Panel and sending reads are never cached.
@@ -109,6 +110,7 @@ type CampaignRaw = {
   title?: string;
   text?: string;
   button?: Partial<Cta> | null;
+  language?: Locale | null;
   products?: (string | null)[] | null;
   status?: CampaignStatus;
   pauseReason?: PauseReason | null;
@@ -133,7 +135,7 @@ export type CampaignDoc = {
   finishedAt: string | null;
 };
 
-const CAMPAIGN = `{ _id, _rev, _createdAt, subject, preheader, image, title, text, button, "products": products[]._ref,
+const CAMPAIGN = `{ _id, _rev, _createdAt, subject, preheader, image, title, text, button, language, "products": products[]._ref,
   status, pauseReason, pauseMessage, cursor, total, sent, failed, failures, startedAt, finishedAt }`;
 
 function toCampaign(raw: CampaignRaw): CampaignDoc {
@@ -148,6 +150,7 @@ function toCampaign(raw: CampaignRaw): CampaignDoc {
       text: raw.text ?? "",
       button: { label: raw.button?.label ?? "", href: raw.button?.href ?? "" },
       products: (raw.products ?? []).filter((id): id is string => typeof id === "string"),
+      language: raw.language === "es" || raw.language === "en" ? raw.language : null,
     },
     progress: {
       status: raw.status ?? "draft",
@@ -184,9 +187,9 @@ export async function getCampaignRows(): Promise<CampaignRow[]> {
   });
 }
 
-export type EmailProductDoc = { _id: string; name: string; price: number | null; slug: string | null; image: string | null };
+export type EmailProductDoc = { _id: string; name: string; nameEn: string | null; price: number | null; slug: string | null; image: string | null };
 const PUBLISHED_PRODUCT = `_type == "product" && archived != true && !(_id in path("drafts.**")) && !(_id in path("versions.**"))`;
-const PRODUCT_FIELDS = `{ _id, name, price, "slug": slug.current, "image": images[0].asset->url }`;
+const PRODUCT_FIELDS = `{ _id, name, nameEn, price, "slug": slug.current, "image": images[0].asset->url }`;
 
 // Deleted or archived products simply don't come back.
 export async function getProductsByIds(ids: string[]): Promise<EmailProductDoc[]> {
@@ -195,7 +198,7 @@ export async function getProductsByIds(ids: string[]): Promise<EmailProductDoc[]
 }
 
 export async function searchProductDocs(term: string): Promise<EmailProductDoc[]> {
-  const filter = term ? `${PUBLISHED_PRODUCT} && name match $q` : PUBLISHED_PRODUCT;
+  const filter = term ? `${PUBLISHED_PRODUCT} && (name match $q || nameEn match $q)` : PUBLISHED_PRODUCT;
   return backendClient.fetch(`*[${filter}] | order(name asc) [0...10]${PRODUCT_FIELDS}`, { q: `${term}*` }, FRESH);
 }
 

@@ -5,6 +5,7 @@ import { backendClient } from "@/sanity/lib/backendClient";
 import { urlFor } from "@/sanity/lib/image";
 import { sendOrderConfirmationEmail } from "@/lib/email";
 import type { Metadata } from "@/actions/createCheckoutSession";
+import type { Locale } from "@/lib/i18n";
 import Stripe from "stripe";
 
 type OrderMetadata = Metadata & { address?: string };
@@ -64,8 +65,10 @@ export async function createOrderFromStripeSession(
     customerEmail,
     clerkUserId,
     address,
+    locale,
   } = session.metadata as unknown as OrderMetadata;
   const parsedAddress = address ? JSON.parse(address) : null;
+  const orderLocale: Locale = locale === "en" ? "en" : "es";
 
   const lineItems =
     session.line_items?.data ??
@@ -136,6 +139,7 @@ export async function createOrderFromStripeSession(
       products: sanityProducts,
       totalPrice: session.amount_total ? session.amount_total / 100 : 0,
       status: "paid",
+      locale: orderLocale,
       orderDate: new Date().toISOString(),
       invoice: invoice
         ? {
@@ -170,7 +174,8 @@ export async function createOrderFromStripeSession(
       session.amount_total ? session.amount_total / 100 : 0,
       productsForEmail,
       invoice?.hosted_invoice_url || undefined,
-      (session.currency ?? "usd").toUpperCase()
+      (session.currency ?? "usd").toUpperCase(),
+      orderLocale
     );
   } catch (error) {
     console.error("❌ Error sending confirmation email:", error);
