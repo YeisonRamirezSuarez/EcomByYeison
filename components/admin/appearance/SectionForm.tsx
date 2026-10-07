@@ -16,6 +16,8 @@ import {
   type SectionKind,
   type Testimonial,
 } from "@/lib/homeSections";
+import type { Locale } from "@/lib/i18n";
+import { localeKey } from "@/lib/localize";
 import { INPUT, TextField } from "../brand/fields";
 import ImageField from "../brand/ImageField";
 
@@ -67,7 +69,8 @@ const NumberField = ({ label, value, min, max, error, onChange }: { label: strin
   </label>
 );
 
-const Testimonials = ({ items, errors, onChange }: { items: Testimonial[]; errors: Record<string, string>; onChange: (items: Testimonial[]) => void }) => {
+const Testimonials = ({ items, errors, edit, onChange }: { items: Testimonial[]; errors: Record<string, string>; edit: Locale; onChange: (items: Testimonial[]) => void }) => {
+  const textKey = localeKey("text", edit) as "text" | "textEn";
   const update = (i: number, patch: Partial<Testimonial>) => onChange(items.map((t, j) => (j === i ? { ...t, ...patch } : t)));
   return (
     <div className="flex flex-col gap-3">
@@ -80,7 +83,7 @@ const Testimonials = ({ items, errors, onChange }: { items: Testimonial[]; error
             </button>
           </div>
           <TextField label="Nombre" value={t.name} onChange={(v) => update(i, { name: v })} error={errors[`items.${i}.name`]} max={60} />
-          <TextField label="Opinión" multiline value={t.text} onChange={(v) => update(i, { text: v })} error={errors[`items.${i}.text`]} max={300} />
+          <TextField label="Opinión" multiline value={t[textKey]} onChange={(v) => update(i, { [textKey]: v } as Partial<Testimonial>)} error={errors[`items.${i}.${textKey}`]} max={300} />
           <div>
             <span className="text-xs font-semibold text-gray-700">Estrellas</span>
             <div className="mt-1 flex gap-0.5">
@@ -108,15 +111,18 @@ const Testimonials = ({ items, errors, onChange }: { items: Testimonial[]; error
   );
 };
 
-const Fields = ({ section: s, errors, categories, onChange }: { section: HomeSection; errors: Record<string, string>; categories: Option[]; onChange: (s: HomeSection) => void }) => {
+const Fields = ({ section: s, errors, categories, edit, onChange }: { section: HomeSection; errors: Record<string, string>; categories: Option[]; edit: Locale; onChange: (s: HomeSection) => void }) => {
+  const titleKey = localeKey("title", edit) as "title" | "titleEn";
+  const textKey = localeKey("text", edit) as "text" | "textEn";
+  const labelKey = localeKey("label", edit) as "label" | "labelEn";
   const set = <K extends keyof HomeSection>(key: K, value: HomeSection[K]) => onChange({ ...s, [key]: value });
-  const title = <TextField label="Título" value={s.title} onChange={(v) => set("title", v)} error={errors.title} max={80} />;
+  const title = <TextField label="Título" value={s[titleKey]} onChange={(v) => set(titleKey, v)} error={errors[titleKey]} max={80} />;
   const text = (max: number, label = "Texto") => (
-    <TextField label={label} multiline value={s.text} onChange={(v) => set("text", v)} error={errors.text} max={max} />
+    <TextField label={label} multiline value={s[textKey]} onChange={(v) => set(textKey, v)} error={errors[textKey]} max={max} />
   );
   const button = (
     <div className="grid grid-cols-2 gap-2">
-      <TextField label="Botón: texto" value={s.button.label} onChange={(v) => set("button", { ...s.button, label: v })} error={errors["button.label"]} max={30} />
+      <TextField label="Botón: texto" value={s.button[labelKey]} onChange={(v) => set("button", { ...s.button, [labelKey]: v })} error={errors[`button.${labelKey}`]} max={30} />
       <TextField label="Enlace" placeholder="/shop" value={s.button.href} onChange={(v) => set("button", { ...s.button, href: v })} error={errors["button.href"]} max={200} />
     </div>
   );
@@ -198,7 +204,7 @@ const Fields = ({ section: s, errors, categories, onChange }: { section: HomeSec
       return (
         <>
           {title}
-          <Testimonials items={s.items} errors={errors} onChange={(items) => set("items", items)} />
+          <Testimonials items={s.items} errors={errors} edit={edit} onChange={(items) => set("items", items)} />
         </>
       );
     case "newsletter":
@@ -221,6 +227,7 @@ const SectionForm = ({
   categoryGone,
   errors,
   categories,
+  edit,
   onChange,
   onBack,
   onRemove,
@@ -230,6 +237,7 @@ const SectionForm = ({
   categoryGone: boolean;
   errors: Record<string, string>;
   categories: Option[];
+  edit: Locale;
   onChange: (section: HomeSection) => void;
   onBack: () => void;
   onRemove: () => void;
@@ -248,7 +256,7 @@ const SectionForm = ({
           {categoryGone ? "La categoría elegida ya no existe; elige otra." : INCOMPLETE[section.kind]}
         </p>
       )}
-      {section.kind !== "banner" && <Fields section={section} errors={errors} categories={categories} onChange={onChange} />}
+      {section.kind !== "banner" && <Fields section={section} errors={errors} categories={categories} edit={edit} onChange={onChange} />}
       {!isBuiltIn(section.kind) &&
         (confirm ? (
           <div role="alert" className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-900">

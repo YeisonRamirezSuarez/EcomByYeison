@@ -3,8 +3,11 @@
 import { useState } from "react";
 import { savePage } from "@/actions/brand";
 import type { PageContent } from "@/lib/brand";
+import type { Locale } from "@/lib/i18n";
+import { lacksLanguage, localeKey, type StoreLanguages } from "@/lib/localize";
 import { PAGE_KEYS, PAGE_LABELS, validatePage, type PageKey } from "@/lib/validation";
 import { SectionCard, TextField, useSave } from "../brand/fields";
+import EditorLocale from "../EditorLocale";
 import BlockEditor from "./BlockEditor";
 
 const PAGE_PATHS: Record<PageKey, string> = {
@@ -15,13 +18,17 @@ const PAGE_PATHS: Record<PageKey, string> = {
   help: "/help",
 };
 
-const PagesTab = ({ initialPages }: { initialPages: Record<PageKey, PageContent> }) => {
+const PagesTab = ({ initialPages, languages }: { initialPages: Record<PageKey, PageContent>; languages: StoreLanguages }) => {
+  const { primary } = languages;
+  const other: Locale = primary === "es" ? "en" : "es";
+  const [edit, setEdit] = useState<Locale>(primary);
+  const introKey = localeKey("intro", edit) as "intro" | "introEn";
   const [saved, setSaved] = useState(initialPages);
   const [key, setKey] = useState<PageKey>("about");
   const [draft, setDraft] = useState<PageContent>(initialPages.about);
   const [askDiscard, setAskDiscard] = useState<PageKey | null>(null);
   const { errors, pending, save, clearErrors } = useSave(
-    validatePage,
+    (input) => validatePage(input, primary),
     (v) => savePage(key, v),
     (v) => {
       setSaved((prev) => ({ ...prev, [key]: v }));
@@ -92,17 +99,20 @@ const PagesTab = ({ initialPages }: { initialPages: Record<PageKey, PageContent>
           </div>
         </div>
       )}
+      {languages.languages.length > 1 && (
+        <EditorLocale value={edit} onChange={setEdit} missing={lacksLanguage(validatePage(draft, other), other) ? [other] : []} />
+      )}
       <SectionCard title={PAGE_LABELS[key]} pending={pending} onSave={() => save(draft)}>
         <TextField
           label="Introducción"
           multiline
           max={2000}
-          value={draft.intro}
-          onChange={(v) => setDraft((d) => ({ ...d, intro: v }))}
-          error={errors.intro}
+          value={draft[introKey]}
+          onChange={(v) => setDraft((d) => ({ ...d, [introKey]: v }))}
+          error={errors[introKey]}
         />
         <p className="text-xs text-gray-500 -mt-2">Separa los párrafos con una línea en blanco.</p>
-        <BlockEditor blocks={draft.blocks} onChange={(blocks) => setDraft((d) => ({ ...d, blocks }))} errors={errors} />
+        <BlockEditor blocks={draft.blocks} onChange={(blocks) => setDraft((d) => ({ ...d, blocks }))} errors={errors} edit={edit} />
       </SectionCard>
       </div>
     </div>

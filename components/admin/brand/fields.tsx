@@ -5,6 +5,8 @@ import toast from "react-hot-toast";
 import type { ActionResult } from "@/lib/actionResult";
 import { INVALID_FORM, type ValidationResult } from "@/lib/validation";
 import { createSaveQueue } from "@/lib/saveQueue";
+import type { Locale } from "@/lib/i18n";
+import { localeKey } from "@/lib/localize";
 
 export const INPUT =
   "w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-shop_light_green/40 disabled:opacity-60";
@@ -19,7 +21,7 @@ export function TextField({
   placeholder,
 }: {
   label: string;
-  value: string;
+  value: string | undefined;
   onChange: (value: string) => void;
   error?: string;
   max: number;
@@ -32,7 +34,7 @@ export function TextField({
       {multiline ? (
         <textarea
           rows={3}
-          value={value}
+          value={value ?? ""}
           maxLength={max}
           placeholder={placeholder}
           aria-invalid={Boolean(error)}
@@ -42,7 +44,7 @@ export function TextField({
       ) : (
         <input
           type="text"
-          value={value}
+          value={value ?? ""}
           maxLength={max}
           placeholder={placeholder}
           aria-invalid={Boolean(error)}
@@ -53,6 +55,22 @@ export function TextField({
       {error && <span className="block text-xs text-red-600 mt-1">{error}</span>}
     </label>
   );
+}
+
+// TextField props bound to the language being edited: "title" or "titleEn".
+export function twin(
+  value: object,
+  key: string,
+  locale: Locale,
+  onChange: (field: string, text: string) => void,
+  errors: Record<string, string>
+) {
+  const field = localeKey(key, locale);
+  return {
+    value: String((value as Record<string, unknown>)[field] ?? ""),
+    onChange: (text: string) => onChange(field, text),
+    error: errors[field],
+  };
 }
 
 export function SectionCard({

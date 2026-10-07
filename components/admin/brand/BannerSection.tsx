@@ -4,20 +4,24 @@ import { useState } from "react";
 import { X } from "lucide-react";
 import { saveAppearanceDraft } from "@/actions/appearance";
 import type { BannerSettings, LocalizedCta } from "@/lib/brand";
+import type { Locale } from "@/lib/i18n";
+import { localeKey } from "@/lib/localize";
 import { MAX_STATS, validateBanner } from "@/lib/validation";
-import { TextField, useAutosave, SavingNote, type AutosaveEvents } from "./fields";
+import { TextField, twin, useAutosave, SavingNote, type AutosaveEvents } from "./fields";
 import ImageField from "./ImageField";
 
 const CTA_LABELS = { primaryCta: "Botón principal", secondaryCta: "Botón secundario" } as const;
 
-const BannerSection = ({ initial, ...events }: { initial: BannerSettings } & AutosaveEvents) => {
+const BannerSection = ({ initial, edit, primary, ...events }: { initial: BannerSettings; edit: Locale; primary: Locale } & AutosaveEvents) => {
   const [value, setValue] = useState(initial);
-  const { errors, pending } = useAutosave(value, validateBanner, (v) => saveAppearanceDraft("banner", v), events);
+  const { errors, pending } = useAutosave(value, (input) => validateBanner(input, primary), (v) => saveAppearanceDraft("banner", v), events);
   const set = <K extends keyof BannerSettings>(key: K, v: BannerSettings[K]) =>
     setValue((prev) => ({ ...prev, [key]: v }));
+  const setText = (field: string, v: string) => setValue((prev) => ({ ...prev, [field]: v }));
+  const labelKey = localeKey("label", edit) as "label" | "labelEn";
   const setCta = (key: keyof typeof CTA_LABELS, field: keyof LocalizedCta, v: string) =>
     setValue((prev) => ({ ...prev, [key]: { ...prev[key], [field]: v } }));
-  const setStat = (i: number, field: "value" | "label", v: string) =>
+  const setStat = (i: number, field: "value" | "label" | "labelEn", v: string) =>
     setValue((prev) => ({
       ...prev,
       stats: prev.stats.map((stat, j) => (j === i ? { ...stat, [field]: v } : stat)),
@@ -25,14 +29,14 @@ const BannerSection = ({ initial, ...events }: { initial: BannerSettings } & Aut
 
   return (
     <div className="flex flex-col gap-3">
-      <TextField label="Etiqueta" value={value.badge} onChange={(v) => set("badge", v)} error={errors.badge} max={40} />
-      <TextField label="Título" value={value.title} onChange={(v) => set("title", v)} error={errors.title} max={60} />
-      <TextField label="Parte resaltada del título" value={value.highlight} onChange={(v) => set("highlight", v)} error={errors.highlight} max={30} />
-      <TextField label="Subtítulo" value={value.subtitle} onChange={(v) => set("subtitle", v)} error={errors.subtitle} max={80} />
-      <TextField label="Descripción" multiline value={value.description} onChange={(v) => set("description", v)} error={errors.description} max={200} />
+      <TextField label="Etiqueta" {...twin(value, "badge", edit, setText, errors)} max={40} />
+      <TextField label="Título" {...twin(value, "title", edit, setText, errors)} max={60} />
+      <TextField label="Parte resaltada del título" {...twin(value, "highlight", edit, setText, errors)} max={30} />
+      <TextField label="Subtítulo" {...twin(value, "subtitle", edit, setText, errors)} max={80} />
+      <TextField label="Descripción" multiline {...twin(value, "description", edit, setText, errors)} max={200} />
       {(Object.keys(CTA_LABELS) as (keyof typeof CTA_LABELS)[]).map((key) => (
         <div key={key} className="grid grid-cols-2 gap-2">
-          <TextField label={`${CTA_LABELS[key]}: texto`} value={value[key].label} onChange={(v) => setCta(key, "label", v)} error={errors[`${key}.label`]} max={30} />
+          <TextField label={`${CTA_LABELS[key]}: texto`} value={value[key][labelKey]} onChange={(v) => setCta(key, labelKey, v)} error={errors[`${key}.${labelKey}`]} max={30} />
           <TextField label="Enlace" placeholder="/shop" value={value[key].href} onChange={(v) => setCta(key, "href", v)} error={errors[`${key}.href`]} max={300} />
         </div>
       ))}
@@ -43,7 +47,7 @@ const BannerSection = ({ initial, ...events }: { initial: BannerSettings } & Aut
         {value.stats.map((stat, i) => (
           <div key={stat._key} className="grid grid-cols-[1fr_1fr_auto] gap-2 items-end mt-1">
             <TextField label="Valor" placeholder="24/7" value={stat.value} onChange={(v) => setStat(i, "value", v)} error={errors[`stats.${i}.value`]} max={10} />
-            <TextField label="Etiqueta" placeholder="Soporte" value={stat.label} onChange={(v) => setStat(i, "label", v)} error={errors[`stats.${i}.label`]} max={20} />
+            <TextField label="Etiqueta" placeholder="Soporte" value={stat[labelKey]} onChange={(v) => setStat(i, labelKey, v)} error={errors[`stats.${i}.${labelKey}`]} max={20} />
             <button
               type="button"
               aria-label="Quitar cifra"

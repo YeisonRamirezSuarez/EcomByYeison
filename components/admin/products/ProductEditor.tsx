@@ -21,7 +21,10 @@ import {
   type ProductInput,
 } from "@/lib/catalog";
 import type { Option, ProductForm } from "@/sanity/queries/adminCatalog";
+import type { Locale } from "@/lib/i18n";
+import { lacksLanguage, localeKey, pickText, type StoreLanguages } from "@/lib/localize";
 import PageHeader from "../shell/PageHeader";
+import EditorLocale from "../EditorLocale";
 import { INPUT, SavingNote, TextField, draftSaves, useAutosave } from "../brand/fields";
 import ProductImages from "./ProductImages";
 
@@ -46,6 +49,7 @@ const ProductEditor = ({
   archived: initialArchived,
   options,
   canPublish,
+  languages,
 }: {
   id: string | null;
   initial: ProductForm;
@@ -54,6 +58,7 @@ const ProductEditor = ({
   archived: boolean;
   options: { categories: Option[]; brands: Option[] };
   canPublish: boolean;
+  languages: StoreLanguages;
 }) => {
   const router = useRouter();
   const idRef = useRef(initialId);
@@ -67,6 +72,11 @@ const ProductEditor = ({
   const [publishErrors, setPublishErrors] = useState<Record<string, string>>({});
   const [confirm, setConfirm] = useState<Confirm>(null);
   const [busy, startTransition] = useTransition();
+  const { primary } = languages;
+  const other: Locale = primary === "es" ? "en" : "es";
+  const [edit, setEdit] = useState<Locale>(primary);
+  const nameKey = localeKey("name", edit) as "name" | "nameEn";
+  const descriptionKey = localeKey("description", edit) as "description" | "descriptionEn";
 
   // Saves the draft; the first save of a new product gets its id and updates the URL.
   const save = async (value: ProductInput): Promise<ActionResult<null>> => {
@@ -80,7 +90,7 @@ const ProductEditor = ({
     return { ok: true, data: null };
   };
 
-  const { errors: saveErrors, pending } = useAutosave(form, validateProduct, save, {
+  const { errors: saveErrors, pending } = useAutosave(form, (input) => validateProduct(input, primary), save, {
     onSaved: () => {
       setHasDraft(true);
       setSaveFailed(false);
@@ -89,6 +99,7 @@ const ProductEditor = ({
     onError: () => setSaveFailed(true),
   });
   const errors = { ...publishErrors, ...saveErrors };
+  const missing = languages.languages.length > 1 && lacksLanguage(validateProduct(form, other), other) ? [other] : [];
 
   const update = (patch: Partial<ProductForm>) => setForm((f) => ({ ...f, ...patch }));
   const state = productState({ hasPublished, hasDraft, archived });
@@ -145,7 +156,7 @@ const ProductEditor = ({
 
   return (
     <>
-      <PageHeader title={form.name || "Nuevo producto"} description="Los cambios se guardan solos como borrador.">
+      <PageHeader title={pickText(form.name, form.nameEn, primary) || "Nuevo producto"} description="Los cambios se guardan solos como borrador.">
         <span className="text-xs font-semibold rounded-full bg-gray-100 text-gray-700 px-2.5 py-1">{PRODUCT_STATE_LABELS[state]}</span>
         {canPublish && id && (
           <>
@@ -191,13 +202,14 @@ const ProductEditor = ({
 
       <div className="grid gap-6 lg:grid-cols-[1fr_320px] items-start">
         <div className="bg-white rounded-2xl shadow-sm p-5 flex flex-col gap-4">
-          <TextField label="Nombre" value={form.name} max={120} error={errors.name}
-            onChange={(name) => update(slugTouched ? { name } : { name, slug: slugify(name) })} />
+          {languages.languages.length > 1 && <EditorLocale value={edit} onChange={setEdit} missing={missing} />}
+          <TextField label="Nombre" value={form[nameKey]} max={120} error={errors[nameKey]}
+            onChange={(text) => update((slugTouched || edit !== primary ? { [nameKey]: text } : { [nameKey]: text, slug: slugify(text) }) as Partial<ProductForm>)} />
           <TextField label="Slug (dirección del producto)" value={form.slug} max={96} error={errors.slug}
             onChange={(slug) => { setSlugTouched(true); update({ slug }); }} />
           <ProductImages value={form.images} onChange={(change) => setForm((f) => ({ ...f, images: change(f.images) }))} error={errors.images} />
-          <TextField label="Descripción" value={form.description} max={2000} multiline error={errors.description}
-            onChange={(description) => update({ description })} />
+          <TextField label="Descripción" value={form[descriptionKey]} max={2000} multiline error={errors[descriptionKey]}
+            onChange={(text) => update({ [descriptionKey]: text } as Partial<ProductForm>)} />
           <div className="grid grid-cols-3 gap-3">
             <NumberField label="Precio" step="0.01" value={form.price} error={errors.price} onChange={(price) => update({ price })} />
             <NumberField label="Descuento (%)" value={form.discount} error={errors.discount} onChange={(discount) => update({ discount })} />

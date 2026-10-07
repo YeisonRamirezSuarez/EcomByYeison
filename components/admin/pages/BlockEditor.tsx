@@ -2,6 +2,8 @@
 
 import { ArrowDown, ArrowUp, Trash2 } from "lucide-react";
 import type { ContentBlock } from "@/lib/brand";
+import type { Locale } from "@/lib/i18n";
+import { localeKey } from "@/lib/localize";
 import { CONTENT_ICONS, MAX_BLOCKS, type ContentIconKey } from "@/lib/validation";
 import { CONTENT_ICON_COMPONENTS } from "@/components/contentIcons";
 import { INPUT, TextField } from "../brand/fields";
@@ -14,11 +16,15 @@ const BlockEditor = ({
   blocks,
   onChange,
   errors,
+  edit,
 }: {
   blocks: ContentBlock[];
   onChange: (blocks: ContentBlock[]) => void;
   errors: Record<string, string>;
+  edit: Locale;
 }) => {
+  const titleKey = localeKey("title", edit) as "title" | "titleEn";
+  const textKey = localeKey("text", edit) as "text" | "textEn";
   const update = (i: number, patch: Partial<ContentBlock>) =>
     onChange(blocks.map((block, j) => (j === i ? { ...block, ...patch } : block)));
   const move = (i: number, to: number) => {
@@ -67,8 +73,8 @@ const BlockEditor = ({
                 <span className="block text-xs text-red-600 mt-1">{errors[`blocks.${i}.icon`]}</span>
               )}
             </label>
-            <TextField label="Título" max={120} value={block.title} onChange={(v) => update(i, { title: v })} error={errors[`blocks.${i}.title`]} />
-            <TextField label="Texto" multiline max={1000} value={block.text} onChange={(v) => update(i, { text: v })} error={errors[`blocks.${i}.text`]} />
+            <TextField label="Título" max={120} value={block[titleKey]} onChange={(v) => update(i, { [titleKey]: v } as Partial<ContentBlock>)} error={errors[`blocks.${i}.${titleKey}`]} />
+            <TextField label="Texto" multiline max={1000} value={block[textKey]} onChange={(v) => update(i, { [textKey]: v } as Partial<ContentBlock>)} error={errors[`blocks.${i}.${textKey}`]} />
             <TextField label="Enlace (opcional)" placeholder="/faqs" max={300} value={block.href} onChange={(v) => update(i, { href: v })} error={errors[`blocks.${i}.href`]} />
           </div>
         );

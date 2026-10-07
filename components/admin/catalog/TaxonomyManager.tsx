@@ -9,7 +9,10 @@ import { Dialog, DialogOverlay, DialogPortal, DialogTitle } from "@/components/u
 import { deleteBrand, deleteCategory, saveBrand, saveCategory } from "@/actions/catalog";
 import { slugify, validateBrand, validateCategory } from "@/lib/catalog";
 import type { TaxonomyKind, TaxonomyRow } from "@/sanity/queries/adminCatalog";
+import type { Locale } from "@/lib/i18n";
+import { lacksLanguage, localeKey, type StoreLanguages } from "@/lib/localize";
 import { INPUT, TextField } from "../brand/fields";
+import EditorLocale from "../EditorLocale";
 import ImageField from "../brand/ImageField";
 
 const EMPTY: TaxonomyRow = { _id: "", title: "", titleEn: "", slug: "", description: "", descriptionEn: "", range: "", featured: false, image: null, uses: 0 };
@@ -18,8 +21,14 @@ const COPY = {
   brand: { new: "Nueva marca", edit: "Editar marca", search: "Buscar marca" },
 };
 
-const TaxonomyManager = ({ kind, rows }: { kind: TaxonomyKind; rows: TaxonomyRow[] }) => {
+const TaxonomyManager = ({ kind, rows, languages }: { kind: TaxonomyKind; rows: TaxonomyRow[]; languages: StoreLanguages }) => {
   const router = useRouter();
+  const { primary } = languages;
+  const other: Locale = primary === "es" ? "en" : "es";
+  const [edit, setEdit] = useState<Locale>(primary);
+  const titleKey = localeKey("title", edit) as "title" | "titleEn";
+  const descriptionKey = localeKey("description", edit) as "description" | "descriptionEn";
+  const validate = (row: TaxonomyRow, locale: Locale) => (kind === "category" ? validateCategory(row, locale) : validateBrand(row, locale));
   const [query, setQuery] = useState("");
   const [editing, setEditing] = useState<TaxonomyRow | null>(null);
   const [slugTouched, setSlugTouched] = useState(false);
@@ -28,7 +37,7 @@ const TaxonomyManager = ({ kind, rows }: { kind: TaxonomyKind; rows: TaxonomyRow
   const [busy, startTransition] = useTransition();
 
   const q = query.trim().toLowerCase();
-  const visible = rows.filter((row) => !q || row.title.toLowerCase().includes(q));
+  const visible = rows.filter((row) => !q || row.title.toLowerCase().includes(q) || row.titleEn.toLowerCase().includes(q));
   const open = (row: TaxonomyRow) => {
     setEditing(row);
     setSlugTouched(row.slug !== "");
@@ -40,7 +49,7 @@ const TaxonomyManager = ({ kind, rows }: { kind: TaxonomyKind; rows: TaxonomyRow
   const save = () =>
     startTransition(async () => {
       if (!editing) return;
-      const checked = kind === "category" ? validateCategory(editing) : validateBrand(editing);
+      const checked = validate(editing, primary);
       if (!checked.ok) return void setErrors(checked.errors);
       const id = editing._id || null;
       const result = kind === "category" ? await saveCategory(id, editing) : await saveBrand(id, editing);
@@ -93,7 +102,7 @@ const TaxonomyManager = ({ kind, rows }: { kind: TaxonomyKind; rows: TaxonomyRow
                 ) : (
                   <div className="h-10 w-10 rounded-lg bg-gray-100" />
                 )}
-                <span className="flex-1 text-sm font-medium text-gray-900">{row.title || "Sin título"}</span>
+                <span className="flex-1 text-sm font-medium text-gray-900">{row.title || row.titleEn || "Sin título"}</span>
                 <span className="text-xs text-gray-500">{row.uses === 1 ? "1 producto" : `${row.uses} productos`}</span>
               </button>
             </li>
@@ -113,12 +122,15 @@ const TaxonomyManager = ({ kind, rows }: { kind: TaxonomyKind; rows: TaxonomyRow
                   <DialogPrimitive.Close aria-label="Cerrar" className="p-1 text-gray-500 hover:text-gray-800"><X size={18} /></DialogPrimitive.Close>
                 </div>
                 <div className="flex-1 overflow-y-auto px-6 py-5 flex flex-col gap-4">
-                  <TextField label="Título" value={editing.title} max={80} error={errors.title}
-                    onChange={(title) => update(slugTouched ? { title } : { title, slug: slugify(title) })} />
+                  {languages.languages.length > 1 && (
+                    <EditorLocale value={edit} onChange={setEdit} missing={lacksLanguage(validate(editing, other), other) ? [other] : []} />
+                  )}
+                  <TextField label="Título" value={editing[titleKey]} max={80} error={errors[titleKey]}
+                    onChange={(text) => update((slugTouched || edit !== primary ? { [titleKey]: text } : { [titleKey]: text, slug: slugify(text) }) as Partial<TaxonomyRow>)} />
                   <TextField label="Slug" value={editing.slug} max={96} error={errors.slug}
                     onChange={(slug) => { setSlugTouched(true); update({ slug }); }} />
-                  <TextField label="Descripción" value={editing.description} max={500} multiline error={errors.description}
-                    onChange={(description) => update({ description })} />
+                  <TextField label="Descripción" value={editing[descriptionKey]} max={500} multiline error={errors[descriptionKey]}
+                    onChange={(text) => update({ [descriptionKey]: text } as Partial<TaxonomyRow>)} />
                   {kind === "category" && (
                     <>
                       <label className="block">

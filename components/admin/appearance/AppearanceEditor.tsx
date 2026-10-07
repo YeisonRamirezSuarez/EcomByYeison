@@ -6,7 +6,9 @@ import { discardAppearance, publishAppearance, saveAppearanceDraft } from "@/act
 import type { ThemeKey } from "@/constants/themes";
 import { validateStyles, type Styles } from "@/lib/styles";
 import type { EditorMessage } from "@/lib/previewMessages";
+import { LOCALE_COOKIE, type Locale } from "@/lib/i18n";
 import type { SiteSettings } from "@/sanity/queries/siteSettings";
+import EditorLocale from "../EditorLocale";
 import IdentitySection from "../brand/IdentitySection";
 import BannerSection from "../brand/BannerSection";
 import ContactSection from "../brand/ContactSection";
@@ -39,7 +41,7 @@ const DEVICES: { key: Device; label: string }[] = [
   { key: "movil", label: "Móvil" },
 ];
 
-const AppearanceEditor = ({ initial, initialHasDraft, categories }: { initial: SiteSettings; initialHasDraft: boolean; categories: Option[] }) => {
+const AppearanceEditor = ({ initial, initialHasDraft, categories, previewLocale }: { initial: SiteSettings; initialHasDraft: boolean; categories: Option[]; previewLocale: Locale }) => {
   const frameRef = useRef<HTMLIFrameElement | null>(null);
   const [tab, setTab] = useState<Tab>("inicio");
   const [device, setDevice] = useState<Device>("pc");
@@ -51,8 +53,15 @@ const AppearanceEditor = ({ initial, initialHasDraft, categories }: { initial: S
   const [styles, setStyles] = useState<Styles>(initial.styles);
   const [sections, setSections] = useState<HomeSection[]>(() => withBuiltIns(initial.homeSections ?? DEFAULT_HOME_SECTIONS));
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
+  const [edit, setEdit] = useState<Locale>(previewLocale);
 
   const post = (message: EditorMessage) => frameRef.current?.contentWindow?.postMessage(message, window.location.origin);
+  // The preview follows the language being edited: same cookie as the store's ES/EN button.
+  const changeEdit = (locale: Locale) => {
+    setEdit(locale);
+    document.cookie = `${LOCALE_COOKIE}=${locale}; path=/; max-age=31536000; samesite=lax`;
+    frameRef.current?.contentWindow?.location.reload();
+  };
   const events = {
     onSaved: () => {
       setHasDraft(true);
@@ -171,6 +180,7 @@ const AppearanceEditor = ({ initial, initialHasDraft, categories }: { initial: S
             </button>
           ))}
         </div>
+        {initial.languages.length > 1 && <EditorLocale value={edit} onChange={changeEdit} />}
         <div className="flex-1" />
         <div className="flex rounded-full bg-gray-100 p-0.5" role="group" aria-label="Dispositivo">
           {DEVICES.map(({ key, label }) => (
@@ -235,6 +245,7 @@ const AppearanceEditor = ({ initial, initialHasDraft, categories }: { initial: S
               <SectionForm
                 key={selected._key}
                 section={selected}
+                edit={edit}
                 shown={isShown(selected)}
                 categoryGone={categoryGone(selected)}
                 errors={selectedErrors}
@@ -260,7 +271,7 @@ const AppearanceEditor = ({ initial, initialHasDraft, categories }: { initial: S
             )}
             {/* Kept mounted so the banner form keeps its state when going back to the list. */}
             <div className={selected?.kind === "banner" ? "" : "hidden"}>
-              <BannerSection initial={initial.banner} {...events} />
+              <BannerSection initial={initial.banner} edit={edit} primary={initial.primary} {...events} />
             </div>
           </div>
           <div role="tabpanel" className={tab === "estilos" ? "" : "hidden"}>
@@ -269,11 +280,11 @@ const AppearanceEditor = ({ initial, initialHasDraft, categories }: { initial: S
           <div role="tabpanel" className={tab === "datos" ? "flex flex-col gap-6" : "hidden"}>
             <section className="flex flex-col gap-3">
               <h2 className="font-bold text-gray-900">Logo y nombre</h2>
-              <IdentitySection initial={{ storeName, tagline, taglineEn, description, descriptionEn, logoType, logoText, logoSubtext, logoImage, favicon }} {...events} />
+              <IdentitySection initial={{ storeName, tagline, taglineEn, description, descriptionEn, logoType, logoText, logoSubtext, logoImage, favicon }} edit={edit} {...events} />
             </section>
             <section className="flex flex-col gap-3">
               <h2 className="font-bold text-gray-900">Contacto</h2>
-              <ContactSection initial={initial.contact} {...events} />
+              <ContactSection initial={initial.contact} edit={edit} {...events} />
             </section>
             <section className="flex flex-col gap-3">
               <h2 className="font-bold text-gray-900">Redes sociales</h2>

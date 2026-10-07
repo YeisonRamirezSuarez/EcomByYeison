@@ -5,11 +5,11 @@ import { getSiteSettings } from "@/sanity/queries/siteSettings";
 
 export default async function PagesPage() {
   await requireSection("paginas");
-  const { pages } = await getSiteSettings();
+  const { pages, languages, primary } = await getSiteSettings();
   return (
     <>
       <PageHeader title="Páginas" description="Contenido de Sobre nosotros, Términos, Privacidad, Preguntas frecuentes y Ayuda." />
-      <PagesTab initialPages={pages} />
+      <PagesTab initialPages={pages} languages={{ languages, primary }} />
     </>
   );
 }
