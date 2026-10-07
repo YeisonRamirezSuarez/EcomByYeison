@@ -11,11 +11,12 @@ export const brandType = defineType({
       name: "title",
       type: "string",
     }),
+    defineField({ name: "titleEn", title: "Title (English)", type: "string" }),
     defineField({
       name: "slug",
       type: "slug",
       options: {
-        source: "title",
+        source: (doc) => String(doc.title || doc.titleEn || ""),
       },
       validation: (Rule) => Rule.required(),
     }),
@@ -23,6 +24,7 @@ export const brandType = defineType({
       name: "description",
       type: "text",
     }),
+    defineField({ name: "descriptionEn", title: "Description (English)", type: "text" }),
     defineField({
       name: "image",
       title: "Brand Image",

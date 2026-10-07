@@ -521,7 +521,7 @@ const goodProduct = {
 const vp = cat.validateProduct(goodProduct);
 assert.equal(vp.ok, true);
 assert.deepEqual(vp.value, {
-  name: "Parlante", slug: "parlante", images: [IMG], description: "", price: 10.5, discount: 0, stock: 3,
+  name: "Parlante", nameEn: "", slug: "parlante", images: [IMG], description: "", descriptionEn: "", price: 10.5, discount: 0, stock: 3,
   categories: ["cat1", "cat2"], brand: null, status: "hot", variant: "gadget", isFeatured: true,
 });
 const bad = cat.validateProduct({
@@ -537,11 +537,11 @@ assert.equal(cat.validateProduct({ ...goodProduct, price: "" }).errors.price, "C
 assert.equal(cat.validateProduct({ ...goodProduct, status: "", variant: "" }).value.status, null);
 
 const vc = cat.validateCategory({ title: "Audio", slug: "audio", description: "", range: "", featured: true, image: null });
-assert.deepEqual(vc.value, { title: "Audio", slug: "audio", description: "", range: null, featured: true, image: null });
+assert.deepEqual(vc.value, { title: "Audio", titleEn: "", slug: "audio", description: "", descriptionEn: "", range: null, featured: true, image: null });
 const badCat = cat.validateCategory({ title: "", slug: "x y", description: "d".repeat(501), range: "-3", image: { assetId: "nope" } });
 for (const key of ["title", "slug", "description", "range", "image"]) assert.ok(badCat.errors[key], `category error ${key}`);
 const vb = cat.validateBrand({ title: "Sony", slug: "sony", description: "Japón", image: IMG });
-assert.deepEqual(vb.value, { title: "Sony", slug: "sony", description: "Japón", image: IMG });
+assert.deepEqual(vb.value, { title: "Sony", titleEn: "", slug: "sony", description: "Japón", descriptionEn: "", image: IMG });
 assert.equal(cat.validateBrand({ title: "x".repeat(81), slug: "sony" }).errors.title, "Máximo 80 caracteres");
 
 const pw = cat.productWrite(vp.value);
@@ -598,11 +598,29 @@ assert.deepEqual(rows.map((r) => [r.id, r.name, r.state]), [
   ["b", "Archivado", "archivado"],
   ["c", "Solo borrador", "borrador"],
 ]);
-assert.deepEqual(rows.find((r) => r.id === "c"), { id: "c", name: "Solo borrador", price: 0, stock: 0, image: null, state: "borrador", updatedAt: "2026-01-15" });
+assert.deepEqual(rows.find((r) => r.id === "c"), { id: "c", name: "Solo borrador", nameEn: "", price: 0, stock: 0, image: null, state: "borrador", updatedAt: "2026-01-15" });
 assert.deepEqual(cat.filterProducts(rows, "activos", "").map((r) => r.id), ["a", "c"]);
 assert.deepEqual(cat.filterProducts(rows, "por-publicar", "").map((r) => r.id), ["a", "c"]);
 assert.deepEqual(cat.filterProducts(rows, "archivados", "").map((r) => r.id), ["b"]);
 assert.deepEqual(cat.filterProducts(rows, "activos", "  NUEVO ").map((r) => r.id), ["a"]);
+
+// English twins: the store's main language is the required one
+assert.equal(cat.validateProduct({ ...goodProduct, name: "" }).errors.name, "Campo obligatorio (español)");
+const enOnly = cat.validateProduct({ ...goodProduct, name: "", nameEn: "Speaker" }, "en");
+assert.equal(enOnly.ok, true);
+assert.equal(enOnly.value.nameEn, "Speaker");
+assert.equal(cat.validateProduct(goodProduct, "en").errors.nameEn, "Campo obligatorio (inglés)");
+assert.equal(cat.validateProduct({ ...goodProduct, nameEn: "x".repeat(121) }).errors.nameEn, "Máximo 120 caracteres");
+assert.equal(cat.validateProduct({ ...goodProduct, descriptionEn: "x".repeat(2001) }).errors.descriptionEn, "Máximo 2000 caracteres");
+assert.equal(cat.validateCategory({ title: "", titleEn: "Audio", slug: "audio" }, "en").ok, true);
+assert.equal(cat.validateBrand({ title: "Sony", slug: "sony" }, "en").errors.titleEn, "Campo obligatorio (inglés)");
+assert.equal(cat.productWrite({ ...vp.value, nameEn: "Speaker" }).set.nameEn, "Speaker");
+assert.equal(cat.categoryWrite({ ...vc.value, titleEn: "Audio" }).set.titleEn, "Audio");
+assert.equal(cat.brandWrite({ ...vb.value, descriptionEn: "Japan" }).set.descriptionEn, "Japan");
+assert.equal(cat.mergeProductRows([{ _id: "e", name: "", nameEn: "Speaker", _updatedAt: "2026-01-01" }])[0].name, "Speaker");
+const both = cat.mergeProductRows([{ _id: "f", name: "Parlante", nameEn: "Speaker", _updatedAt: "2026-01-01" }]);
+assert.deepEqual(cat.filterProducts(both, "activos", "speak").map((r) => r.id), ["f"]);
+assert.deepEqual(cat.filterProducts(both, "activos", "parla").map((r) => r.id), ["f"]);
 
 // A product with a draft counts once; singular when it is one.
 assert.equal(cat.usesLabel(1), "La usa 1 producto");
@@ -1104,6 +1122,83 @@ assert.equal(ck.checkoutLines([{ id: "p1", quantity: 1 }], [{ ...SERVER[0], pric
   assert.equal(lz.lacksLanguage({ ok: false, errors: { nameEn: "Campo obligatorio (inglés)" } }, "en"), true);
   assert.equal(lz.lacksLanguage({ ok: false, errors: { price: "Número inválido" } }, "en"), false);
   assert.equal(lz.lacksLanguage({ ok: true, value: {} }, "en"), false);
+}
+
+// Content in the visitor's language (lib/localize.ts)
+{
+  const lz = await import("../lib/localize.ts");
+  const hs = await import("../lib/homeSections.ts");
+  const { BRAND_DEFAULTS } = await import("../constants/brandDefaults.ts");
+
+  const product = {
+    _id: "p", name: "Parlante", nameEn: "Speaker", description: "Suena bien", descriptionEn: "",
+    categories: [{ title: "Audio", titleEn: "Sound" }, { title: "Ofertas" }, "Ya texto", null],
+  };
+  const en = lz.localizeProduct(product, "en");
+  assert.equal(en.name, "Speaker");
+  assert.equal(en.description, "Suena bien"); // no English description: the Spanish one
+  assert.deepEqual(en.categories, ["Sound", "Ofertas", "Ya texto", null]);
+  assert.equal(en.nameEs, "Parlante");
+  assert.equal(lz.productName(en, "es"), "Parlante"); // the cart can switch back
+  assert.equal(lz.localizeProduct(en, "es").name, "Parlante");
+  assert.equal(lz.localizeProduct({ name: "Solo español" }, "en").name, "Solo español");
+  assert.equal(lz.localizeProduct({ name: "", nameEn: "Only English" }, "es").name, "Only English");
+  assert.deepEqual(lz.localizeProduct({ name: "x", categories: [{ _ref: "cat1" }] }, "en").categories, [{ _ref: "cat1" }]);
+  assert.equal(lz.productName({ name: "Mesa" }, "en"), "Mesa"); // cart saved before this change
+
+  assert.deepEqual(
+    lz.localizeTaxonomy({ title: "Audio", titleEn: "Sound", description: "", descriptionEn: "Speakers" }, "es"),
+    { title: "Audio", titleEn: "Sound", description: "Speakers", descriptionEn: "Speakers" }
+  );
+
+  const body = [{ _type: "block", children: [] }];
+  const bodyEn = [{ _type: "block", children: [], _key: "en" }];
+  assert.equal(lz.localizeBlog({ title: "Hola", titleEn: "Hi", body, bodyEn }, "en").body, bodyEn);
+  assert.equal(lz.localizeBlog({ title: "Hola", body, bodyEn: [] }, "en").body, body);
+  assert.equal(lz.localizeBlog({ title: "Hola", titleEn: "Hi", body }, "en").title, "Hi");
+  assert.deepEqual(
+    lz.localizeBlog({ title: "x", blogcategories: [{ title: "Noticias", titleEn: "News" }] }, "en").blogcategories,
+    [{ title: "News", titleEn: "News" }]
+  );
+
+  const brandEn = lz.localizeBrand(
+    { ...BRAND_DEFAULTS, tagline: "Lo mejor", taglineEn: "", banner: { ...BRAND_DEFAULTS.banner, stats: [{ _key: "a", value: "1", label: "Vendidos", labelEn: "Sold" }] } },
+    "en"
+  );
+  assert.equal(brandEn.tagline, "Lo mejor");
+  assert.equal(brandEn.banner.title, BRAND_DEFAULTS.banner.titleEn);
+  assert.equal(brandEn.banner.primaryCta.label, "Shop now");
+  assert.equal(brandEn.banner.stats[0].label, "Sold");
+  assert.equal(brandEn.pages.about.blocks[0].title, "Shipping");
+  assert.equal(brandEn.pages.faqs.intro, ""); // both empty stays empty
+  assert.equal(lz.localizeBrand(BRAND_DEFAULTS, "es").pages.about.blocks[0].title, "Envíos");
+  // Blocks saved before the twins existed (no titleEn at all) show the Spanish text
+  const oldBlock = { _key: "b", icon: "truck", title: "Envíos", text: "Rápido", href: "" };
+  const oldPages = { ...BRAND_DEFAULTS.pages, about: { intro: "Hola", blocks: [oldBlock] } };
+  assert.equal(lz.localizeBrand({ ...BRAND_DEFAULTS, pages: oldPages }, "en").pages.about.blocks[0].title, "Envíos");
+  assert.equal(lz.localizeBrand({ ...BRAND_DEFAULTS, pages: oldPages }, "en").pages.about.intro, "Hola");
+
+  const sections = lz.localizeHomeSections(
+    [
+      { ...hs.newSection("testimonials", "t"), title: "Opiniones", items: [{ _key: "a", name: "Ana", text: "Excelente", textEn: "Great", rating: 5, photo: null }] },
+      hs.newSection("categories", "c"),
+      { ...hs.newSection("promo", "p"), title: "Oferta", button: { label: "Ver", labelEn: "See", href: "/deal" } },
+    ],
+    "en"
+  );
+  assert.equal(sections[0].title, "Opiniones");
+  assert.equal(sections[0].items[0].text, "Great");
+  assert.equal(sections[0].items[0].name, "Ana");
+  assert.equal(sections[1].title, "Popular categories");
+  assert.equal(sections[2].button.label, "See");
+
+  const settings = lz.localizeSettings({ ...BRAND_DEFAULTS, homeSections: null }, "en");
+  assert.equal(settings.homeSections, null);
+  assert.equal(settings.tagline, BRAND_DEFAULTS.taglineEn);
+
+  assert.equal(lz.localizeEmailBrand({ storeName: "T", address: "Calle 1", addressEn: "1 Main St" }, "en").address, "1 Main St");
+  assert.equal(lz.localizeEmailBrand({ storeName: "T", address: "Calle 1" }, "en").address, "Calle 1");
+  assert.deepEqual(lz.localizeEmailProducts([{ name: "Parlante", nameEn: "Speaker" }, { name: "Mesa" }], "en").map((p) => p.name), ["Speaker", "Mesa"]);
 }
 
 console.log("check-permissions: ok");

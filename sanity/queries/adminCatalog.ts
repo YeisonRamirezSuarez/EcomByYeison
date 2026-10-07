@@ -11,9 +11,11 @@ const NOT_VERSIONS = `!(_id in path("versions.**"))`;
 // Form values as the editor keeps them (numbers as text, empty selects as "").
 export type ProductForm = {
   name: string;
+  nameEn: string;
   slug: string;
   images: ImageValue[];
   description: string;
+  descriptionEn: string;
   price: string;
   discount: string;
   stock: string;
@@ -26,9 +28,11 @@ export type ProductForm = {
 
 export const EMPTY_PRODUCT: ProductForm = {
   name: "",
+  nameEn: "",
   slug: "",
   images: [],
   description: "",
+  descriptionEn: "",
   price: "",
   discount: "0",
   stock: "0",
@@ -40,13 +44,15 @@ export const EMPTY_PRODUCT: ProductForm = {
 };
 
 const FORM_PROJECTION = `{
-  name, "slug": slug.current, description, price, discount, stock, status, variant, isFeatured, archived,
+  name, nameEn, "slug": slug.current, description, descriptionEn, price, discount, stock, status, variant, isFeatured, archived,
   "images": images[defined(asset)]{ "assetId": asset._ref, "url": asset->url },
   "categories": categories[defined(@->_id)]._ref, "brand": select(defined(brand->_id) => brand._ref, null)
 }`;
 
 type FormDoc = {
   name?: string;
+  nameEn?: string;
+  descriptionEn?: string;
   slug?: string;
   description?: string;
   price?: number;
@@ -66,9 +72,11 @@ const asText = (n: number | undefined, fallback: string) => (typeof n === "numbe
 function toForm(doc: FormDoc): ProductForm {
   return {
     name: doc.name ?? "",
+    nameEn: doc.nameEn ?? "",
     slug: doc.slug ?? "",
     images: (doc.images ?? []).filter((image) => image?.assetId && image?.url),
     description: doc.description ?? "",
+    descriptionEn: doc.descriptionEn ?? "",
     price: asText(doc.price, ""),
     discount: asText(doc.discount, "0"),
     stock: asText(doc.stock, "0"),
@@ -83,7 +91,7 @@ function toForm(doc: FormDoc): ProductForm {
 export async function getAdminProducts(): Promise<ProductRow[]> {
   // ponytail: loads every product; paginate on the server when a store has many thousands.
   const docs = await backendClient.fetch<ProductDocRow[]>(
-    `*[_type == "product" && ${NOT_VERSIONS}]{ _id, name, price, stock, archived, _updatedAt, "image": images[0].asset->url }`,
+    `*[_type == "product" && ${NOT_VERSIONS}]{ _id, name, nameEn, price, stock, archived, _updatedAt, "image": images[0].asset->url }`,
     {},
     RAW
   );
@@ -112,8 +120,8 @@ export type Option = { _id: string; title: string };
 export async function getCatalogOptions(): Promise<{ categories: Option[]; brands: Option[] }> {
   return backendClient.fetch(
     `{
-      "categories": *[_type == "category"] | order(title asc){ _id, "title": coalesce(title, "Sin título") },
-      "brands": *[_type == "brand"] | order(title asc){ _id, "title": coalesce(title, "Sin título") }
+      "categories": *[_type == "category"] | order(title asc){ _id, "title": select(length(title) > 0 => title, length(titleEn) > 0 => titleEn, "Sin título") },
+      "brands": *[_type == "brand"] | order(title asc){ _id, "title": select(length(title) > 0 => title, length(titleEn) > 0 => titleEn, "Sin título") }
     }`,
     {},
     FRESH
@@ -125,8 +133,10 @@ export type TaxonomyKind = "category" | "brand";
 export type TaxonomyRow = {
   _id: string;
   title: string;
+  titleEn: string;
   slug: string;
   description: string;
+  descriptionEn: string;
   range: string;
   featured: boolean;
   image: ImageValue | null;
@@ -141,7 +151,7 @@ export async function getTaxonomy(kind: TaxonomyKind): Promise<TaxonomyRow[]> {
   }>(
     `{
       "rows": *[_type == $kind && !(_id in path("drafts.**")) && ${NOT_VERSIONS}] | order(title asc){
-        _id, "title": coalesce(title, ""), "slug": coalesce(slug.current, ""), "description": coalesce(description, ""),
+        _id, "title": coalesce(title, ""), "titleEn": coalesce(titleEn, ""), "slug": coalesce(slug.current, ""), "description": coalesce(description, ""), "descriptionEn": coalesce(descriptionEn, ""),
         range, "featured": featured == true,
         "image": select(defined(image.asset) => { "assetId": image.asset._ref, "url": image.asset->url }, null)
       },

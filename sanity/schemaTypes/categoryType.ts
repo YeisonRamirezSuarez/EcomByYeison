@@ -10,13 +10,15 @@ export const categoryType = defineType({
     defineField({
       name: "title",
       type: "string",
-      validation: (Rule) => Rule.required(),
+      validation: (Rule) =>
+        Rule.custom((title, context) => (title || context.document?.titleEn ? true : "Write the title in Spanish or English")),
     }),
+    defineField({ name: "titleEn", title: "Title (English)", type: "string" }),
     defineField({
       name: "slug",
       type: "slug",
       options: {
-        source: "title",
+        source: (doc) => String(doc.title || doc.titleEn || ""),
         maxLength: 96,
       },
       validation: (Rule) => Rule.required(),
@@ -25,6 +27,7 @@ export const categoryType = defineType({
       name: "description",
       type: "text",
     }),
+    defineField({ name: "descriptionEn", title: "Description (English)", type: "text" }),
     defineField({
       name: "range",
       type: "number",

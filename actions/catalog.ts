@@ -23,6 +23,7 @@ import {
   type SanityWrite,
 } from "@/lib/catalog";
 import { backendClient } from "@/sanity/lib/backendClient";
+import { getSiteSettings } from "@/sanity/queries/siteSettings";
 import type { Mutation } from "@sanity/client";
 
 const RAW = { perspective: "raw", useCdn: false, cache: "no-store" } as const;
@@ -53,7 +54,8 @@ const applyWrite = (write: SanityWrite) => (patch: ReturnType<typeof backendClie
   write.unset.length ? patch.set(write.set).unset(write.unset) : patch.set(write.set);
 
 export async function saveProductDraft(id: string | null, data: unknown): Promise<ActionResult<{ id: string }>> {
-  const r = validateProduct(data);
+  const { primary } = await getSiteSettings();
+  const r = validateProduct(data, primary);
   if (!r.ok) return fail(INVALID_FORM, r.errors);
   if (id !== null && !isDocId(id)) return fail(INVALID_FORM);
   return run(async () => {
@@ -94,14 +96,14 @@ export async function publishProduct(id: string): Promise<ActionResult<null>> {
 
   const form = await backendClient.fetch<Record<string, unknown>>(
     `*[_id == $draftId][0]{
-      name, "slug": slug.current, description, price, discount, stock, status, variant, isFeatured,
+      name, nameEn, "slug": slug.current, description, descriptionEn, price, discount, stock, status, variant, isFeatured,
       "images": images[defined(asset)]{ "assetId": asset._ref, "url": asset->url },
       "categories": categories[]._ref, "brand": brand._ref
     }`,
     { draftId: draftOf(id) },
     RAW
   );
-  const r = validateProduct(form);
+  const r = validateProduct(form, (await getSiteSettings()).primary);
   if (!r.ok) return fail("Completa los campos marcados antes de publicar", r.errors);
 
   const taken = await backendClient.fetch<number>(
@@ -166,7 +168,8 @@ export async function deleteProduct(id: string): Promise<ActionResult<null>> {
 type Kind = "category" | "brand";
 
 async function saveTaxonomy(kind: Kind, id: string | null, data: unknown): Promise<ActionResult<{ id: string }>> {
-  const r = kind === "category" ? validateCategory(data) : validateBrand(data);
+  const { primary } = await getSiteSettings();
+  const r = kind === "category" ? validateCategory(data, primary) : validateBrand(data, primary);
   if (!r.ok) return fail(INVALID_FORM, r.errors);
   if (id !== null && !isDocId(id)) return fail(INVALID_FORM);
   const allowed = await run(() => requirePermission("catalogo"));

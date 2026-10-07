@@ -12,7 +12,7 @@ import type { TaxonomyKind, TaxonomyRow } from "@/sanity/queries/adminCatalog";
 import { INPUT, TextField } from "../brand/fields";
 import ImageField from "../brand/ImageField";
 
-const EMPTY: TaxonomyRow = { _id: "", title: "", slug: "", description: "", range: "", featured: false, image: null, uses: 0 };
+const EMPTY: TaxonomyRow = { _id: "", title: "", titleEn: "", slug: "", description: "", descriptionEn: "", range: "", featured: false, image: null, uses: 0 };
 const COPY = {
   category: { new: "Nueva categoría", edit: "Editar categoría", search: "Buscar categoría" },
   brand: { new: "Nueva marca", edit: "Editar marca", search: "Buscar marca" },

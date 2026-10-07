@@ -1,6 +1,7 @@
 // Pure catalog rules (products, categories, brands) shared by the admin panel and server actions.
 // Only type imports: also run by scripts/check-permissions.mjs.
 import type { ImageValue } from "./brand";
+import type { Locale } from "./i18n";
 import type { ValidationResult } from "./validation";
 
 export const PRODUCT_STATUSES = { new: "Nuevo", hot: "Popular", sale: "Oferta" } as const;
@@ -17,6 +18,8 @@ export const MAX_PRODUCT_IMAGES = 10;
 export const SLUG_TAKEN = "Ya existe otro con este slug";
 
 const REQUIRED = "Campo obligatorio";
+// Same text as requiredIn in lib/localize.ts (pure modules cannot import each other).
+const requiredIn = (locale: Locale) => `${REQUIRED} (${locale === "en" ? "inglés" : "español"})`;
 const INVALID_NUMBER = "Número inválido";
 const tooLong = (max: number) => `Máximo ${max} caracteres`;
 
@@ -48,6 +51,15 @@ function text(errors: Errors, key: string, value: unknown, max: number, required
   if (required && !s) errors[key] = REQUIRED;
   else if (s.length > max) errors[key] = tooLong(max);
   return s;
+}
+
+// A text with an English twin ("name" + "nameEn"): when required, only the store's main language must be filled.
+function texts(errors: Errors, v: Record<string, unknown>, name: string, max: number, required: Locale | null = null): [string, string] {
+  const es = text(errors, name, v[name], max);
+  const en = text(errors, `${name}En`, v[`${name}En`], max);
+  const field = required === "en" ? `${name}En` : name;
+  if (required && !(required === "en" ? en : es) && !errors[field]) errors[field] = requiredIn(required);
+  return [es, en];
 }
 
 function slug(errors: Errors, value: unknown) {
@@ -104,9 +116,11 @@ const result = <T>(errors: Errors, value: T): ValidationResult<T> =>
 
 export type ProductInput = {
   name: string;
+  nameEn: string;
   slug: string;
   images: ImageValue[];
   description: string;
+  descriptionEn: string;
   price: number;
   discount: number;
   stock: number;
@@ -117,7 +131,7 @@ export type ProductInput = {
   isFeatured: boolean;
 };
 
-export function validateProduct(input: unknown): ValidationResult<ProductInput> {
+export function validateProduct(input: unknown, primary: Locale = "es"): ValidationResult<ProductInput> {
   const v = asObject(input);
   const errors: Errors = {};
 
@@ -140,11 +154,16 @@ export function validateProduct(input: unknown): ValidationResult<ProductInput> 
     else errors.brand = "Marca inválida";
   }
 
+  const [name, nameEn] = texts(errors, v, "name", 120, primary);
+  const [description, descriptionEn] = texts(errors, v, "description", 2000);
+
   return result(errors, {
-    name: text(errors, "name", v.name, 120, true),
+    name,
+    nameEn,
     slug: slug(errors, v.slug),
     images,
-    description: text(errors, "description", v.description, 2000),
+    description,
+    descriptionEn,
     price: num(errors, "price", v.price, { required: true }) ?? 0,
     discount: num(errors, "discount", v.discount, { max: 100 }) ?? 0,
     stock: num(errors, "stock", v.stock, { int: true }) ?? 0,
@@ -158,35 +177,52 @@ export function validateProduct(input: unknown): ValidationResult<ProductInput> 
 
 export type CategoryInput = {
   title: string;
+  titleEn: string;
   slug: string;
   description: string;
+  descriptionEn: string;
   range: number | null;
   featured: boolean;
   image: ImageValue | null;
 };
 
-export function validateCategory(input: unknown): ValidationResult<CategoryInput> {
+export function validateCategory(input: unknown, primary: Locale = "es"): ValidationResult<CategoryInput> {
   const v = asObject(input);
   const errors: Errors = {};
+  const [title, titleEn] = texts(errors, v, "title", 80, primary);
+  const [description, descriptionEn] = texts(errors, v, "description", 500);
   return result(errors, {
-    title: text(errors, "title", v.title, 80, true),
+    title,
+    titleEn,
     slug: slug(errors, v.slug),
-    description: text(errors, "description", v.description, 500),
+    description,
+    descriptionEn,
     range: num(errors, "range", v.range),
     featured: v.featured === true,
     image: optionalImage(errors, v.image),
   });
 }
 
-export type BrandInput = { title: string; slug: string; description: string; image: ImageValue | null };
+export type BrandInput = {
+  title: string;
+  titleEn: string;
+  slug: string;
+  description: string;
+  descriptionEn: string;
+  image: ImageValue | null;
+};
 
-export function validateBrand(input: unknown): ValidationResult<BrandInput> {
+export function validateBrand(input: unknown, primary: Locale = "es"): ValidationResult<BrandInput> {
   const v = asObject(input);
   const errors: Errors = {};
+  const [title, titleEn] = texts(errors, v, "title", 80, primary);
+  const [description, descriptionEn] = texts(errors, v, "description", 500);
   return result(errors, {
-    title: text(errors, "title", v.title, 80, true),
+    title,
+    titleEn,
     slug: slug(errors, v.slug),
-    description: text(errors, "description", v.description, 500),
+    description,
+    descriptionEn,
     image: optionalImage(errors, v.image),
   });
 }
@@ -225,9 +261,11 @@ export function imageExtras(images: unknown): ImageExtras {
 export function productWrite(p: ProductInput, extras: ImageExtras = {}): SanityWrite {
   return write({
     name: p.name,
+    nameEn: p.nameEn,
     slug: { _type: "slug", current: p.slug },
     images: p.images.map((image, i) => ({ _key: `img${i}`, ...imageRef(image), ...extras[image.assetId] })),
     description: p.description,
+    descriptionEn: p.descriptionEn,
     price: p.price,
     discount: p.discount,
     stock: p.stock,
@@ -242,8 +280,10 @@ export function productWrite(p: ProductInput, extras: ImageExtras = {}): SanityW
 export function categoryWrite(c: CategoryInput): SanityWrite {
   return write({
     title: c.title,
+    titleEn: c.titleEn,
     slug: { _type: "slug", current: c.slug },
     description: c.description,
+    descriptionEn: c.descriptionEn,
     range: c.range,
     featured: c.featured,
     image: c.image ? imageRef(c.image) : null,
@@ -253,8 +293,10 @@ export function categoryWrite(c: CategoryInput): SanityWrite {
 export function brandWrite(b: BrandInput): SanityWrite {
   return write({
     title: b.title,
+    titleEn: b.titleEn,
     slug: { _type: "slug", current: b.slug },
     description: b.description,
+    descriptionEn: b.descriptionEn,
     image: b.image ? imageRef(b.image) : null,
   });
 }
@@ -322,6 +364,7 @@ export function productState(s: { hasPublished: boolean; hasDraft: boolean; arch
 export type ProductDocRow = {
   _id: string;
   name?: string;
+  nameEn?: string;
   price?: number;
   stock?: number;
   archived?: boolean;
@@ -332,6 +375,7 @@ export type ProductDocRow = {
 export type ProductRow = {
   id: string;
   name: string;
+  nameEn: string;
   price: number;
   stock: number;
   image: string | null;
@@ -355,7 +399,9 @@ export function mergeProductRows(docs: ProductDocRow[]): ProductRow[] {
     const shown = (draft ?? published) as ProductDocRow;
     rows.push({
       id,
-      name: shown.name ?? "",
+      // The panel lists the Spanish name, or the English one when there is no Spanish name.
+      name: shown.name || shown.nameEn || "",
+      nameEn: shown.nameEn ?? "",
       price: shown.price ?? 0,
       stock: shown.stock ?? 0,
       image: shown.image ?? null,
@@ -377,6 +423,6 @@ export function filterProducts(rows: ProductRow[], filter: ProductFilter, query:
         : filter === "por-publicar"
           ? row.state === "borrador" || row.state === "por-publicar"
           : row.state !== "archivado";
-    return inFilter && (!q || row.name.toLowerCase().includes(q));
+    return inFilter && (!q || row.name.toLowerCase().includes(q) || row.nameEn.toLowerCase().includes(q));
   });
 }

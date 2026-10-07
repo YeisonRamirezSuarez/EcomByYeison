@@ -1,6 +1,8 @@
 // Store languages and how texts written in the panel reach the visitor. A text field ("name")
 // is Spanish; its twin ("nameEn") is English. An empty text falls back to the other language,
 // so the store never shows a blank. Pure: only type imports, so scripts/check-permissions.mjs can run it.
+import type { Brand as StoreBrand, PageContent } from "./brand";
+import type { HomeSection } from "./homeSections";
 import type { Locale } from "./i18n";
 import type { ValidationResult } from "./validation";
 
@@ -60,3 +62,119 @@ export const requiredIn = (locale: Locale) => `Campo obligatorio (${locale === "
 // True when a validator run for that language reports a required field still empty.
 export const lacksLanguage = (result: ValidationResult<unknown>, locale: Locale): boolean =>
   !result.ok && Object.values(result.errors).includes(requiredIn(locale));
+
+type Titled = { title?: unknown; titleEn?: unknown };
+// A referenced document projected as { title, titleEn } (not a bare reference).
+const isTitled = (value: unknown): value is Titled =>
+  typeof value === "object" && value !== null && !("_ref" in value) && ("title" in value || "titleEn" in value);
+const asText = (value: unknown) => (typeof value === "string" ? value : "");
+
+export type LocalizableProduct = {
+  name?: unknown;
+  nameEn?: unknown;
+  nameEs?: unknown;
+  description?: unknown;
+  descriptionEn?: unknown;
+  categories?: unknown;
+};
+
+// The product as the store shows it: name, description and category names in the visitor's
+// language. nameEs/nameEn stay so the cart (saved in the browser) can switch later (productName).
+export function localizeProduct<T extends LocalizableProduct>(product: T, locale: Locale): T {
+  const nameEs = typeof product.nameEs === "string" ? product.nameEs : asText(product.name);
+  const categories = Array.isArray(product.categories)
+    ? product.categories.map((c) => (isTitled(c) ? pickText(c.title, c.titleEn, locale) : c))
+    : product.categories;
+  return {
+    ...product,
+    name: pickText(nameEs, product.nameEn, locale),
+    nameEs,
+    nameEn: asText(product.nameEn),
+    description: pickText(product.description, product.descriptionEn, locale),
+    categories,
+  };
+}
+
+export const productName = (product: LocalizableProduct, locale: Locale): string =>
+  pickText(typeof product.nameEs === "string" ? product.nameEs : product.name, product.nameEn, locale);
+
+export function localizeTaxonomy<T extends Titled & { description?: unknown; descriptionEn?: unknown }>(doc: T, locale: Locale): T {
+  return {
+    ...doc,
+    title: pickText(doc.title, doc.titleEn, locale),
+    description: pickText(doc.description, doc.descriptionEn, locale),
+  };
+}
+
+const hasBlocks = (value: unknown) => Array.isArray(value) && value.length > 0;
+
+export type LocalizableBlog = Titled & { body?: unknown; bodyEn?: unknown; blogcategories?: unknown };
+
+// Blog posts are written in Studio: the English body replaces the Spanish one only when it has content.
+export function localizeBlog<T extends LocalizableBlog>(blog: T, locale: Locale): T {
+  const [first, second] = locale === "en" ? [blog.bodyEn, blog.body] : [blog.body, blog.bodyEn];
+  const categories = Array.isArray(blog.blogcategories)
+    ? blog.blogcategories.map((c) => (isTitled(c) ? { ...c, title: pickText(c.title, c.titleEn, locale) } : c))
+    : blog.blogcategories;
+  return {
+    ...blog,
+    title: pickText(blog.title, blog.titleEn, locale),
+    body: hasBlocks(first) ? first : hasBlocks(second) ? second : blog.body,
+    blogcategories: categories,
+  };
+}
+
+export function localizeBrand<T extends StoreBrand>(brand: T, locale: Locale): T {
+  const pick = (es: unknown, en: unknown) => pickText(es, en, locale);
+  const { banner, contact } = brand;
+  const page = (p: PageContent): PageContent => ({
+    ...p,
+    intro: pick(p.intro, p.introEn),
+    blocks: p.blocks.map((b) => ({ ...b, title: pick(b.title, b.titleEn), text: pick(b.text, b.textEn) })),
+  });
+  return {
+    ...brand,
+    tagline: pick(brand.tagline, brand.taglineEn),
+    description: pick(brand.description, brand.descriptionEn),
+    banner: {
+      ...banner,
+      badge: pick(banner.badge, banner.badgeEn),
+      title: pick(banner.title, banner.titleEn),
+      highlight: pick(banner.highlight, banner.highlightEn),
+      subtitle: pick(banner.subtitle, banner.subtitleEn),
+      description: pick(banner.description, banner.descriptionEn),
+      primaryCta: { ...banner.primaryCta, label: pick(banner.primaryCta.label, banner.primaryCta.labelEn) },
+      secondaryCta: { ...banner.secondaryCta, label: pick(banner.secondaryCta.label, banner.secondaryCta.labelEn) },
+      stats: banner.stats.map((s) => ({ ...s, label: pick(s.label, s.labelEn) })),
+    },
+    contact: { ...contact, address: pick(contact.address, contact.addressEn), hours: pick(contact.hours, contact.hoursEn) },
+    pages: Object.fromEntries(Object.entries(brand.pages).map(([key, p]) => [key, page(p)])) as StoreBrand["pages"],
+  };
+}
+
+export function localizeHomeSections(sections: HomeSection[], locale: Locale): HomeSection[] {
+  return sections.map((s) => ({
+    ...s,
+    title: pickText(s.title, s.titleEn, locale),
+    text: pickText(s.text, s.textEn, locale),
+    button: { ...s.button, label: pickText(s.button.label, s.button.labelEn, locale) },
+    items: s.items.map((t) => ({ ...t, text: pickText(t.text, t.textEn, locale) })),
+  }));
+}
+
+// Settings as the store shows them. Panel editors keep the raw settings (both languages).
+export function localizeSettings<T extends StoreBrand & { homeSections: HomeSection[] | null }>(settings: T, locale: Locale): T {
+  return {
+    ...localizeBrand(settings, locale),
+    homeSections: settings.homeSections && localizeHomeSections(settings.homeSections, locale),
+  };
+}
+
+// Campaign emails: the store address and product names in the campaign's language.
+export const localizeEmailBrand = <B extends { address: string; addressEn?: string }>(brand: B, locale: Locale): B => ({
+  ...brand,
+  address: pickText(brand.address, brand.addressEn, locale),
+});
+
+export const localizeEmailProducts = <P extends { name: string; nameEn?: string }>(products: P[], locale: Locale): P[] =>
+  products.map((p) => ({ ...p, name: pickText(p.name, p.nameEn, locale) }));

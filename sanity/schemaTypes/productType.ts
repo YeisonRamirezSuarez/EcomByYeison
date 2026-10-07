@@ -11,14 +11,17 @@ export const productType = defineType({
       name: "name",
       title: "Product Name",
       type: "string",
-      validation: (Rule) => Rule.required(),
+      // The panel requires the store's main language; here either language is enough.
+      validation: (Rule) =>
+        Rule.custom((name, context) => (name || context.document?.nameEn ? true : "Write the name in Spanish or English")),
     }),
+    defineField({ name: "nameEn", title: "Product Name (English)", type: "string" }),
     defineField({
       name: "slug",
       title: "Slug",
       type: "slug",
       options: {
-        source: "name",
+        source: (doc) => String(doc.name || doc.nameEn || ""),
         maxLength: 96,
       },
       validation: (Rule) => Rule.required(),
@@ -34,6 +37,7 @@ export const productType = defineType({
       title: "Description",
       type: "string",
     }),
+    defineField({ name: "descriptionEn", title: "Description (English)", type: "string" }),
     defineField({
       name: "price",
       title: "Price",
