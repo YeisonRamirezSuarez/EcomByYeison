@@ -6,6 +6,7 @@ import {
   canAssignRole,
   roleFromMetadata,
 } from "../lib/permissions.ts";
+const v = await import("../lib/validation.ts");
 
 // roleFromMetadata
 assert.equal(roleFromMetadata(undefined), "cliente");
@@ -111,7 +112,6 @@ assert.deepEqual(parsePriceRange("2000000-"), { minPrice: 2000000, maxPrice: nul
 assert.deepEqual(parsePriceRange("basura"), { minPrice: 0, maxPrice: null });
 
 // Brand validation
-const v = await import("../lib/validation.ts");
 assert.equal(v.isValidHref("/shop"), true);
 assert.equal(v.isValidHref("//evil.com"), false);
 assert.equal(v.isValidHref("/\\evil.com"), false);
@@ -790,6 +790,198 @@ assert.equal(ck.checkoutLines([{ id: "p1", quantity: 1 }], [{ ...SERVER[0], pric
   assert.equal(st.contrastRatio("#000000", "#ffffff"), st.contrastRatio("#ffffff", "#000000"));
   assert.ok(st.contrastRatio("#ffffff", "#9a3412") >= st.MIN_CONTRAST);
   assert.ok(st.contrastRatio("#ffffff", "#fde68a") < st.MIN_CONTRAST);
+}
+
+// Campaign email HTML
+{
+  const ce = await import("../lib/campaignEmail.ts");
+  const nl = await import("../lib/newsletter.ts");
+  const content = {
+    ...nl.EMPTY_CAMPAIGN,
+    subject: "Ofertas <hoy>",
+    preheader: "Solo hoy",
+    title: 'Hasta 50% "off"',
+    text: "Hola <script>alert(1)</script>\nlínea 2\n\nSegundo párrafo",
+    button: { label: "Ver", href: "/shop" },
+  };
+  const brand = { storeName: "Tienda & Co", logoUrl: null, address: "Calle 1 #2-3, Bogotá", primary: "#9a3412", button: "#1d4ed8" };
+  const products = [{ name: "Audífonos", url: "/product/audifonos", imageUrl: "https://cdn.sanity.io/images/p/d/a.png", price: "$ 10.000" }];
+  const out = ce.renderCampaignEmail({ content, products, brand, baseUrl: "https://tienda.com/", unsubscribeUrl: "https://tienda.com/boletin/baja?s=x&t=y" });
+  assert.equal(out.subject, "Ofertas <hoy>");
+  assert.ok(!out.html.includes("<script>"));
+  assert.ok(out.html.includes("Hola &lt;script&gt;alert(1)&lt;/script&gt;<br>línea 2"));
+  assert.ok(out.html.includes("Hasta 50% &quot;off&quot;"));
+  assert.ok(out.html.includes("Solo hoy"));
+  assert.ok(out.html.includes("Tienda &amp; Co · Calle 1 #2-3, Bogotá"));
+  assert.ok(out.html.includes('href="https://tienda.com/boletin/baja?s=x&amp;t=y"'));
+  assert.ok(out.html.includes('href="https://tienda.com/shop"'));
+  assert.ok(out.html.includes(">Ver</a>"));
+  assert.ok(out.html.includes("#1d4ed8"));
+  assert.ok(out.html.includes('href="https://tienda.com/product/audifonos"'));
+  assert.ok(out.html.includes("https://cdn.sanity.io/images/p/d/a.png?w=400&amp;h=400&amp;fit=crop&amp;auto=format"));
+  assert.ok(out.html.includes("$ 10.000"));
+  assert.ok(out.text.includes("Ver: https://tienda.com/shop"));
+  assert.ok(out.text.includes("- Audífonos — $ 10.000: https://tienda.com/product/audifonos"));
+  assert.ok(out.text.includes("Darte de baja: https://tienda.com/boletin/baja?s=x&t=y"));
+
+  // Incomplete button hidden, unsafe colors replaced, footer always there
+  const bare = ce.renderCampaignEmail({
+    content: { ...content, button: { label: "Ver", href: "" } },
+    products: [],
+    brand: { ...brand, button: "red;background:url(x)" },
+    baseUrl: "https://tienda.com",
+    unsubscribeUrl: "https://tienda.com/boletin/baja",
+  });
+  assert.ok(!bare.html.includes(">Ver</a>"));
+  assert.ok(!bare.html.includes("red;background"));
+  assert.ok(bare.html.includes("Darte de baja"));
+  assert.ok(bare.html.includes("Recibes este correo porque te suscribiste en Tienda &amp; Co."));
+  assert.equal(ce.renderCampaignEmail({ content: { ...content, subject: "" }, products: [], brand, baseUrl: "", unsubscribeUrl: "#" }).subject, content.title);
+}
+
+// Newsletter rules
+{
+  const nl = await import("../lib/newsletter.ts");
+
+  // Same email and link rules as lib/validation.ts
+  for (const sample of ["/shop", "//evil.com", "/\\x", "https://a.co", "http://a.co", "javascript:alert(1)", "", "a@b.co", "a b@c.co"]) {
+    assert.equal(nl.isValidHref(sample), v.isValidHref(sample), sample);
+    assert.equal(nl.isEmail(sample), v.isEmail(sample), sample);
+  }
+  assert.equal(nl.isSubscriberId("subscriber.0123456789abcdef0123456789abcdef"), true);
+  assert.equal(nl.isSubscriberId("subscriber.xyz"), false);
+  assert.equal(nl.isSubscriberId("drafts.subscriber.0123456789abcdef0123456789abcdef"), false);
+  assert.equal(nl.isCampaignId("3f2b8c1e-9a4d-4e2f-8b1a-2c3d4e5f6a7b"), true);
+  assert.equal(nl.isCampaignId("campaign.3f2b8c1e-9a4d-4e2f-8b1a-2c3d4e5f6a7b"), false);
+
+  // SMTP settings
+  const smtp = { host: "smtp.example.com", port: "587", security: "starttls", user: "zz@example.com", password: "secreta", fromName: "", fromEmail: "ZZ@Example.com", replyTo: "", dailyLimit: "450" };
+  const okSmtp = nl.validateSmtpSettings(smtp, { hasStoredPassword: false });
+  assert.ok(okSmtp.ok);
+  assert.equal(okSmtp.value.port, 587);
+  assert.equal(okSmtp.value.fromEmail, "zz@example.com");
+  assert.equal(okSmtp.value.dailyLimit, 450);
+  const badSmtp = nl.validateSmtpSettings({ ...smtp, host: "", port: "99999", fromEmail: "no", replyTo: "x", dailyLimit: "0", password: "" }, { hasStoredPassword: false });
+  assert.ok(!badSmtp.ok);
+  for (const key of ["host", "port", "fromEmail", "replyTo", "dailyLimit", "password"]) assert.ok(badSmtp.errors[key], `smtp error ${key}`);
+  assert.ok(nl.validateSmtpSettings({ ...smtp, password: "" }, { hasStoredPassword: true }).ok); // keeps the saved one
+  assert.ok(nl.validateSmtpSettings({ ...smtp, user: "", password: "" }, { hasStoredPassword: false }).ok); // no login
+  assert.ok(nl.validateSmtpSettings({ ...smtp, host: "smtp example.com" }, { hasStoredPassword: false }).errors.host);
+  assert.equal(nl.validateSmtpSettings({ ...smtp, security: "rara" }, { hasStoredPassword: false }).value.security, "starttls");
+
+  // Campaign
+  const content = { ...nl.EMPTY_CAMPAIGN, subject: " Ofertas ", title: "ZZ Hola", button: { label: "Ver", href: "/shop" }, products: ["p1", "p2", "p1"] };
+  const okCampaign = nl.validateCampaign(content);
+  assert.ok(okCampaign.ok);
+  assert.equal(okCampaign.value.subject, "Ofertas");
+  assert.deepEqual(okCampaign.value.products, ["p1", "p2"]);
+  const badCampaign = nl.validateCampaign({ ...content, subject: "x".repeat(151), button: { label: "Ver", href: "javascript:alert(1)" }, image: { assetId: "nope", url: "http://x" }, products: ["a", "b", "c", "d", "e", "f", "g"] });
+  assert.ok(!badCampaign.ok);
+  for (const key of ["subject", "button.href", "image", "products"]) assert.ok(badCampaign.errors[key], `campaign error ${key}`);
+  assert.ok(nl.validateCampaign({ ...content, products: ["drafts.p1"] }).errors.products);
+  assert.ok(nl.validateCampaign({ ...content, subject: "", title: "" }).ok); // drafts may be empty
+
+  // What blocks sending
+  const ready = { smtpReady: true, keyReady: true, baseUrl: "https://tienda.com", address: "Calle 1", activeCount: 3 };
+  assert.deepEqual(nl.campaignSendProblems(okCampaign.value, ready), []);
+  assert.equal(nl.campaignSendProblems({ ...okCampaign.value, subject: "", title: "" }, { smtpReady: false, keyReady: false, baseUrl: "", address: " ", activeCount: 0 }).length, 7);
+
+  // CSV import
+  const csv = "﻿Nombre;Correo\r\n\"Pérez; Ana\";ANA@example.com\r\nLuis;luis@example.com\r\nOtra;ana@example.com\r\nMal;no-es-correo\r\n;\r\n";
+  const parsed = nl.parseEmailCsv(csv);
+  assert.ok(parsed.ok);
+  assert.deepEqual(parsed.emails, ["ana@example.com", "luis@example.com"]);
+  assert.deepEqual(parsed.invalid, ["no-es-correo"]);
+  assert.equal(parsed.duplicates, 1);
+  const noHeader = nl.parseEmailCsv("x,uno@example.com\ny,\"dos@example.com\"\n");
+  assert.ok(noHeader.ok);
+  assert.deepEqual(noHeader.emails, ["uno@example.com", "dos@example.com"]);
+  assert.deepEqual(nl.parseEmailCsv("email\ntres@example.com").emails, ["tres@example.com"]);
+  assert.deepEqual(nl.parseEmailCsv("\"a,b\",cuatro@example.com").emails, ["cuatro@example.com"]);
+  assert.equal(nl.parseEmailCsv("solo,texto\nsin,correos").ok, false);
+  const big = "email\n" + Array.from({ length: nl.MAX_IMPORT_ROWS + 1 }, (_, i) => `zz${i}@example.com`).join("\n");
+  assert.equal(nl.parseEmailCsv(big).ok, false);
+
+  // Import plan never re-activates someone who unsubscribed
+  assert.deepEqual(
+    nl.planImport(["a@x.co", "b@x.co", "c@x.co"], { "b@x.co": "active", "c@x.co": "unsubscribed" }),
+    { create: ["a@x.co"], already: 1, skippedUnsubscribed: 1 }
+  );
+
+  // CSV export: BOM, header, labels, quoting, no spreadsheet formulas
+  const exported = nl.subscribersCsv([
+    { _id: "s1", email: "ana@example.com", subscribedAt: "2026-10-07T10:00:00.000Z", source: "import", status: "unsubscribed" },
+    { _id: "s2", email: "=cmd@example.com", subscribedAt: null, source: "footer", status: "active" },
+  ]);
+  assert.ok(exported.startsWith("﻿email,fecha,origen,estado\r\n"));
+  assert.ok(exported.includes("ana@example.com,2026-10-07,Importado,Dado de baja\r\n"));
+  assert.ok(exported.includes("'=cmd@example.com,,Pie de página,Activo\r\n"));
+
+  // Filters from the URL
+  assert.deepEqual(nl.readSubscriberFilters({}), { search: "", status: "all", page: 0 });
+  assert.deepEqual(nl.readSubscriberFilters({ q: " ZZ ", estado: "unsubscribed", pagina: "3" }), { search: "zz", status: "unsubscribed", page: 2 });
+  assert.deepEqual(nl.readSubscriberFilters({ estado: "hacker", pagina: "-4" }), { search: "", status: "all", page: 0 });
+
+  // Daily limit and batches
+  assert.match(nl.utcDay(new Date("2026-10-07T23:59:00Z")), /^2026-10-07$/);
+  assert.equal(nl.remainingToday(450, null, "2026-10-07"), 450);
+  assert.equal(nl.remainingToday(450, { date: "2026-10-07", count: 440 }, "2026-10-07"), 10);
+  assert.equal(nl.remainingToday(450, { date: "2026-10-06", count: 450 }, "2026-10-07"), 450);
+  assert.equal(nl.remainingToday(450, { date: "2026-10-07", count: 500 }, "2026-10-07"), 0);
+  assert.equal(nl.batchSize(450), nl.BATCH_SIZE);
+  assert.equal(nl.batchSize(7), 7);
+  assert.equal(nl.batchSize(0), 0);
+  assert.equal(nl.progressPercent(5, 10), 50);
+  assert.equal(nl.progressPercent(12, 10), 100);
+  assert.equal(nl.progressPercent(0, 0), 100);
+
+  // SMTP errors: a dead server pauses the campaign, a refused address only fails that one
+  assert.equal(nl.isRecipientError({ code: "EENVELOPE", responseCode: 550, command: "RCPT TO" }), true);
+  assert.equal(nl.isRecipientError({ code: "EMESSAGE", responseCode: 554, command: "DATA" }), true);
+  assert.equal(nl.isRecipientError({ code: "EAUTH", responseCode: 535 }), false);
+  assert.equal(nl.isRecipientError({ code: "ECONNECTION" }), false);
+  assert.equal(nl.isRecipientError({ code: "EENVELOPE", responseCode: 553, command: "MAIL FROM" }), false);
+  assert.equal(nl.isRecipientError({ responseCode: 421 }), false);
+  assert.equal(nl.isRecipientError({}), false);
+  assert.match(nl.smtpErrorMessage({ code: "EAUTH" }), /contraseña/);
+  assert.match(nl.smtpErrorMessage({ code: "ECONNECTION" }), /conectar/);
+  assert.match(nl.smtpErrorMessage({ code: "ETIMEDOUT" }), /a tiempo/);
+  assert.match(nl.smtpErrorMessage({ responseCode: 451 }), /esperar/);
+  assert.match(nl.smtpErrorMessage({ command: "MAIL FROM", responseCode: 553 }), /remitente/);
+  assert.equal(nl.errorDetail(new Error("x".repeat(400))).length, 300);
+}
+
+// Newsletter secrets: SMTP password encryption, unsubscribe signatures, subscriber ids
+{
+  const sec = await import("../lib/secrets.ts");
+  const { createHash } = await import("node:crypto");
+  const KEY = "clave-de-prueba";
+  const token = sec.encryptSecret("contraseña ñ", KEY);
+  assert.ok(token.startsWith("v1."));
+  assert.ok(!token.includes("contraseña"));
+  assert.equal(sec.decryptSecret(token, KEY), "contraseña ñ");
+  assert.notEqual(sec.encryptSecret("x", KEY), sec.encryptSecret("x", KEY)); // random IV
+  assert.throws(() => sec.decryptSecret(token, "otra-clave"));
+  const flip = (index) => {
+    const raw = Buffer.from(token.slice(3), "base64url");
+    raw[index < 0 ? raw.length + index : index] ^= 1;
+    return "v1." + raw.toString("base64url");
+  };
+  assert.throws(() => sec.decryptSecret(flip(14), KEY)); // ciphertext byte
+  assert.throws(() => sec.decryptSecret(flip(-1), KEY)); // tag byte
+  assert.throws(() => sec.decryptSecret("texto-plano", KEY));
+  assert.throws(() => sec.decryptSecret("v1.AAAA", KEY));
+
+  const sig = sec.signUnsubscribe("subscriber.abc", KEY);
+  assert.equal(sec.verifyUnsubscribe("subscriber.abc", sig, KEY), true);
+  assert.equal(sec.verifyUnsubscribe("subscriber.abd", sig, KEY), false);
+  assert.equal(sec.verifyUnsubscribe("subscriber.abc", sig, "otra-clave"), false);
+  assert.equal(sec.verifyUnsubscribe("subscriber.abc", "corta", KEY), false);
+  assert.equal(sec.verifyUnsubscribe("subscriber.abc", "", KEY), false);
+
+  const id = sec.subscriberDocId("ana@example.com");
+  assert.equal(id, `subscriber.${createHash("sha256").update("ana@example.com").digest("hex").slice(0, 32)}`);
+  assert.match(id, /^subscriber\.[a-f0-9]{32}$/);
 }
 
 console.log("check-permissions: ok");
