@@ -16,6 +16,7 @@ import {
   type CampaignProgress,
   type SendReadiness,
 } from "@/lib/newsletter";
+import CampaignSendPanel from "./CampaignSendPanel";
 import ProductPicker from "./ProductPicker";
 
 export type EditorProps = {
@@ -30,7 +31,7 @@ export type EditorProps = {
   ready: SendReadiness & { remaining: number };
 };
 
-const CampaignEditor = ({ id, initial, initialProducts, missing: initialMissing, progress, brand, baseUrl }: EditorProps) => {
+const CampaignEditor = ({ id, initial, initialProducts, missing: initialMissing, progress, failures, brand, baseUrl, ready }: EditorProps) => {
   const [content, setContent] = useState(initial);
   const [chosen, setChosen] = useState(initialProducts);
   const [missing, setMissing] = useState(initialMissing);
@@ -38,7 +39,8 @@ const CampaignEditor = ({ id, initial, initialProducts, missing: initialMissing,
   const [askDelete, setAskDelete] = useState(false);
   const [pending, startTransition] = useTransition();
   const router = useRouter();
-  const editable = progress.status === "draft";
+  const [locked, setLocked] = useState(progress.status !== "draft");
+  const editable = !locked;
 
   const save = useAutosave(content, validateCampaign, (value) => saveCampaign(id, value), {
     onSaved: () => setSaveFailed(false),
@@ -65,6 +67,7 @@ const CampaignEditor = ({ id, initial, initialProducts, missing: initialMissing,
     });
   const duplicate = () =>
     startTransition(async () => {
+      await draftSaves.flush();
       const result = await duplicateCampaign(id);
       if (!result.ok) toast.error(result.error);
       else router.push(`/admin/boletin/${result.data.id}`);
@@ -133,6 +136,7 @@ const CampaignEditor = ({ id, initial, initialProducts, missing: initialMissing,
           </fieldset>
           <ProductPicker chosen={chosen} missing={missing} disabled={!editable} onChange={setProducts} />
           {save.errors.products && <span className="text-xs text-red-600">{save.errors.products}</span>}
+          <CampaignSendPanel id={id} content={content} ready={ready} initialProgress={progress} failures={failures} onLock={() => setLocked(true)} />
         </div>
         <div className="flex justify-center">
           <iframe

@@ -3,9 +3,9 @@
 import { currentUser } from "@clerk/nextjs/server";
 import { ActionError, run, type ActionResult } from "@/lib/actionResult";
 import { renderCampaignEmail } from "@/lib/campaignEmail";
-import { getEmailBrand, loadEmailProducts, toPickerProduct, type PickerProduct } from "@/lib/campaignSend";
+import { getEmailBrand, loadEmailProducts, runBatch, sendReadiness, toPickerProduct, type PickerProduct } from "@/lib/campaignSend";
 import { addUsage, getMailer } from "@/lib/mailer";
-import { EMPTY_CAMPAIGN, errorDetail, isCampaignId, isEmail, isSubscriberId, MAX_IMPORT_ROWS, planImport, smtpErrorMessage, subscribersCsv, validateCampaign, validateSmtpSettings, type CampaignContent, type SmtpErrorInfo } from "@/lib/newsletter";
+import { campaignSendProblems, EMPTY_CAMPAIGN, errorDetail, isCampaignId, isEmail, isSubscriberId, MAX_IMPORT_ROWS, planImport, smtpErrorMessage, subscribersCsv, validateCampaign, validateSmtpSettings, type CampaignContent, type CampaignProgress, type SmtpErrorInfo } from "@/lib/newsletter";
 import { requirePermission } from "@/lib/roles";
 import { encryptSecret, subscriberDocId } from "@/lib/secrets";
 import { siteUrl } from "@/lib/unsubscribe";
@@ -229,7 +229,7 @@ export async function saveCampaign(id: string, input: unknown): Promise<ActionRe
     await requirePermission("configurar");
     const campaign = await findCampaign(id);
     if (campaign.progress.status !== "draft") throw new ActionError("Esta campaña ya no se puede editar; duplícala para cambiarla");
-    await backendClient.patch(campaign._id).set(campaignFields(checked.value)).commit();
+    await backendClient.patch(campaign._id).ifRevisionId(campaign._rev).set(campaignFields(checked.value)).commit();
     return null;
   });
 }
@@ -279,5 +279,44 @@ export async function sendCampaignTest(id: string): Promise<ActionResult<{ to: s
     }
     await addUsage(1);
     return { to };
+  });
+}
+
+// Draft: starts from the first subscriber. Paused (or left "sending" by a closed page): resumes.
+export async function startCampaign(id: string): Promise<ActionResult<CampaignProgress>> {
+  return run(async () => {
+    await requirePermission("configurar");
+    const campaign = await findCampaign(id);
+    const { status } = campaign.progress;
+    if (status === "sent") throw new ActionError("Esta campaña ya se envió");
+    const { brand } = await getEmailBrand();
+    const ready = await sendReadiness(brand.address);
+    // On resume, an empty list just lets the next batch mark the campaign as sent.
+    const problems = campaignSendProblems(campaign.content, status === "draft" ? ready : { ...ready, activeCount: Math.max(ready.activeCount, 1) });
+    if (problems.length > 0) throw new ActionError(problems[0]);
+    const patch = backendClient.patch(campaign._id).ifRevisionId(campaign._rev).set({ status: "sending" }).unset(["pauseReason", "pauseMessage"]);
+    if (status === "draft") {
+      patch.set({ cursor: "", total: ready.activeCount, sent: 0, failed: 0, failures: [], startedAt: new Date().toISOString() });
+    }
+    await patch.commit();
+    return (await findCampaign(id)).progress;
+  });
+}
+
+export async function sendCampaignBatch(id: string): Promise<ActionResult<CampaignProgress>> {
+  return run(async () => {
+    await requirePermission("configurar");
+    return runBatch(await findCampaign(id));
+  });
+}
+
+export async function pauseCampaign(id: string): Promise<ActionResult<CampaignProgress>> {
+  return run(async () => {
+    await requirePermission("configurar");
+    const campaign = await findCampaign(id);
+    if (campaign.progress.status === "sending") {
+      await backendClient.patch(campaign._id).set({ status: "paused", pauseReason: "user", pauseMessage: "En pausa" }).commit();
+    }
+    return (await findCampaign(id)).progress;
   });
 }

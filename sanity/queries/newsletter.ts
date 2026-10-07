@@ -198,3 +198,12 @@ export async function searchProductDocs(term: string): Promise<EmailProductDoc[]
   const filter = term ? `${PUBLISHED_PRODUCT} && name match $q` : PUBLISHED_PRODUCT;
   return backendClient.fetch(`*[${filter}] | order(name asc) [0...10]${PRODUCT_FIELDS}`, { q: `${term}*` }, FRESH);
 }
+
+// Always the same order (by _id), so a campaign resumes exactly after its cursor.
+export async function getNextBatch(cursor: string, limit: number): Promise<{ _id: string; email: string }[]> {
+  return backendClient.fetch(
+    `*[_type == "subscriber" && ${ACTIVE} && _id > $cursor] | order(_id asc) [0...$limit]{ _id, email }`,
+    { cursor, limit },
+    FRESH
+  );
+}

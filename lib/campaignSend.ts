@@ -1,11 +1,13 @@
 import "server-only";
 import { formatPrice, type CurrencyCode } from "@/constants/currencies";
 import { THEMES } from "@/constants/themes";
-import type { EmailBrand, EmailProduct } from "@/lib/campaignEmail";
-import { getMailer, remainingSendsToday } from "@/lib/mailer";
-import type { SendReadiness } from "@/lib/newsletter";
-import { siteUrl } from "@/lib/unsubscribe";
-import { countActiveSubscribers, getProductsByIds, type EmailProductDoc } from "@/sanity/queries/newsletter";
+import { ActionError } from "@/lib/actionResult";
+import { renderCampaignEmail, type EmailBrand, type EmailProduct } from "@/lib/campaignEmail";
+import { addUsage, getMailer, remainingSendsToday, type Mailer } from "@/lib/mailer";
+import { batchSize, errorDetail, isRecipientError, MAX_FAILURES, smtpErrorMessage, type CampaignProgress, type PauseReason, type SendReadiness, type SmtpErrorInfo } from "@/lib/newsletter";
+import { siteUrl, unsubscribeLinks } from "@/lib/unsubscribe";
+import { backendClient } from "@/sanity/lib/backendClient";
+import { countActiveSubscribers, getCampaign, getNextBatch, getProductsByIds, type CampaignDoc, type EmailProductDoc } from "@/sanity/queries/newsletter";
 import { getSiteSettings } from "@/sanity/queries/siteSettings";
 
 export type PickerProduct = EmailProduct & { _id: string };
@@ -58,4 +60,97 @@ export async function sendReadiness(address: string): Promise<SendReadiness & { 
     activeCount,
     remaining,
   };
+}
+
+const OTHER_TAB = "Otra pestaña está enviando esta campaña";
+const isConflict = (error: unknown) => (error as { statusCode?: number } | null)?.statusCode === 409;
+
+async function pauseWith(campaign: CampaignDoc, reason: PauseReason, message: string): Promise<CampaignProgress> {
+  await backendClient.patch(campaign._id).set({ status: "paused", pauseReason: reason, pauseMessage: message }).commit();
+  return { ...campaign.progress, status: "paused", pauseReason: reason, pauseMessage: message };
+}
+
+async function latest(campaign: CampaignDoc): Promise<CampaignProgress> {
+  return (await getCampaign(campaign._id))?.progress ?? campaign.progress;
+}
+
+// One batch of up to 20. A batch only changes the status to paused (limit or SMTP) or sent;
+// if the owner paused meanwhile, it stays paused.
+export async function runBatch(campaign: CampaignDoc): Promise<CampaignProgress> {
+  if (campaign.progress.status !== "sending") return campaign.progress;
+  const secret = process.env.EMAIL_ENCRYPTION_KEY;
+  const base = siteUrl();
+  const mailer: Mailer | null = await getMailer().catch(() => null);
+  if (!mailer || !secret || !base) return pauseWith(campaign, "smtp", "El correo de salida no está configurado. Revisa Ajustes → Correo.");
+
+  const take = batchSize(await remainingSendsToday(mailer.dailyLimit));
+  if (take === 0) return pauseWith(campaign, "limit", `Llegaste al tope de hoy (${mailer.dailyLimit}). Continúa mañana.`);
+
+  const batch = await getNextBatch(campaign.cursor, take);
+  if (batch.length === 0) {
+    await backendClient.patch(campaign._id).set({ status: "sent", finishedAt: new Date().toISOString() }).unset(["pauseReason", "pauseMessage"]).commit();
+    return { ...campaign.progress, status: "sent", pauseReason: null, pauseMessage: "" };
+  }
+
+  // Read everything the emails need before reserving, so a read error never skips people.
+  const { brand, currency } = await getEmailBrand();
+  const products = await loadEmailProducts(campaign.content.products, currency);
+
+  // Reserve the batch before sending: a second tab gets a revision conflict instead of
+  // sending the same people. If the page dies mid-batch, those reserved and not sent are lost
+  // (up to 20): repeating emails would hurt the sender's reputation more.
+  try {
+    await backendClient.patch(campaign._id).ifRevisionId(campaign._rev).set({ cursor: batch[batch.length - 1]._id }).commit();
+  } catch (error) {
+    if (!isConflict(error)) throw error;
+    const now = await getCampaign(campaign._id);
+    if (now && now.progress.status !== "sending") return now.progress;
+    throw new ActionError(OTHER_TAB);
+  }
+
+  const failures = [...campaign.failures];
+  let sent = 0;
+  let failed = 0;
+  let lastDone = campaign.cursor;
+  for (const subscriber of batch) {
+    const links = unsubscribeLinks(subscriber._id, secret, base);
+    const email = renderCampaignEmail({ content: campaign.content, products, brand, baseUrl: base, unsubscribeUrl: links.page });
+    try {
+      await mailer.transporter.sendMail({
+        from: mailer.from,
+        replyTo: mailer.replyTo,
+        to: subscriber.email,
+        subject: email.subject,
+        html: email.html,
+        text: email.text,
+        headers: { "List-Unsubscribe": `<${links.oneClick}>`, "List-Unsubscribe-Post": "List-Unsubscribe=One-Click" },
+      });
+      sent++;
+    } catch (error) {
+      if (!isRecipientError(error as SmtpErrorInfo)) {
+        // The server itself failed: give back the untouched part of the batch and pause.
+        const pause = { failures: failures.slice(-MAX_FAILURES), status: "paused", pauseReason: "smtp", pauseMessage: smtpErrorMessage(error as SmtpErrorInfo) };
+        // Give back the unsent part only if no other tab reserved after this batch.
+        const now = await getCampaign(campaign._id);
+        let gaveBack = false;
+        if (now?.cursor === batch[batch.length - 1]._id) {
+          try {
+            await backendClient.patch(campaign._id).ifRevisionId(now._rev).inc({ sent, failed }).set({ ...pause, cursor: lastDone }).commit();
+            gaveBack = true;
+          } catch (conflict) {
+            if (!isConflict(conflict)) throw conflict;
+          }
+        }
+        if (!gaveBack) await backendClient.patch(campaign._id).inc({ sent, failed }).set(pause).commit();
+        await addUsage(sent);
+        return latest(campaign);
+      }
+      failed++;
+      failures.push({ email: subscriber.email, error: errorDetail(error) });
+    }
+    lastDone = subscriber._id;
+  }
+  await backendClient.patch(campaign._id).inc({ sent, failed }).set({ failures: failures.slice(-MAX_FAILURES) }).commit();
+  await addUsage(sent);
+  return latest(campaign);
 }
