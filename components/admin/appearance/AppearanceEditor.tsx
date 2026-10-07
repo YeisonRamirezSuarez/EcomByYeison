@@ -14,6 +14,19 @@ import SocialSection from "../brand/SocialSection";
 import { draftSaves, useAutosave } from "../brand/fields";
 import StylesPanel from "./StylesPanel";
 import PreviewFrame, { type Device } from "./PreviewFrame";
+import {
+  DEFAULT_HOME_SECTIONS,
+  isSectionComplete,
+  newSection,
+  validateHomeSections,
+  withBuiltIns,
+  type HomeSection,
+  type NewKind,
+} from "@/lib/homeSections";
+import { parsePreviewMessage } from "@/lib/previewMessages";
+import type { Option } from "@/sanity/queries/adminCatalog";
+import SectionList from "./SectionList";
+import SectionForm from "./SectionForm";
 
 type Tab = "inicio" | "estilos" | "datos";
 const TABS: { key: Tab; label: string }[] = [
@@ -26,7 +39,7 @@ const DEVICES: { key: Device; label: string }[] = [
   { key: "movil", label: "Móvil" },
 ];
 
-const AppearanceEditor = ({ initial, initialHasDraft }: { initial: SiteSettings; initialHasDraft: boolean }) => {
+const AppearanceEditor = ({ initial, initialHasDraft, categories }: { initial: SiteSettings; initialHasDraft: boolean; categories: Option[] }) => {
   const frameRef = useRef<HTMLIFrameElement | null>(null);
   const [tab, setTab] = useState<Tab>("inicio");
   const [device, setDevice] = useState<Device>("pc");
@@ -36,6 +49,8 @@ const AppearanceEditor = ({ initial, initialHasDraft }: { initial: SiteSettings;
   const [busy, startTransition] = useTransition();
   const [theme, setTheme] = useState<ThemeKey>(initial.theme);
   const [styles, setStyles] = useState<Styles>(initial.styles);
+  const [sections, setSections] = useState<HomeSection[]>(() => withBuiltIns(initial.homeSections ?? DEFAULT_HOME_SECTIONS));
+  const [selectedKey, setSelectedKey] = useState<string | null>(null);
 
   const post = (message: EditorMessage) => frameRef.current?.contentWindow?.postMessage(message, window.location.origin);
   const events = {
@@ -48,6 +63,48 @@ const AppearanceEditor = ({ initial, initialHasDraft }: { initial: SiteSettings;
   };
 
   const stylesSave = useAutosave(styles, validateStyles, (v) => saveAppearanceDraft("styles", v), events);
+  const sectionsSave = useAutosave(sections, validateHomeSections, (v) => saveAppearanceDraft("homeSections", v), events);
+
+  const categoryGone = (s: HomeSection) =>
+    s.kind === "products" && s.source === "category" && Boolean(s.category) && !categories.some((c) => c._id === s.category);
+  const isShown = (s: HomeSection) => isSectionComplete(s) && !categoryGone(s);
+  const selectedIndex = sections.findIndex((s) => s._key === selectedKey);
+  const selected = selectedIndex >= 0 ? sections[selectedIndex] : null;
+  const prefix = `sections.${selectedIndex}.`;
+  const selectedErrors = Object.fromEntries(
+    Object.entries(sectionsSave.errors)
+      .filter(([key]) => key.startsWith(prefix))
+      .map(([key, message]) => [key.slice(prefix.length), message])
+  );
+
+  const open = (key: string) => {
+    setTab("inicio");
+    setSelectedKey(key);
+    post({ type: "focus-section", key });
+  };
+  const updateSection = (next: HomeSection) => setSections((list) => list.map((s) => (s._key === next._key ? next : s)));
+  const addSection = (kind: NewKind) => {
+    const section = newSection(kind, crypto.randomUUID());
+    setSections((list) => [...list, section]);
+    setSelectedKey(section._key);
+  };
+  const removeSection = (key: string) => {
+    setSections((list) => list.filter((s) => s._key !== key));
+    setSelectedKey(null);
+  };
+
+  // A click on a section inside the preview opens it here.
+  useEffect(() => {
+    const onMessage = (event: MessageEvent) => {
+      if (event.origin !== window.location.origin || event.source !== frameRef.current?.contentWindow) return;
+      const message = parsePreviewMessage(event.data);
+      if (!message) return;
+      setTab("inicio");
+      setSelectedKey(message.key);
+    };
+    window.addEventListener("message", onMessage);
+    return () => window.removeEventListener("message", onMessage);
+  }, []);
 
   // Styles show in the preview at once; the draft save follows 1 s after the last change.
   useEffect(() => {
@@ -121,7 +178,7 @@ const AppearanceEditor = ({ initial, initialHasDraft }: { initial: SiteSettings;
             </button>
           ))}
         </div>
-        {stylesSave.pending ? (
+        {stylesSave.pending || sectionsSave.pending ? (
           <span className="text-xs text-gray-500">Guardando…</span>
         ) : (
           hasDraft && <span className="text-xs font-semibold rounded-full bg-amber-100 text-amber-800 px-2.5 py-1">Cambios sin publicar</span>
@@ -167,8 +224,37 @@ const AppearanceEditor = ({ initial, initialHasDraft }: { initial: SiteSettings;
         {/* Every tab stays mounted (hidden) so its forms keep their unsaved state. */}
         <div className="bg-white rounded-2xl shadow-sm p-4 overflow-y-auto">
           <div role="tabpanel" className={tab === "inicio" ? "flex flex-col gap-3" : "hidden"}>
-            <h2 className="font-bold text-gray-900">Banner principal</h2>
-            <BannerSection initial={initial.banner} {...events} />
+            {selected ? (
+              <SectionForm
+                key={selected._key}
+                section={selected}
+                shown={isShown(selected)}
+                categoryGone={categoryGone(selected)}
+                errors={selectedErrors}
+                categories={categories}
+                onChange={updateSection}
+                onBack={() => setSelectedKey(null)}
+                onRemove={() => removeSection(selected._key)}
+              />
+            ) : (
+              <SectionList
+                sections={sections}
+                error={
+                  sectionsSave.errors.sections ??
+                  (Object.keys(sectionsSave.errors).length > 0
+                    ? "Hay campos por corregir en una sección. Los cambios del inicio no se guardan hasta corregirlos."
+                    : undefined)
+                }
+                isShown={isShown}
+                onChange={setSections}
+                onOpen={open}
+                onAdd={addSection}
+              />
+            )}
+            {/* Kept mounted so the banner form keeps its state when going back to the list. */}
+            <div className={selected?.kind === "banner" ? "" : "hidden"}>
+              <BannerSection initial={initial.banner} {...events} />
+            </div>
           </div>
           <div role="tabpanel" className={tab === "estilos" ? "" : "hidden"}>
             <StylesPanel theme={theme} styles={styles} errors={stylesSave.errors} onThemeChange={changeTheme} onChange={setStyles} />

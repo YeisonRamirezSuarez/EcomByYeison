@@ -255,8 +255,8 @@ function parseSection(errors: Errors, p: string, kind: SectionKind, key: string,
       s.source = option(errors, `${p}.source`, v.source, Object.keys(PRODUCT_SOURCES) as ProductSource[], "featured");
       if (s.source === "category") {
         const id = typeof v.category === "string" ? v.category : "";
-        if (!id) errors[`${p}.category`] = "Elige una categoría";
-        else if (!DOC_ID.test(id)) errors[`${p}.category`] = "Categoría inválida";
+        // An empty category is an incomplete section: it is saved and the store skips it.
+        if (id && !DOC_ID.test(id)) errors[`${p}.category`] = "Categoría inválida";
         else s.category = id;
       }
       s.count = option(errors, `${p}.count`, v.count, PRODUCT_COUNTS, 8);

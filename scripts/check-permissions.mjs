@@ -655,9 +655,9 @@ assert.equal(ck.checkoutLines([{ id: "p1", quantity: 1 }], [{ ...SERVER[0], pric
   assert.ok(hs.validateHomeSections(DEF.map((s) => (s.kind === "blog" ? { ...s, count: 7 } : s))).errors["sections.4.count"]);
   assert.equal(hs.validateHomeSections(DEF.map((s) => (s.kind === "blog" ? { ...s, count: 3 } : s))).value[4].count, 3);
 
-  // Products: category required for source "category", ids only, counts 4/8/12
+  // Products: an empty category is saved (incomplete section), ids only, counts 4/8/12
   const prod = { ...hs.newSection("products", "p1"), source: "category", category: "" };
-  assert.ok(withSection(prod).errors["sections.5.category"]);
+  assert.ok(withSection(prod).ok && withSection(prod).value[5].category === ""); // incomplete sections are saved
   assert.ok(withSection({ ...prod, category: "drafts.x" }).errors["sections.5.category"]);
   assert.ok(withSection({ ...prod, category: "cat1", count: 5 }).errors["sections.5.count"]);
   assert.ok(withSection({ ...prod, category: "cat1" }).ok);
