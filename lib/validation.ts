@@ -100,7 +100,7 @@ export function isValidHref(value: unknown): boolean {
 
 export function isEmail(value: unknown): boolean {
   return (
-    typeof value === "string" && value.length <= 254 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
+    typeof value === "string" && value.length <= 254 && /^[^\s@"(),:;<>[\]\\]+@[^\s@"(),:;<>[\]\\]+\.[^\s@"(),:;<>[\]\\]+$/.test(value)
   );
 }
 

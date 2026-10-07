@@ -844,9 +844,17 @@ assert.equal(ck.checkoutLines([{ id: "p1", quantity: 1 }], [{ ...SERVER[0], pric
   const nl = await import("../lib/newsletter.ts");
 
   // Same email and link rules as lib/validation.ts
-  for (const sample of ["/shop", "//evil.com", "/\\x", "https://a.co", "http://a.co", "javascript:alert(1)", "", "a@b.co", "a b@c.co"]) {
+  for (const sample of ["/shop", "//evil.com", "/\\x", "https://a.co", "http://a.co", "javascript:alert(1)", "", "a@b.co", "a b@c.co", "ana(@gmail.com", "x,otro@gmail.com", "juan;perez@gmail.com", "a<b@c.co", "\"a\"@c.co", "ana@example.com", "zz-send0@example.com"]) {
     assert.equal(nl.isValidHref(sample), v.isValidHref(sample), sample);
     assert.equal(nl.isEmail(sample), v.isEmail(sample), sample);
+  }
+  for (const bad of ["ana(@gmail.com", "x,otro@gmail.com", "juan;perez@gmail.com", "a<b@c.co", '"a"@c.co']) {
+    assert.equal(nl.isEmail(bad), false, bad);
+    assert.equal(v.isEmail(bad), false, bad);
+  }
+  for (const good of ["ana@example.com", "zz-send0@example.com"]) {
+    assert.equal(nl.isEmail(good), true, good);
+    assert.equal(v.isEmail(good), true, good);
   }
   assert.equal(nl.isSubscriberId("subscriber.0123456789abcdef0123456789abcdef"), true);
   assert.equal(nl.isSubscriberId("subscriber.xyz"), false);
@@ -884,6 +892,10 @@ assert.equal(ck.checkoutLines([{ id: "p1", quantity: 1 }], [{ ...SERVER[0], pric
   // What blocks sending
   const ready = { smtpReady: true, keyReady: true, baseUrl: "https://tienda.com", address: "Calle 1", activeCount: 3 };
   assert.deepEqual(nl.campaignSendProblems(okCampaign.value, ready), []);
+  const unreadable = nl.campaignSendProblems(okCampaign.value, { ...ready, smtpReady: false, smtpUnreadable: true });
+  assert.equal(unreadable.length, 1);
+  assert.match(unreadable[0], /No se pudo leer la contraseña/);
+  assert.match(nl.campaignSendProblems(okCampaign.value, { ...ready, smtpReady: false })[0], /Configura el correo/);
   assert.equal(nl.campaignSendProblems({ ...okCampaign.value, subject: "", title: "" }, { smtpReady: false, keyReady: false, baseUrl: "", address: " ", activeCount: 0 }).length, 7);
 
   // CSV import
@@ -943,6 +955,13 @@ assert.equal(ck.checkoutLines([{ id: "p1", quantity: 1 }], [{ ...SERVER[0], pric
   assert.equal(nl.isRecipientError({ code: "EENVELOPE", responseCode: 553, command: "MAIL FROM" }), false);
   assert.equal(nl.isRecipientError({ responseCode: 421 }), false);
   assert.equal(nl.isRecipientError({}), false);
+  // RCPT 4xx is per-address only with an enhanced status 4.1.x / 4.2.x; otherwise the server is at fault
+  assert.equal(nl.isRecipientError({ code: "EENVELOPE", responseCode: 452, command: "RCPT TO", response: "452 4.2.2 The email account that you tried to reach is over quota" }), true);
+  assert.equal(nl.isRecipientError({ code: "EENVELOPE", responseCode: 450, command: "RCPT TO", response: "450 4.1.8 Sender address rejected: Domain not found" }), true);
+  assert.equal(nl.isRecipientError({ code: "EENVELOPE", responseCode: 451, command: "RCPT TO", response: "451 4.3.0 Temporary server error" }), false);
+  assert.equal(nl.isRecipientError({ code: "EENVELOPE", responseCode: 452, command: "RCPT TO" }), false);
+  assert.equal(nl.isRecipientError({ responseCode: 421, command: "RCPT TO", response: "421 4.2.1 try later" }), false);
+  assert.equal(nl.isRecipientError({ responseCode: 421, command: "RCPT TO" }), false);
   assert.match(nl.smtpErrorMessage({ code: "EAUTH" }), /contraseña/);
   assert.match(nl.smtpErrorMessage({ code: "ECONNECTION" }), /conectar/);
   assert.match(nl.smtpErrorMessage({ code: "ETIMEDOUT" }), /a tiempo/);

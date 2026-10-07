@@ -5,6 +5,9 @@ import SubscribersTab from "@/components/admin/newsletter/SubscribersTab";
 import { requireSection } from "@/lib/adminAccess";
 import { readSubscriberFilters } from "@/lib/newsletter";
 
+// Large CSV imports commit in chunks from this page.
+export const maxDuration = 60;
+
 const TABS = [
   ["suscriptores", "Suscriptores"],
   ["campanas", "Campañas"],

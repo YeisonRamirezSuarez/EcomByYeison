@@ -2,12 +2,15 @@ import PageHeader from "@/components/admin/shell/PageHeader";
 import CurrencySection from "@/components/admin/CurrencySection";
 import SmtpSection from "@/components/admin/newsletter/SmtpSection";
 import { requireSection } from "@/lib/adminAccess";
+import { getMailer } from "@/lib/mailer";
 import { getSmtpView } from "@/sanity/queries/newsletter";
 import { getSiteSettings } from "@/sanity/queries/siteSettings";
 
 export default async function SettingsPage() {
   await requireSection("ajustes");
   const [{ currency }, smtp] = await Promise.all([getSiteSettings(), getSmtpView()]);
+  // A saved password that cannot be decrypted (key changed) is not the same as "not configured".
+  const smtpUnreadable = await getMailer().then(() => false, () => Boolean(process.env.EMAIL_ENCRYPTION_KEY));
   return (
     <>
       <PageHeader title="Ajustes" description="Opciones generales de la tienda." />
@@ -16,7 +19,12 @@ export default async function SettingsPage() {
           <CurrencySection initialCurrency={currency} />
         </div>
         <div className="bg-white rounded-2xl shadow-sm p-5">
-          <SmtpSection initial={smtp} keyReady={Boolean(process.env.EMAIL_ENCRYPTION_KEY)} />
+          <SmtpSection
+            initial={smtp}
+            keyReady={Boolean(process.env.EMAIL_ENCRYPTION_KEY)}
+            unreadable={smtpUnreadable}
+            envConfigured={Boolean(process.env.SMTP_HOST)}
+          />
         </div>
       </div>
     </>

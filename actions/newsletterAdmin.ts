@@ -5,7 +5,7 @@ import { ActionError, run, type ActionResult } from "@/lib/actionResult";
 import { renderCampaignEmail } from "@/lib/campaignEmail";
 import { getEmailBrand, loadEmailProducts, runBatch, sendReadiness, toPickerProduct, type PickerProduct } from "@/lib/campaignSend";
 import { addUsage, getMailer } from "@/lib/mailer";
-import { campaignSendProblems, EMPTY_CAMPAIGN, errorDetail, isCampaignId, isEmail, isSubscriberId, MAX_IMPORT_ROWS, planImport, smtpErrorMessage, subscribersCsv, validateCampaign, validateSmtpSettings, type CampaignContent, type CampaignProgress, type SmtpErrorInfo } from "@/lib/newsletter";
+import { campaignSendProblems, EMPTY_CAMPAIGN, errorDetail, isCampaignId, isEmail, isSubscriberId, MAX_IMPORT_ROWS, planImport, SMTP_UNREADABLE, smtpErrorMessage, subscribersCsv, validateCampaign, validateSmtpSettings, type CampaignContent, type CampaignProgress, type SmtpErrorInfo } from "@/lib/newsletter";
 import { requirePermission } from "@/lib/roles";
 import { encryptSecret, subscriberDocId } from "@/lib/secrets";
 import { siteUrl } from "@/lib/unsubscribe";
@@ -13,6 +13,9 @@ import { INVALID_FORM } from "@/lib/validation";
 import { backendClient } from "@/sanity/lib/backendClient";
 import { getAllSubscribers, getCampaign, getSmtpDoc, getSubscriberStatus, getSubscriberStatuses, searchProductDocs, SMTP_ID, type CampaignDoc } from "@/sanity/queries/newsletter";
 import { getSiteSettings } from "@/sanity/queries/siteSettings";
+
+// A failed usage count must not fail work already done.
+const countFailed = (error: unknown) => console.error("Could not count the sent email", error);
 
 const KEY_MISSING = "Falta la clave de cifrado en el servidor (EMAIL_ENCRYPTION_KEY)";
 
@@ -82,7 +85,7 @@ export async function testSmtp(): Promise<ActionResult<SmtpTest>> {
         text: `Este es un correo de prueba de ${storeName}. Si lo recibes, el correo de salida funciona.`,
       });
       steps.push(`Correo enviado a ${to}`);
-      await addUsage(1);
+      await addUsage(1).catch(countFailed);
       return { ok: true, steps, message: "", detail: "" };
     } catch (error) {
       return { ok: false, steps, message: smtpErrorMessage(error as SmtpErrorInfo), detail: errorDetail(error) };
@@ -267,7 +270,12 @@ export async function sendCampaignTest(id: string): Promise<ActionResult<{ to: s
     await requirePermission("configurar");
     const campaign = await findCampaign(id);
     const to = await sessionEmail();
-    const mailer = await getMailer().catch(() => null);
+    let mailer;
+    try {
+      mailer = await getMailer();
+    } catch {
+      throw new ActionError(SMTP_UNREADABLE);
+    }
     if (!mailer) throw new ActionError("Configura el correo de salida en Ajustes → Correo.");
     const { brand, currency } = await getEmailBrand();
     const products = await loadEmailProducts(campaign.content.products, currency);
@@ -277,7 +285,7 @@ export async function sendCampaignTest(id: string): Promise<ActionResult<{ to: s
     } catch (error) {
       throw new ActionError(smtpErrorMessage(error as SmtpErrorInfo));
     }
-    await addUsage(1);
+    await addUsage(1).catch(countFailed);
     return { to };
   });
 }

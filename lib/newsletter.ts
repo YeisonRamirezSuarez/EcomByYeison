@@ -52,7 +52,7 @@ export const CAMPAIGN_STATUS_LABELS: Record<CampaignStatus, string> = {
   paused: "En pausa",
   sent: "Enviada",
 };
-export type PauseReason = "user" | "limit" | "smtp";
+export type PauseReason = "user" | "limit" | "smtp" | "address";
 export type CampaignContent = {
   subject: string;
   preheader: string;
@@ -80,7 +80,7 @@ export type CampaignProgress = {
   pauseMessage: string;
 };
 export type CampaignFailure = { email: string; error: string };
-export type SendReadiness = { smtpReady: boolean; keyReady: boolean; baseUrl: string; address: string; activeCount: number };
+export type SendReadiness = { smtpReady: boolean; smtpUnreadable?: boolean; keyReady: boolean; baseUrl: string; address: string; activeCount: number };
 
 type Errors = Record<string, string>;
 const REQUIRED = "Campo obligatorio";
@@ -100,7 +100,7 @@ const result = <T>(errors: Errors, value: T): ValidationResult<T> =>
 // Same rules as lib/validation.ts: a runtime import would break the node test run, so a
 // test in scripts/check-permissions.mjs keeps both copies in step.
 export function isEmail(value: unknown): boolean {
-  return typeof value === "string" && value.length <= 254 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+  return typeof value === "string" && value.length <= 254 && /^[^\s@"(),:;<>[\]\\]+@[^\s@"(),:;<>[\]\\]+\.[^\s@"(),:;<>[\]\\]+$/.test(value);
 }
 
 export function isHttpsUrl(value: unknown): boolean {
@@ -184,9 +184,12 @@ export function validateCampaign(input: unknown): ValidationResult<CampaignConte
   return result(errors, { subject, preheader, image, title, text: body, button: { label, href }, products });
 }
 
+export const SMTP_UNREADABLE = "No se pudo leer la contraseña guardada. Vuelve a escribirla en Ajustes → Correo.";
+
 export function campaignSendProblems(content: CampaignContent, ready: SendReadiness): string[] {
   const problems: string[] = [];
-  if (!ready.smtpReady) problems.push("Configura el correo de salida en Ajustes → Correo.");
+  if (ready.smtpUnreadable) problems.push(SMTP_UNREADABLE);
+  else if (!ready.smtpReady) problems.push("Configura el correo de salida en Ajustes → Correo.");
   if (!ready.keyReady) problems.push("Falta la clave de cifrado en el servidor (EMAIL_ENCRYPTION_KEY).");
   if (!ready.baseUrl) problems.push("Falta la dirección pública de la tienda en el servidor (NEXT_PUBLIC_BASE_URL).");
   if (!ready.address.trim()) problems.push("Agrega la dirección de la tienda en Apariencia → Datos de la tienda → Contacto.");
@@ -315,19 +318,23 @@ export const progressPercent = (done: number, total: number): number =>
   total > 0 ? Math.min(100, Math.round((done * 100) / total)) : 100;
 
 // nodemailer errors carry `code` (EAUTH, ECONNECTION…), `responseCode` and `command`.
-export type SmtpErrorInfo = { code?: unknown; responseCode?: unknown; command?: unknown };
+export type SmtpErrorInfo = { code?: unknown; responseCode?: unknown; command?: unknown; response?: unknown };
 const FATAL_CODES = new Set(["EAUTH", "ECONNECTION", "ETIMEDOUT", "ESOCKET", "EDNS", "ETLS", "EPROTOCOL"]);
 const errorParts = (error: SmtpErrorInfo) => ({
   code: typeof error?.code === "string" ? error.code : "",
   response: typeof error?.responseCode === "number" ? error.responseCode : 0,
   command: typeof error?.command === "string" ? error.command.toUpperCase() : "",
+  text: typeof error?.response === "string" ? error.response : "",
 });
 
 // true = only this address failed, keep sending. false = the server itself failed (login,
 // connection, sender refused, "try later"), so every next message would fail too: pause.
+// An answer to RCPT TO that is 4xx counts as per-address only with an enhanced status 4.1.x or
+// 4.2.x (address / mailbox, e.g. "452 4.2.2 over quota"); any other 4xx is server-wide: pause.
 export function isRecipientError(error: SmtpErrorInfo): boolean {
-  const { code, response, command } = errorParts(error);
-  if (FATAL_CODES.has(code) || command.startsWith("MAIL FROM")) return false;
+  const { code, response, command, text } = errorParts(error);
+  if (FATAL_CODES.has(code) || command.startsWith("MAIL FROM") || response === 421) return false;
+  if (response >= 400 && response < 500) return command.startsWith("RCPT") && /\b4\.[12]\.\d{1,3}\b/.test(text);
   return response >= 500 && response < 600;
 }
 

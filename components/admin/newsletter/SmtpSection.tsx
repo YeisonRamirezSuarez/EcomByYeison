@@ -5,7 +5,7 @@ import toast from "react-hot-toast";
 import { Check, X } from "lucide-react";
 import { deleteSmtpSettings, saveSmtpSettings, testSmtp, type SmtpTest } from "@/actions/newsletterAdmin";
 import { INPUT } from "@/components/admin/brand/fields";
-import { SMTP_SECURITY, type SmtpSecurity, type SmtpView } from "@/lib/newsletter";
+import { SMTP_SECURITY, SMTP_UNREADABLE, type SmtpSecurity, type SmtpView } from "@/lib/newsletter";
 
 type Form = {
   host: string;
@@ -29,7 +29,7 @@ const Field = ({ label, error, children }: { label: string; error?: string; chil
   </label>
 );
 
-const SmtpSection = ({ initial, keyReady }: { initial: SmtpView; keyReady: boolean }) => {
+const SmtpSection = ({ initial, keyReady, unreadable, envConfigured }: { initial: SmtpView; keyReady: boolean; unreadable: boolean; envConfigured: boolean }) => {
   const [form, setForm] = useState<Form>({
     host: initial.host,
     port: String(initial.port),
@@ -49,6 +49,11 @@ const SmtpSection = ({ initial, keyReady }: { initial: SmtpView; keyReady: boole
   const [pending, startTransition] = useTransition();
   const set = (key: keyof Form) => (event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
     setForm((f) => ({ ...f, [key]: event.target.value }));
+  // The usual port implies its security; other ports leave it as is.
+  const setPort = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const port = event.target.value;
+    setForm((f) => ({ ...f, port, security: port === "465" ? "ssl" : port === "587" ? "starttls" : f.security }));
+  };
 
   const save = () =>
     startTransition(async () => {
@@ -93,13 +98,23 @@ const SmtpSection = ({ initial, keyReady }: { initial: SmtpView; keyReady: boole
           enviar campañas.
         </p>
       )}
+      {unreadable && (
+        <p role="alert" className="mb-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+          {SMTP_UNREADABLE}
+        </p>
+      )}
+      {envConfigured && !saved && (
+        <p className="mb-3 text-xs text-gray-500">
+          Ahora los correos salen con la configuración del servidor (variables SMTP_*). Si guardas aquí, se usará esta en su lugar.
+        </p>
+      )}
       <div className="grid gap-3 sm:grid-cols-2">
         <Field label="Servidor (SMTP)" error={errors.host}>
           <input value={form.host} onChange={set("host")} placeholder="smtp.gmail.com" className={INPUT} />
         </Field>
         <div className="grid grid-cols-2 gap-3">
           <Field label="Puerto" error={errors.port}>
-            <input type="number" min={1} max={65535} value={form.port} onChange={set("port")} className={INPUT} />
+            <input type="number" min={1} max={65535} value={form.port} onChange={setPort} className={INPUT} />
           </Field>
           <Field label="Seguridad">
             <select value={form.security} onChange={set("security")} className={INPUT}>

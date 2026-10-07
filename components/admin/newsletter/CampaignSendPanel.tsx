@@ -36,14 +36,19 @@ const CampaignSendPanel = ({
     initialProgress.status === "sending" ? { ...initialProgress, status: "paused", pauseReason: "user", pauseMessage: LEFT_OPEN } : initialProgress
   );
   const [running, setRunning] = useState(false);
+  const [pausing, setPausing] = useState(false);
   const [confirming, setConfirming] = useState(false);
   const [error, setError] = useState("");
   const stop = useRef(false);
   const router = useRouter();
   const problems = campaignSendProblems(content, progress.status === "draft" ? ready : { ...ready, activeCount: Math.max(ready.activeCount, 1) });
 
+  // The draft view has no Continuar button.
+  const retry = progress.status === "draft" ? "Intenta de nuevo." : "Pulsa Continuar para reintentar.";
+
   const loop = async (first: () => Promise<ActionResult<CampaignProgress>>) => {
     setRunning(true);
+    setPausing(false);
     setError("");
     stop.current = false;
     try {
@@ -54,9 +59,9 @@ const CampaignSendPanel = ({
         if (result.data.status !== "sending" || stop.current) break;
         result = await sendCampaignBatch(id);
       }
-      if (!result.ok) setError(`${result.error}. Pulsa Continuar para reintentar.`);
+      if (!result.ok) setError(`${result.error.replace(/\.$/, "")}. ${retry}`);
     } catch {
-      setError("Se perdió la conexión con el servidor. Pulsa Continuar para reintentar.");
+      setError(`Se perdió la conexión con el servidor. ${retry}`);
     } finally {
       setRunning(false);
       router.refresh(); // failures list from the server
@@ -72,6 +77,7 @@ const CampaignSendPanel = ({
   };
   const pause = async () => {
     stop.current = true;
+    setPausing(true);
     const result = await pauseCampaign(id);
     if (result.ok) setProgress(result.data);
   };
@@ -91,7 +97,7 @@ const CampaignSendPanel = ({
             Se enviará a {ready.activeCount} suscriptores activos. Hoy quedan {ready.remaining} envíos
             {ready.activeCount > ready.remaining ? "; el resto sigue mañana" : ""}.
             <div className="mt-2 flex gap-2">
-              <button type="button" onClick={start} className="rounded-lg bg-shop_orange px-3 py-1.5 text-xs font-semibold text-white">
+              <button type="button" onClick={start} disabled={running} className="rounded-lg bg-shop_orange px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-60">
                 Enviar
               </button>
               <button type="button" onClick={() => setConfirming(false)} className="rounded-lg border border-amber-300 px-3 py-1.5 text-xs font-semibold">
@@ -100,7 +106,7 @@ const CampaignSendPanel = ({
             </div>
           </div>
         ) : (
-          <button type="button" onClick={() => setConfirming(true)} className="self-start px-4 py-2 rounded-lg bg-shop_orange text-white font-semibold">
+          <button type="button" onClick={() => setConfirming(true)} disabled={running} className="self-start px-4 py-2 rounded-lg bg-shop_orange text-white font-semibold disabled:opacity-60">
             Enviar a {ready.activeCount} suscriptores
           </button>
         )
@@ -117,8 +123,8 @@ const CampaignSendPanel = ({
           {running ? (
             <div className="flex flex-wrap items-center gap-3">
               <p className="text-gray-600">No cierres esta página: el envío sigue mientras esté abierta.</p>
-              <button type="button" onClick={pause} className="px-3 py-1.5 rounded-lg border border-gray-300 font-semibold">
-                Pausar
+              <button type="button" onClick={pause} disabled={pausing} className="px-3 py-1.5 rounded-lg border border-gray-300 font-semibold disabled:opacity-60">
+                {pausing ? "Pausando…" : "Pausar"}
               </button>
             </div>
           ) : progress.status === "sent" ? (
