@@ -36,14 +36,14 @@ const brandColors: Record<string, { bg: string; text: string; border: string }> 
   dell:     { bg: "#007DB8", text: "#fff",     border: "#007DB8" },
 };
 
-const ShopByBrands = async () => {
+const ShopByBrands = async ({ title = "Compra por marca" }: { title?: string }) => {
   const brands = await getAllBrands();
   return (
     <div className="my-10 md:my-16">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h2 className="text-2xl font-bold text-darkColor">Compra por marca</h2>
+          {title && <h2 className="text-2xl font-bold text-darkColor">{title}</h2>}
           <p className="text-gray-500 text-sm mt-1">Las mejores marcas del mercado</p>
         </div>
         <Link

@@ -9,14 +9,15 @@ import "dayjs/locale/es";
 
 dayjs.locale("es");
 
-const LatestBlog = async () => {
+const LatestBlog = async ({ title = "Últimas entradas", count = null }: { title?: string; count?: number | null }) => {
   const blogs = await getLatestBlogs();
   if (!blogs?.length) return null;
+  const shown = count ? blogs.slice(0, count) : blogs;
   return (
     <div className="my-10 md:my-16">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h2 className="text-2xl font-bold text-darkColor">Últimas entradas</h2>
+          {title && <h2 className="text-2xl font-bold text-darkColor">{title}</h2>}
           <p className="text-gray-500 text-sm mt-1">Noticias, reviews y consejos tech</p>
         </div>
         <Link
@@ -28,7 +29,7 @@ const LatestBlog = async () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {blogs?.map((blog) => (
+        {shown.map((blog) => (
           <Link
             key={blog?._id}
             href={`/blog/${blog?.slug?.current}`}

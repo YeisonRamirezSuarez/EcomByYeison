@@ -1,30 +1,20 @@
 import Container from "@/components/Container";
-import HomeBanner from "@/components/HomeBanner";
-import HomeCategories from "@/components/HomeCategories";
-import LatestBlog from "@/components/LatestBlog";
-import ProductGrid from "@/components/ProductGrid";
-import ShopByBrands from "@/components/ShopByBrands";
-import { getCategories, getProductsByVariant } from "@/sanity/queries";
-import { getProductType } from "@/constants/data";
-import { getServerLocale } from "@/lib/locale";
+import HomeSectionView from "@/components/home/HomeSectionView";
+import { DEFAULT_HOME_SECTIONS, isSectionComplete } from "@/lib/homeSections";
+import { getSiteSettings } from "@/sanity/queries/siteSettings";
 
-import React from "react";
-
+// Sections come from Apariencia → Inicio; a store that never used the editor gets today's five.
+// data-section-key lets the editor's preview pick a section (components/PreviewBridge.tsx).
 const Home = async () => {
-  const locale = await getServerLocale();
-  const productType = getProductType(locale);
-  const [categories, initialProducts] = await Promise.all([
-    getCategories(6),
-    getProductsByVariant(productType[0]?.value || "gadget"),
-  ]);
-
+  const { homeSections } = await getSiteSettings();
+  const sections = (homeSections ?? DEFAULT_HOME_SECTIONS).filter((s) => !s.hidden && isSectionComplete(s));
   return (
     <Container className="bg-shop-light-pink">
-      <HomeBanner />
-      <ProductGrid initialProducts={initialProducts} initialTab={productType[0]?.title} />
-      <HomeCategories categories={categories} />
-      <ShopByBrands />
-      <LatestBlog />
+      {sections.map((section) => (
+        <div key={section._key} data-section-key={section._key}>
+          <HomeSectionView section={section} />
+        </div>
+      ))}
     </Container>
   );
 };

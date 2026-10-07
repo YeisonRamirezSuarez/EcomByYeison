@@ -32,12 +32,12 @@ const categoryIcons: Record<string, LucideIcon> = {
 
 type CategoryWithCount = Category & { productCount?: number };
 
-const HomeCategories = ({ categories }: { categories: CategoryWithCount[] }) => {
+const HomeCategories = ({ categories, title = "Categorías populares" }: { categories: CategoryWithCount[]; title?: string }) => {
   return (
     <div className="my-10 md:my-16">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h2 className="text-2xl font-bold text-darkColor">Categorías populares</h2>
+          {title && <h2 className="text-2xl font-bold text-darkColor">{title}</h2>}
           <p className="text-gray-500 text-sm mt-1">Explora por tipo de producto</p>
         </div>
         <Link

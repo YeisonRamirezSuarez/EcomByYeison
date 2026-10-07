@@ -15,6 +15,8 @@ import {
 } from "./query";
 import { parsePriceRange } from "@/constants/currencies";
 import type { ShopFilters } from "@/lib/shopFilters";
+import type { Product } from "@/sanity.types";
+import type { ProductSource } from "@/lib/homeSections";
 
 const getCategories = async (quantity?: number) => {
   try {
@@ -226,7 +228,28 @@ const getProductsByVariant = async (variant: string) => {
   }
 };
 
+// "Productos elegidos" on the home page. The filter comes from a fixed map, never from input.
+const SECTION_FILTERS: Record<ProductSource, string> = {
+  category: "references($category)",
+  featured: "isFeatured == true",
+  sale: 'status == "sale"',
+};
+
+const getSectionProducts = async ({ source, category, count }: { source: ProductSource; category: string; count: number }) => {
+  try {
+    const query = `*[_type == "product" && archived != true && ${SECTION_FILTERS[source]}] | order(name asc)[0...$count]{
+      ..., "categories": categories[]->title
+    }`;
+    const { data } = await sanityFetch({ query, params: { category, count } });
+    return (data ?? []) as Product[];
+  } catch (error) {
+    console.log("Error fetching section products:", error);
+    return [];
+  }
+};
+
 export {
+  getSectionProducts,
   getCategories,
   getAllBrands,
   getProductsByVariant,
