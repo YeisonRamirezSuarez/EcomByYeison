@@ -1,18 +1,7 @@
-import nodemailer from "nodemailer";
+import { addUsage, getMailer } from "@/lib/mailer";
 import { getSiteSettings } from "@/sanity/queries/siteSettings";
 import { THEMES } from "@/constants/themes";
 import { formatPrice } from "@/constants/currencies";
-
-// Create transporter
-export const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST,
-  port: parseInt(process.env.SMTP_PORT || "587"),
-  secure: process.env.SMTP_PORT === "465", // true for 465, false for other ports
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASSWORD,
-  },
-});
 
 // Store name and palette for emails. getSiteSettings never throws: neutral defaults if Sanity is down.
 async function emailBrand() {
@@ -34,10 +23,10 @@ export interface EmailOptions {
 
 export async function sendEmail(options: EmailOptions) {
   try {
-    const info = await transporter.sendMail({
-      from: process.env.SMTP_FROM_EMAIL || process.env.SMTP_USER,
-      ...options,
-    });
+    const mailer = await getMailer();
+    if (!mailer) throw new Error("No hay correo de salida configurado (Ajustes → Correo o SMTP_*)");
+    const info = await mailer.transporter.sendMail({ from: mailer.from, replyTo: mailer.replyTo, ...options });
+    await addUsage(1).catch((error) => console.error("Could not count the sent email", error));
     return info;
   } catch (error) {
     console.error(`❌ Error sending email:`, error);
