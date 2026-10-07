@@ -1,13 +1,14 @@
 import Container from "@/components/Container";
 import HomeSectionView from "@/components/home/HomeSectionView";
 import { DEFAULT_HOME_SECTIONS, isSectionComplete } from "@/lib/homeSections";
-import { getSiteSettings } from "@/sanity/queries/siteSettings";
+import { localizeHomeSections } from "@/lib/localize";
+import { getLocalizedSettings } from "@/lib/locale";
 
 // Sections come from Apariencia → Inicio; a store that never used the editor gets today's five.
 // data-section-key lets the editor's preview pick a section (components/PreviewBridge.tsx).
 const Home = async () => {
-  const { homeSections } = await getSiteSettings();
-  const sections = (homeSections ?? DEFAULT_HOME_SECTIONS).filter((s) => !s.hidden && isSectionComplete(s));
+  const { homeSections, locale } = await getLocalizedSettings();
+  const sections = (homeSections ?? localizeHomeSections(DEFAULT_HOME_SECTIONS, locale)).filter((s) => !s.hidden && isSectionComplete(s));
   return (
     <Container className="bg-shop-light-pink">
       {sections.map((section) => (

@@ -8,12 +8,16 @@ import { AnimatePresence, motion } from "motion/react";
 import { Loader2 } from "lucide-react";
 import NoProductAvailable from "./NoProductAvailable";
 import ProductCard from "./ProductCard";
+import useStore from "@/store";
+import { localizeProduct } from "@/lib/localize";
+import { t } from "@/lib/i18n";
 interface Props {
   categories: Category[];
   slug: string;
 }
 
 const CategoryProducts = ({ categories, slug }: Props) => {
+  const { locale } = useStore();
   const [currentSlug, setCurrentSlug] = useState(slug);
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -29,7 +33,7 @@ const CategoryProducts = ({ categories, slug }: Props) => {
     try {
       const query = `
         *[_type == 'product' && archived != true && references(*[_type == "category" && slug.current == $categorySlug]._id)] | order(name asc){
-        ...,"categories": categories[]->title}
+        ...,"categories": categories[]->{ title, titleEn }}
       `;
       const data = await client.fetch(query, { categorySlug });
       setProducts(data);
@@ -62,7 +66,7 @@ const CategoryProducts = ({ categories, slug }: Props) => {
           <div className="flex flex-col items-center justify-center py-10 min-h-80 space-y-4 text-center bg-gray-100 rounded-lg w-full">
             <div className="flex items-center space-x-2 text-blue-600">
               <Loader2 className="w-5 h-5 animate-spin" />
-              <span>Product is loading...</span>
+              <span>{t(locale, "productsLoading")}</span>
             </div>
           </div>
         ) : products?.length > 0 ? (
@@ -70,7 +74,7 @@ const CategoryProducts = ({ categories, slug }: Props) => {
             {products?.map((product: Product) => (
               <AnimatePresence key={product._id}>
                 <motion.div>
-                  <ProductCard product={product} />
+                  <ProductCard product={localizeProduct(product, locale)} />
                 </motion.div>
               </AnimatePresence>
             ))}

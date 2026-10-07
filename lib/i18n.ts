@@ -53,6 +53,8 @@ type Messages = {
   headerWelcome: string;
   headerMyOrders: string;
   cartTitle: string;
+  checkoutUnknownProduct: string;
+  productsLoading: string;
   cartConfirmReset: string;
   cartResetSuccess: string;
   checkoutUnavailable: string;
@@ -294,6 +296,8 @@ export const MESSAGES: Record<Locale, Messages> = {
     headerWelcome: "Bienvenido a {store}",
     headerMyOrders: "Mis pedidos",
     cartTitle: "Carrito de compras",
+    checkoutUnknownProduct: "Producto desconocido",
+    productsLoading: "Cargando productos...",
     cartConfirmReset: "¿Seguro que deseas vaciar tu carrito?",
     cartResetSuccess: "¡Carrito reiniciado con éxito!",
     checkoutUnavailable: "Algunos productos de tu carrito ya no están disponibles. Quítalos e inténtalo de nuevo.",
@@ -533,6 +537,8 @@ export const MESSAGES: Record<Locale, Messages> = {
     headerWelcome: "Welcome to {store}",
     headerMyOrders: "My orders",
     cartTitle: "Shopping Cart",
+    checkoutUnknownProduct: "Unknown Product",
+    productsLoading: "Products are loading...",
     cartConfirmReset: "Are you sure you want to reset your cart?",
     cartResetSuccess: "Cart reset successfully!",
     checkoutUnavailable: "Some products in your cart are no longer available. Remove them and try again.",

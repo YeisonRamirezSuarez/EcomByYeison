@@ -15,10 +15,27 @@ import {
 } from "./query";
 import { parsePriceRange } from "@/constants/currencies";
 import type { ShopFilters } from "@/lib/shopFilters";
-import type { Product } from "@/sanity.types";
+import type {
+  BLOG_CATEGORIESResult,
+  BRAND_QUERYResult,
+  BRANDS_QUERYResult,
+  DEAL_PRODUCTSResult,
+  GET_ALL_BLOGResult,
+  LATEST_BLOG_QUERYResult,
+  MY_ORDERS_QUERYResult,
+  OTHERS_BLOG_QUERYResult,
+  Product,
+} from "@/sanity.types";
 import type { ProductSource } from "@/lib/homeSections";
+import { getServerLocale } from "@/lib/locale";
+import { localizeBlog, localizeProduct, localizeTaxonomy, pickText } from "@/lib/localize";
+
+// Every query below returns content in the visitor's language (lib/localize.ts): components
+// keep reading name/title. Category names come as { title, titleEn } and become strings.
+const PRODUCT_CATEGORIES = `"categories": categories[]->{ title, titleEn }`;
 
 const getCategories = async (quantity?: number) => {
+  const locale = await getServerLocale();
   try {
     // Single round-trip: fetch the categories plus a flat list of every
     // product->category reference, then tally the counts in JS. This avoids the
@@ -43,10 +60,10 @@ const getCategories = async (quantity?: number) => {
     );
 
     return (data?.categories ?? []).map(
-      (category: { _id: string; [key: string]: unknown }) => ({
-        ...category,
-        productCount: counts[category._id] ?? 0,
-      })
+      (category: { _id: string; title?: unknown; [key: string]: unknown }) => {
+        const withCount = { ...category, productCount: counts[category._id] ?? 0 };
+        return localizeTaxonomy(withCount, locale);
+      }
     );
   } catch (error) {
     console.log("Error fetching categories", error);
@@ -55,34 +72,38 @@ const getCategories = async (quantity?: number) => {
 };
 
 const getAllBrands = async () => {
+  const locale = await getServerLocale();
   try {
     const { data } = await sanityFetch({ query: BRANDS_QUERY });
-    return data ?? [];
+    return (data ?? []).map((brand: BRANDS_QUERYResult[number]) => localizeTaxonomy(brand, locale));
   } catch (error) {
     console.log("Error fetching all brands:", error);
     return [];
   }
 };
 
-const getLatestBlogs = async () => {
+const getLatestBlogs = async (): Promise<LATEST_BLOG_QUERYResult> => {
+  const locale = await getServerLocale();
   try {
     const { data } = await sanityFetch({ query: LATEST_BLOG_QUERY });
-    return data ?? [];
+    return (data ?? []).map((blog: LATEST_BLOG_QUERYResult[number]) => localizeBlog(blog, locale));
   } catch (error) {
     console.log("Error fetching latest Blogs:", error);
     return [];
   }
 };
 const getDealProducts = async () => {
+  const locale = await getServerLocale();
   try {
     const { data } = await sanityFetch({ query: DEAL_PRODUCTS });
-    return data ?? [];
+    return (data ?? []).map((product: DEAL_PRODUCTSResult[number]) => localizeProduct(product, locale));
   } catch (error) {
     console.log("Error fetching deal Products:", error);
     return [];
   }
 };
 const getProductBySlug = async (slug: string) => {
+  const locale = await getServerLocale();
   try {
     const product = await sanityFetch({
       query: PRODUCT_BY_SLUG_QUERY,
@@ -90,13 +111,14 @@ const getProductBySlug = async (slug: string) => {
         slug,
       },
     });
-    return product?.data || null;
+    return product?.data ? localizeProduct(product.data, locale) : null;
   } catch (error) {
     console.error("Error fetching product by ID:", error);
     return null;
   }
 };
 const getBrand = async (slug: string) => {
+  const locale = await getServerLocale();
   try {
     const product = await sanityFetch({
       query: BRAND_QUERY,
@@ -104,17 +126,23 @@ const getBrand = async (slug: string) => {
         slug,
       },
     });
-    return product?.data || null;
+    return (product?.data ?? []).map((row: BRAND_QUERYResult[number] & { brandNameEn?: string | null }) => ({ ...row, brandName: pickText(row.brandName, row.brandNameEn, locale) }));
   } catch (error) {
     console.error("Error fetching product by ID:", error);
     return null;
   }
 };
 const getMyOrders = async (userId: string) => {
+  const locale = await getServerLocale();
   try {
     // Use backendClient directly to bypass caching for fresh order status
     const orders = await backendClient.fetch(MY_ORDERS_QUERY, { userId });
-    return orders || null;
+    return orders
+      ? orders.map((order: MY_ORDERS_QUERYResult[number]) => ({
+          ...order,
+          products: order.products?.map((item) => (item.product ? { ...item, product: localizeProduct(item.product, locale) } : item)),
+        }))
+      : null;
   } catch (error) {
     console.error("Error fetching user orders:", error);
     return null;
@@ -122,13 +150,14 @@ const getMyOrders = async (userId: string) => {
 };
 
 const getShopProducts = async ({ category, brand, price }: ShopFilters) => {
+  const locale = await getServerLocale();
   try {
     const { minPrice, maxPrice } = parsePriceRange(price);
     const { data } = await sanityFetch({
       query: SHOP_PRODUCTS_QUERY,
       params: { selectedCategory: category, selectedBrand: brand, minPrice, maxPrice },
     });
-    return data ?? [];
+    return (data ?? []).map((product: Product) => localizeProduct(product, locale));
   } catch (error) {
     console.log("Error fetching shop products:", error);
     return [];
@@ -148,13 +177,14 @@ const getMyOrderCount = async (userId: string): Promise<number> => {
   }
 };
 
-const getAllBlogs = async (quantity: number) => {
+const getAllBlogs = async (quantity: number): Promise<GET_ALL_BLOGResult> => {
+  const locale = await getServerLocale();
   try {
     const { data } = await sanityFetch({
       query: GET_ALL_BLOG,
       params: { quantity },
     });
-    return data ?? [];
+    return (data ?? []).map((blog: GET_ALL_BLOGResult[number]) => localizeBlog(blog, locale));
   } catch (error) {
     console.log("Error fetching all brands:", error);
     return [];
@@ -162,23 +192,28 @@ const getAllBlogs = async (quantity: number) => {
 };
 
 const getSingleBlog = async (slug: string) => {
+  const locale = await getServerLocale();
   try {
     const { data } = await sanityFetch({
       query: SINGLE_BLOG_QUERY,
       params: { slug },
     });
-    return data ?? null;
+    return data ? localizeBlog(data, locale) : null;
   } catch (error) {
     console.log("Error fetching all brands:", error);
     return null;
   }
 };
 const getBlogCategories = async () => {
+  const locale = await getServerLocale();
   try {
     const { data } = await sanityFetch({
       query: BLOG_CATEGORIES,
     });
-    return data ?? [];
+    return (data ?? []).map((blog: BLOG_CATEGORIESResult[number]) => ({
+      ...blog,
+      blogcategories: blog.blogcategories?.map((c) => (c ? localizeTaxonomy(c, locale) : c)) ?? null,
+    }));
   } catch (error) {
     console.log("Error fetching all brands:", error);
     return [];
@@ -186,29 +221,31 @@ const getBlogCategories = async () => {
 };
 
 const getOthersBlog = async (slug: string, quantity: number) => {
+  const locale = await getServerLocale();
   try {
     const { data } = await sanityFetch({
       query: OTHERS_BLOG_QUERY,
       params: { slug, quantity },
     });
-    return data ?? [];
+    return (data ?? []).map((blog: OTHERS_BLOG_QUERYResult[number]) => localizeBlog(blog, locale));
   } catch (error) {
     console.log("Error fetching all brands:", error);
     return [];
   }
 };
 const searchProducts = async (searchTerm: string) => {
+  const locale = await getServerLocale();
   try {
     // Parameterized: the term (incl. the wildcards) is a value, never spliced
     // into the query structure, so this is injection-safe.
-    const query = `*[_type == "product" && archived != true && name match $q] | order(name asc){
-      ..., "categories": categories[]->title
+    const query = `*[_type == "product" && archived != true && (name match $q || nameEn match $q)] | order(name asc){
+      ..., ${PRODUCT_CATEGORIES}
     }`;
     const { data } = await sanityFetch({
       query,
       params: { q: `*${searchTerm}*` },
     });
-    return data ?? [];
+    return (data ?? []).map((product: Product) => localizeProduct(product, locale));
   } catch (error) {
     console.log("Error searching products:", error);
     return [];
@@ -216,12 +253,13 @@ const searchProducts = async (searchTerm: string) => {
 };
 
 const getProductsByVariant = async (variant: string) => {
+  const locale = await getServerLocale();
   try {
     const query = `*[_type == "product" && archived != true && variant == $variant] | order(name asc){
-  ...,"categories": categories[]->title
+  ...,${PRODUCT_CATEGORIES}
 }`;
     const { data } = await sanityFetch({ query, params: { variant } });
-    return data ?? [];
+    return (data ?? []).map((product: Product) => localizeProduct(product, locale));
   } catch (error) {
     console.log("Error fetching products by variant:", error);
     return [];
@@ -236,12 +274,13 @@ const SECTION_FILTERS: Record<ProductSource, string> = {
 };
 
 const getSectionProducts = async ({ source, category, count }: { source: ProductSource; category: string; count: number }) => {
+  const locale = await getServerLocale();
   try {
     const query = `*[_type == "product" && archived != true && ${SECTION_FILTERS[source]}] | order(name asc)[0...$count]{
-      ..., "categories": categories[]->title
+      ..., ${PRODUCT_CATEGORIES}
     }`;
     const { data } = await sanityFetch({ query, params: { category, count } });
-    return (data ?? []) as Product[];
+    return ((data ?? []) as Product[]).map((product: Product) => localizeProduct(product, locale));
   } catch (error) {
     console.log("Error fetching section products:", error);
     return [];

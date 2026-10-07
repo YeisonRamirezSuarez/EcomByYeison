@@ -1,6 +1,7 @@
 "use client";
 
 import useStore from "@/store";
+import { productName } from "@/lib/localize";
 import { useState } from "react";
 import Container from "./Container";
 import { Heart, X } from "lucide-react";
@@ -81,7 +82,7 @@ const WishListProducts = () => {
                             />
                           </Link>
                         )}
-                        <p className="line-clamp-1">{product?.name}</p>
+                        <p className="line-clamp-1">{productName(product, locale)}</p>
                       </td>
                       <td className="p-2 capitalize hidden md:table-cell">
                         {product?.categories && (

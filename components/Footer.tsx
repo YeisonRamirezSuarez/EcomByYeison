@@ -6,17 +6,15 @@ import NewsletterForm from "./NewsletterForm";
 import { SubText, SubTitle } from "./ui/text";
 import { getQuickLinksData } from "@/constants/data";
 import Link from "next/link";
-import { getServerLocale } from "@/lib/locale";
+import { getLocalizedSettings } from "@/lib/locale";
 import { t } from "@/lib/i18n";
 import { Clock, Mail, MapPin, Phone, ShieldCheck } from "lucide-react";
 import { getCategories } from "@/sanity/queries";
 import { Category } from "@/sanity.types";
-import { getSiteSettings } from "@/sanity/queries/siteSettings";
 import { isEmail } from "@/lib/validation";
 
 const Footer = async () => {
-  const locale = await getServerLocale();
-  const { storeName, description, contact } = await getSiteSettings();
+  const { storeName, description, contact, locale } = await getLocalizedSettings();
   const quickLinksData = getQuickLinksData(locale);
   // Real categories from Sanity, only those that actually have products so the
   // footer never links to an empty category. getCategories adds productCount.

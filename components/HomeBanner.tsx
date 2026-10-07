@@ -2,11 +2,11 @@ import React from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { ArrowRight, Zap } from "lucide-react";
-import { getSiteSettings } from "@/sanity/queries/siteSettings";
+import { getLocalizedSettings } from "@/lib/locale";
 import { isValidHref } from "@/lib/validation";
 
 const HomeBanner = async () => {
-  const { banner } = await getSiteSettings();
+  const { banner } = await getLocalizedSettings();
   const { primaryCta, secondaryCta, image, stats } = banner;
   // Studio edits skip panel validation, so unsafe links are dropped here too.
   const showPrimary = primaryCta.label && isValidHref(primaryCta.href);

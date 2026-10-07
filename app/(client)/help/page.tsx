@@ -3,13 +3,11 @@ import ContentBlocks from "@/components/ContentBlocks";
 import { Title } from "@/components/ui/text";
 import { HelpCircle } from "lucide-react";
 import Link from "next/link";
-import { getSiteSettings } from "@/sanity/queries/siteSettings";
-import { getServerLocale } from "@/lib/locale";
+import { getLocalizedSettings } from "@/lib/locale";
 import { t } from "@/lib/i18n";
 
 export default async function HelpPage() {
-  const locale = await getServerLocale();
-  const { pages } = await getSiteSettings();
+  const { pages, locale } = await getLocalizedSettings();
   return (
     <Container className="py-16">
       <Title className="mb-4">{t(locale, "pageHelpTitle")}</Title>

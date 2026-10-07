@@ -11,6 +11,8 @@ import HomeTabbar from "./HomeTabbar";
 import { getProductType } from "@/constants/data";
 import { Product } from "@/sanity.types";
 import useStore from "@/store";
+import { localizeProduct } from "@/lib/localize";
+import { t } from "@/lib/i18n";
 
 interface ProductGridProps {
   initialProducts?: Product[];
@@ -25,7 +27,7 @@ const ProductGrid = ({ initialProducts = [], initialTab }: ProductGridProps) => 
   const [loading, setLoading] = useState(false);
   const [selectedTab, setSelectedTab] = useState(defaultTab);
   const query = `*[_type == "product" && archived != true && variant == $variant] | order(name asc){
-  ...,"categories": categories[]->title
+  ...,"categories": categories[]->{ title, titleEn }
 }`;
 
   useEffect(() => {
@@ -52,7 +54,7 @@ const ProductGrid = ({ initialProducts = [], initialTab }: ProductGridProps) => 
         <div className="flex flex-col items-center justify-center py-10 min-h-80 space-y-4 text-center bg-gray-100 rounded-lg w-full mt-10">
           <motion.div className="flex items-center space-x-2 text-blue-600">
             <Loader2 className="w-5 h-5 animate-spin" />
-            <span>{locale === "en" ? "Products are loading..." : "Cargando productos..."}</span>
+            <span>{t(locale, "productsLoading")}</span>
           </motion.div>
         </div>
       ) : products?.length ? (
@@ -66,7 +68,7 @@ const ProductGrid = ({ initialProducts = [], initialTab }: ProductGridProps) => 
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
                 >
-                  <ProductCard key={product?._id} product={product} />
+                  <ProductCard key={product?._id} product={localizeProduct(product, locale)} />
                 </motion.div>
               </AnimatePresence>
             ))}

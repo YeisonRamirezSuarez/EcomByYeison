@@ -4,7 +4,7 @@ import { Address } from "@/sanity.types";
 import { urlFor } from "@/sanity/lib/image";
 import { CartItem } from "@/store";
 import Stripe from "stripe";
-import { resolveLocale } from "@/lib/localize";
+import { pickText, resolveLocale } from "@/lib/localize";
 import { getSiteSettings } from "@/sanity/queries/siteSettings";
 import { backendClient } from "@/sanity/lib/backendClient";
 import { checkoutLines, type CheckoutProduct } from "@/lib/checkout";
@@ -36,7 +36,7 @@ export async function createCheckoutSession(
     // Only ids and quantities come from the browser: name, price and photo are read from Sanity.
     const wanted = (items ?? []).map((item) => ({ id: String(item?.product?._id ?? ""), quantity: item?.quantity }));
     const products = await backendClient.fetch<CheckoutProduct[]>(
-      `*[_type == "product" && _id in $ids && archived != true]{ _id, name, price, description, images }`,
+      `*[_type == "product" && _id in $ids && archived != true]{ _id, name, nameEn, price, description, descriptionEn, images }`,
       { ids: wanted.map((w) => w.id) },
       { perspective: "published", useCdn: false, cache: "no-store" }
     );
@@ -79,8 +79,8 @@ export async function createCheckoutSession(
           currency: currency.toLowerCase(),
           unit_amount: Math.round(product.price! * 100),
           product_data: {
-            name: product.name || (locale === "en" ? "Unknown Product" : "Producto desconocido"),
-            description: product.description || undefined,
+            name: pickText(product.name, product.nameEn, locale) || t(locale, "checkoutUnknownProduct"),
+            description: pickText(product.description, product.descriptionEn, locale) || undefined,
             metadata: { id: product._id },
             images: product.images?.length ? [urlFor(product.images[0] as Parameters<typeof urlFor>[0]).url()] : undefined,
           },

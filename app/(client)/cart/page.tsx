@@ -28,6 +28,7 @@ import AddAddressDialog from "@/components/AddAddressDialog";
 import { urlFor } from "@/sanity/lib/image";
 import useStore from "@/store";
 import { t } from "@/lib/i18n";
+import { productName } from "@/lib/localize";
 import { useAuth, useUser } from "@clerk/nextjs";
 import { ShoppingBag, Trash } from "lucide-react";
 import Image from "next/image";
@@ -150,7 +151,7 @@ const CartPage = () => {
                             <div className="h-full flex flex-1 flex-col justify-between py-1">
                               <div className="flex flex-col gap-0.5 md:gap-1.5">
                                 <h2 className="text-base font-semibold line-clamp-1">
-                                  {product?.name}
+                                  {productName(product, locale)}
                                 </h2>
                                 <p className="text-sm capitalize">
                                   {t(locale, "cartVariant")}:{" "}

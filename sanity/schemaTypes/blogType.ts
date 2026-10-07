@@ -11,6 +11,7 @@ export const blogType = defineType({
       name: "title",
       type: "string",
     }),
+    defineField({ name: "titleEn", title: "Title (English)", type: "string" }),
     defineField({
       name: "slug",
       type: "slug",
@@ -52,6 +53,7 @@ export const blogType = defineType({
       name: "body",
       type: "blockContent",
     }),
+    defineField({ name: "bodyEn", title: "Body (English)", type: "blockContent" }),
   ],
   preview: {
     select: {

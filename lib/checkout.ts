@@ -3,8 +3,10 @@
 export type CheckoutProduct = {
   _id: string;
   name?: string | null;
+  nameEn?: string | null;
   price?: number | null;
   description?: string | null;
+  descriptionEn?: string | null;
   images?: unknown[] | null;
 };
 

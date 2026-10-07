@@ -2,14 +2,12 @@ import Container from "@/components/Container";
 import ContactForm from "@/components/ContactForm";
 import { Title } from "@/components/ui/text";
 import { Clock, Mail, MapPin, Phone } from "lucide-react";
-import { getSiteSettings } from "@/sanity/queries/siteSettings";
-import { getServerLocale } from "@/lib/locale";
+import { getLocalizedSettings } from "@/lib/locale";
 import { t } from "@/lib/i18n";
 import { isEmail } from "@/lib/validation";
 
 export default async function ContactPage() {
-  const locale = await getServerLocale();
-  const { contact, storeName } = await getSiteSettings();
+  const { contact, storeName, locale } = await getLocalizedSettings();
   const items = [
     { title: t(locale, "footerWriteUs"), value: contact.email, Icon: Mail },
     { title: t(locale, "footerCallUs"), value: contact.phone, Icon: Phone },
