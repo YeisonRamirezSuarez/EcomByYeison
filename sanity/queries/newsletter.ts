@@ -1,5 +1,5 @@
 import "server-only";
-import { DEFAULT_DAILY_LIMIT, EMPTY_SMTP, type SmtpSecurity, type SmtpView } from "@/lib/newsletter";
+import { DEFAULT_DAILY_LIMIT, EMPTY_SMTP, type SmtpSecurity, type SmtpView, type SubscriberStatus } from "@/lib/newsletter";
 import { backendClient } from "../lib/backendClient";
 
 // Panel and sending reads are never cached.
@@ -45,4 +45,14 @@ export async function getSmtpView(): Promise<SmtpView> {
 
 export async function getUsage(): Promise<{ date: string; count: number } | null> {
   return backendClient.fetch<{ date: string; count: number } | null>(`*[_id == $id][0]{ date, count }`, { id: USAGE_ID }, FRESH);
+}
+
+// Old documents have no status: they count as active.
+export async function getSubscriberStatus(id: string): Promise<SubscriberStatus | null> {
+  const doc = await backendClient.fetch<{ status: SubscriberStatus } | null>(
+    `*[_id == $id][0]{ "status": coalesce(status, "active") }`,
+    { id },
+    FRESH
+  );
+  return doc?.status ?? null;
 }

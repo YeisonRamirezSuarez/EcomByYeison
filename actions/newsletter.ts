@@ -1,8 +1,9 @@
 "use server";
 
-import { createHash } from "node:crypto";
+import { subscriberDocId } from "@/lib/secrets";
 import { validateSubscription } from "@/lib/validation";
 import { backendClient } from "@/sanity/lib/backendClient";
+import { getSubscriberStatus } from "@/sanity/queries/newsletter";
 
 export type SubscribeResult =
   | { ok: true; message: string }
@@ -21,16 +22,27 @@ export async function subscribe(input: unknown): Promise<SubscribeResult> {
   const { email } = result.value;
 
   try {
-    // The dot in the id keeps subscribers out of Sanity's public read API; same email, same id.
-    const id = `subscriber.${createHash("sha256").update(email).digest("hex").slice(0, 32)}`;
-    await backendClient.createIfNotExists({
-      _id: id,
-      _type: "subscriber",
-      email,
-      consent: true,
-      subscribedAt: new Date().toISOString(),
-      source: "footer",
-    });
+    const id = subscriberDocId(email);
+    const now = new Date().toISOString();
+    const status = await getSubscriberStatus(id);
+    if (!status) {
+      await backendClient.createIfNotExists({
+        _id: id,
+        _type: "subscriber",
+        email,
+        consent: true,
+        subscribedAt: now,
+        source: "footer",
+        status: "active",
+      });
+    } else if (status === "unsubscribed") {
+      // The person asked again from the store: a new, explicit consent.
+      await backendClient
+        .patch(id)
+        .set({ status: "active", consent: true, subscribedAt: now, source: "footer" })
+        .unset(["unsubscribedAt"])
+        .commit();
+    }
     return { ok: true, message: SUCCESS };
   } catch (error) {
     console.log("Subscribe failed", error);

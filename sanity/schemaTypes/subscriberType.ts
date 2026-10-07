@@ -12,6 +12,13 @@ export const subscriberType = defineType({
     defineField({ name: "consent", title: "Aceptó recibir correos", type: "boolean" }),
     defineField({ name: "subscribedAt", title: "Fecha", type: "datetime" }),
     defineField({ name: "source", title: "Origen", type: "string" }),
+    defineField({
+      name: "status",
+      title: "Estado",
+      type: "string",
+      options: { list: [{ title: "Activo", value: "active" }, { title: "Dado de baja", value: "unsubscribed" }] },
+    }),
+    defineField({ name: "unsubscribedAt", title: "Fecha de baja", type: "datetime" }),
   ],
   preview: { select: { title: "email", subtitle: "subscribedAt" } },
 });
