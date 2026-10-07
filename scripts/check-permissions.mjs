@@ -343,7 +343,7 @@ assert.equal(formatPrice(1250000, "cop"), "$1,250,000.00"); // lowercase falls b
 
 // Admin dashboard sections
 const perms = await import("../lib/permissions.ts");
-const ALL_SECTIONS = ["inicio", "pedidos", "productos", "categorias", "marcas", "apariencia", "paginas", "usuarios", "ajustes"];
+const ALL_SECTIONS = ["inicio", "pedidos", "productos", "categorias", "marcas", "apariencia", "paginas", "boletin", "usuarios", "ajustes"];
 assert.deepEqual(perms.adminSections("superadmin"), ALL_SECTIONS);
 assert.deepEqual(perms.adminSections("admin"), ALL_SECTIONS);
 assert.deepEqual(perms.adminSections("empleado"), ["inicio", "pedidos", "productos"]);

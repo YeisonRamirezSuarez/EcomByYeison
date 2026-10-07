@@ -2,6 +2,7 @@ import {
   FileText,
   FolderTree,
   LayoutDashboard,
+  Mail,
   Package,
   Palette,
   Settings,
@@ -22,6 +23,7 @@ export const SECTION_PATHS: Record<AdminSection, string> = {
   marcas: "/admin/marcas",
   apariencia: "/admin/apariencia",
   paginas: "/admin/paginas",
+  boletin: "/admin/boletin",
   usuarios: "/admin/usuarios",
   ajustes: "/admin/ajustes",
 };
@@ -42,6 +44,7 @@ export const NAV_GROUPS: { title: string; items: NavItem[] }[] = [
     items: [
       { section: "apariencia", label: "Apariencia", icon: Palette },
       { section: "paginas", label: "Páginas", icon: FileText },
+      { section: "boletin", label: "Boletín", icon: Mail },
       { section: "usuarios", label: "Usuarios", icon: Users },
       { section: "ajustes", label: "Ajustes", icon: Settings },
     ],

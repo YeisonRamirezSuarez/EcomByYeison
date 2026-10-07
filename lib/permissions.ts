@@ -22,6 +22,7 @@ export type AdminSection =
   | "marcas"
   | "apariencia"
   | "paginas"
+  | "boletin"
   | "usuarios"
   | "ajustes";
 
@@ -93,6 +94,7 @@ const SECTION_PERMISSION: Record<AdminSection, Permission> = {
   marcas: "catalogo",
   apariencia: "configurar",
   paginas: "configurar",
+  boletin: "configurar",
   usuarios: "asignarEmpleado",
   ajustes: "configurar",
 };

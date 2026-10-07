@@ -3,12 +3,12 @@
 import { currentUser } from "@clerk/nextjs/server";
 import { ActionError, run, type ActionResult } from "@/lib/actionResult";
 import { addUsage, getMailer } from "@/lib/mailer";
-import { errorDetail, smtpErrorMessage, validateSmtpSettings, type SmtpErrorInfo } from "@/lib/newsletter";
+import { errorDetail, isEmail, isSubscriberId, MAX_IMPORT_ROWS, planImport, smtpErrorMessage, subscribersCsv, validateSmtpSettings, type SmtpErrorInfo } from "@/lib/newsletter";
 import { requirePermission } from "@/lib/roles";
-import { encryptSecret } from "@/lib/secrets";
+import { encryptSecret, subscriberDocId } from "@/lib/secrets";
 import { INVALID_FORM } from "@/lib/validation";
 import { backendClient } from "@/sanity/lib/backendClient";
-import { getSmtpDoc, SMTP_ID } from "@/sanity/queries/newsletter";
+import { getAllSubscribers, getSmtpDoc, getSubscriberStatus, getSubscriberStatuses, SMTP_ID } from "@/sanity/queries/newsletter";
 import { getSiteSettings } from "@/sanity/queries/siteSettings";
 
 const KEY_MISSING = "Falta la clave de cifrado en el servidor (EMAIL_ENCRYPTION_KEY)";
@@ -84,5 +84,92 @@ export async function testSmtp(): Promise<ActionResult<SmtpTest>> {
     } catch (error) {
       return { ok: false, steps, message: smtpErrorMessage(error as SmtpErrorInfo), detail: errorDetail(error) };
     }
+  });
+}
+
+const PERMISSION_ONE = "Confirma que tienes permiso de esta persona para enviarle correos";
+const PERMISSION_MANY = "Confirma que tienes permiso de estas personas para enviarles correos";
+const BAD_LIST = "La lista de correos no es válida";
+
+const asRecord = (value: unknown): Record<string, unknown> =>
+  value && typeof value === "object" && !Array.isArray(value) ? (value as Record<string, unknown>) : {};
+
+function newSubscriber(email: string, source: "manual" | "import", now: string) {
+  return { _id: subscriberDocId(email), _type: "subscriber", email, consent: true, subscribedAt: now, source, status: "active" };
+}
+
+export async function addSubscriber(input: unknown): Promise<ActionResult<"created" | "exists" | "unsubscribed">> {
+  const v = asRecord(input);
+  const email = typeof v.email === "string" ? v.email.trim().toLowerCase() : "";
+  const errors: Record<string, string> = {};
+  if (!isEmail(email)) errors.email = "Ingresa un correo válido";
+  if (v.consent !== true) errors.consent = PERMISSION_ONE;
+  if (Object.keys(errors).length > 0) return { ok: false, error: INVALID_FORM, errors };
+  return run(async () => {
+    await requirePermission("configurar");
+    const status = await getSubscriberStatus(subscriberDocId(email));
+    // Never re-activates someone who unsubscribed: only they can, from the store.
+    if (status) return status === "unsubscribed" ? "unsubscribed" : "exists";
+    await backendClient.createIfNotExists(newSubscriber(email, "manual", new Date().toISOString()));
+    return "created";
+  });
+}
+
+export type ImportCounts = { create: number; already: number; skippedUnsubscribed: number };
+
+function cleanEmails(input: unknown): string[] | null {
+  if (!Array.isArray(input) || input.length > MAX_IMPORT_ROWS) return null;
+  const emails = [...new Set(input.map((e) => (typeof e === "string" ? e.trim().toLowerCase() : "")))];
+  return emails.every(isEmail) ? emails : null;
+}
+
+async function importPlan(emails: string[]) {
+  const found = await getSubscriberStatuses(emails);
+  return planImport(emails, Object.fromEntries(found.map((s) => [s.email, s.status])));
+}
+
+export async function previewImport(input: unknown): Promise<ActionResult<ImportCounts>> {
+  const emails = cleanEmails(input);
+  if (!emails) return { ok: false, error: BAD_LIST };
+  return run(async () => {
+    await requirePermission("configurar");
+    const plan = await importPlan(emails);
+    return { create: plan.create.length, already: plan.already, skippedUnsubscribed: plan.skippedUnsubscribed };
+  });
+}
+
+export async function importSubscribers(input: unknown): Promise<ActionResult<ImportCounts>> {
+  const v = asRecord(input);
+  const emails = cleanEmails(v.emails);
+  if (!emails) return { ok: false, error: BAD_LIST };
+  if (v.consent !== true) return { ok: false, error: PERMISSION_MANY, errors: { consent: PERMISSION_MANY } };
+  return run(async () => {
+    await requirePermission("configurar");
+    const plan = await importPlan(emails);
+    const now = new Date().toISOString();
+    // ponytail: 200 documents per transaction keeps each request small; 5000 rows = 25 requests.
+    for (let i = 0; i < plan.create.length; i += 200) {
+      const tx = backendClient.transaction();
+      for (const email of plan.create.slice(i, i + 200)) tx.createIfNotExists(newSubscriber(email, "import", now));
+      await tx.commit();
+    }
+    return { create: plan.create.length, already: plan.already, skippedUnsubscribed: plan.skippedUnsubscribed };
+  });
+}
+
+// Right to deletion (Ley 1581): the data goes; if they subscribe again they start as new.
+export async function deleteSubscriber(id: string): Promise<ActionResult<null>> {
+  return run(async () => {
+    await requirePermission("configurar");
+    if (!isSubscriberId(id)) throw new ActionError("Suscriptor no encontrado");
+    await backendClient.delete(id);
+    return null;
+  });
+}
+
+export async function exportSubscribers(): Promise<ActionResult<string>> {
+  return run(async () => {
+    await requirePermission("configurar");
+    return subscribersCsv(await getAllSubscribers());
   });
 }
