@@ -6,7 +6,7 @@ import type { ActionResult } from "@/lib/actionResult";
 import { INVALID_FORM, type ValidationResult } from "@/lib/validation";
 import { createSaveQueue } from "@/lib/saveQueue";
 import type { Locale } from "@/lib/i18n";
-import { localeKey } from "@/lib/localize";
+import { localeKey, twinError, twinPatch } from "@/lib/localize";
 
 export const INPUT =
   "w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-shop_light_green/40 disabled:opacity-60";
@@ -57,19 +57,22 @@ export function TextField({
   );
 }
 
-// TextField props bound to the language being edited: "title" or "titleEn".
+// The language being edited, the store's main language, and whether the store has just one.
+export type TwinLang = { edit: Locale; primary: Locale; single: boolean };
+
+// TextField props bound to the language being edited: "title" or "titleEn". `onChange` gets the
+// fields to write (see twinPatch); the error falls back to the main-language field's.
 export function twin(
   value: object,
   key: string,
-  locale: Locale,
-  onChange: (field: string, text: string) => void,
+  lang: TwinLang,
+  onChange: (patch: Record<string, string>) => void,
   errors: Record<string, string>
 ) {
-  const field = localeKey(key, locale);
   return {
-    value: String((value as Record<string, unknown>)[field] ?? ""),
-    onChange: (text: string) => onChange(field, text),
-    error: errors[field],
+    value: String((value as Record<string, unknown>)[localeKey(key, lang.edit)] ?? ""),
+    onChange: (text: string) => onChange(twinPatch(key, text, lang.edit, lang.single)),
+    error: twinError(errors, "", key, lang.edit, lang.primary),
   };
 }
 

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { Download, X } from "lucide-react";
-import useStore from "@/store";
+import { useLocale } from "@/components/StoreSettingsProvider";
 import { t } from "@/lib/i18n";
 import { useBrand } from "./StoreSettingsProvider";
 
@@ -28,7 +28,7 @@ const DISMISS_DAYS = 7;
  * it within the last week.
  */
 const InstallPrompt = () => {
-  const { locale } = useStore();
+  const locale = useLocale();
   const { storeName } = useBrand();
   const [mounted, setMounted] = useState(false);
   const [deferred, setDeferred] = useState<BeforeInstallPromptEvent | null>(

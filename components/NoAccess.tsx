@@ -11,7 +11,7 @@ import {
 import Logo from "./Logo";
 import { SignInButton, SignUpButton } from "@clerk/nextjs";
 import { Button } from "./ui/button";
-import useStore from "@/store";
+import { useLocale } from "@/components/StoreSettingsProvider";
 import { t } from "@/lib/i18n";
 
 const NoAccess = ({
@@ -19,7 +19,7 @@ const NoAccess = ({
 }: {
   details?: string;
 }) => {
-  const { locale } = useStore();
+  const locale = useLocale();
   const defaultDetails = details || t(locale, "noAccessDetails");
 
   return (

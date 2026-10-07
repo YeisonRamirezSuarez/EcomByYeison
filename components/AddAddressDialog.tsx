@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import { createAddress } from "@/actions/createAddress";
 import { Address } from "@/sanity.types";
-import useStore from "@/store";
+import { useLocale } from "@/components/StoreSettingsProvider";
 import { t } from "@/lib/i18n";
 import toast from "react-hot-toast";
 
@@ -28,7 +28,7 @@ const AddAddressDialog = ({
 }: {
   onCreated: (address: Address) => void;
 }) => {
-  const { locale } = useStore();
+  const locale = useLocale();
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
 

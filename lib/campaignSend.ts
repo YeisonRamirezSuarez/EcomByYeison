@@ -33,7 +33,7 @@ export async function getEmailBrand(): Promise<{ brand: EmailBrand; currency: Cu
 
 export const toPickerProduct = (doc: EmailProductDoc, currency: CurrencyCode): PickerProduct => ({
   _id: doc._id,
-  name: doc.name,
+  name: doc.name || doc.nameEn || "",
   nameEn: doc.nameEn ?? "",
   url: doc.slug ? `/product/${doc.slug}` : "/shop",
   imageUrl: doc.image,

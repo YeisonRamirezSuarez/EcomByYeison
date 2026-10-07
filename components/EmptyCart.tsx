@@ -4,11 +4,11 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { emptyCart } from "@/images";
 import Image from "next/image";
-import useStore from "@/store";
+import { useLocale } from "@/components/StoreSettingsProvider";
 import { t } from "@/lib/i18n";
 
 export default function EmptyCart() {
-  const { locale } = useStore();
+  const locale = useLocale();
 
   return (
     <div className="py-10 md:py-20 bg-gradient-to-b from-blue-50 to-white flex items-center justify-center p-4">

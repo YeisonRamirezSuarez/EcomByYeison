@@ -17,7 +17,6 @@ const ProductCharacteristics = async ({
 }) => {
   const locale = await getServerLocale();
   const brand = await getBrand(product?.slug?.current as string);
-  console.log(brand);
 
   return (
     <Accordion type="single" collapsible>
@@ -25,7 +24,7 @@ const ProductCharacteristics = async ({
         <AccordionTrigger>{t(locale, "productCharacteristics", { name: product?.name ?? "" })}</AccordionTrigger>
         <AccordionContent>
           <p className="flex items-center justify-between">
-            Brand:{" "}
+            {t(locale, "productBrand")}{" "}
             {brand && (
               <span className="font-semibold tracking-wide">
                 {brand[0]?.brandName}
@@ -33,17 +32,17 @@ const ProductCharacteristics = async ({
             )}
           </p>
           <p className="flex items-center justify-between">
-            Collection:{" "}
+            {t(locale, "productCollection")}{" "}
             <span className="font-semibold tracking-wide">2025</span>
           </p>
           <p className="flex items-center justify-between">
-            Type:{" "}
+            {t(locale, "productType")}{" "}
             <span className="font-semibold tracking-wide">
               {product?.variant}
             </span>
           </p>
           <p className="flex items-center justify-between">
-            Stock:{" "}
+            {t(locale, "productStock")}{" "}
             <span className="font-semibold tracking-wide">
               {product?.stock ? t(locale, "productInStock") : t(locale, "productOutOfStock")}
             </span>

@@ -2,13 +2,14 @@
 
 import { useRouter } from "next/navigation";
 import useStore from "@/store";
+import { useLocale } from "@/components/StoreSettingsProvider";
 import { LOCALE_COOKIE, t, type Locale } from "@/lib/i18n";
 
 // Shows the language to switch to. Server-rendered parts re-render via router.refresh().
-const LanguageToggle = ({ initialLocale }: { initialLocale: Locale }) => {
+const LanguageToggle = () => {
   const router = useRouter();
-  const { locale: storeLocale, setLocale, hasHydrated } = useStore();
-  const locale = hasHydrated ? storeLocale : initialLocale;
+  const setLocale = useStore((s) => s.setLocale);
+  const locale = useLocale();
   const next: Locale = locale === "es" ? "en" : "es";
 
   const change = () => {

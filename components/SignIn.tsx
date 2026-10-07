@@ -2,12 +2,12 @@
 
 import { useState } from "react";
 import { AuthModal } from "./AuthModal";
-import useStore from "@/store";
+import { useLocale } from "@/components/StoreSettingsProvider";
 import { t } from "@/lib/i18n";
 
 const SignIn = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const { locale } = useStore();
+  const locale = useLocale();
 
   return (
     <>

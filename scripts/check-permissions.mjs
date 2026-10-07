@@ -1130,6 +1130,14 @@ assert.equal(ck.checkoutLines([{ id: "p1", quantity: 1 }], [{ ...SERVER[0], pric
 
   assert.equal(lz.localeKey("title", "es"), "title");
   assert.equal(lz.localeKey("title", "en"), "titleEn");
+  assert.deepEqual(lz.twinPatch("title", "Hola", "es", false), { title: "Hola" });
+  assert.deepEqual(lz.twinPatch("title", "", "es", true), { title: "", titleEn: "" });
+  assert.deepEqual(lz.twinPatch("label", "Shop", "en", true), { labelEn: "Shop", label: "" });
+  const errs = { "stats.0.label": "Campo obligatorio (español)", nameEn: "x" };
+  assert.equal(lz.twinError(errs, "stats.0.", "label", "en", "es"), "Campo obligatorio (español)");
+  assert.equal(lz.twinError(errs, "", "name", "en", "es"), "x");
+  assert.equal(lz.twinError(errs, "", "name", "es", "es"), undefined);
+  assert.equal(lz.twinError(errs, "", "other", "en", "es"), undefined);
   assert.equal(lz.requiredIn("es"), "Campo obligatorio (español)");
   assert.equal(lz.requiredIn("en"), "Campo obligatorio (inglés)");
   assert.equal(lz.lacksLanguage({ ok: false, errors: { nameEn: "Campo obligatorio (inglés)" } }, "en"), true);

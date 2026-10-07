@@ -2,14 +2,14 @@
 import { getProductType } from "@/constants/data";
 import { t } from "@/lib/i18n";
 import Link from "next/link";
-import useStore from "@/store";
+import { useLocale } from "@/components/StoreSettingsProvider";
 interface Props {
   selectedTab: string;
   onTabSelect: (tab: string) => void;
 }
 
 const HomeTabbar = ({ selectedTab, onTabSelect }: Props) => {
-  const { locale } = useStore();
+  const locale = useLocale();
   const productType = getProductType(locale);
 
   return (

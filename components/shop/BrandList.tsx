@@ -3,7 +3,7 @@ import React from "react";
 import Title from "../Title";
 import { RadioGroup, RadioGroupItem } from "../ui/radio-group";
 import { Label } from "../ui/label";
-import useStore from "@/store";
+import { useLocale } from "@/components/StoreSettingsProvider";
 import { t } from "@/lib/i18n";
 
 interface Props {
@@ -13,7 +13,7 @@ interface Props {
 }
 
 const BrandList = ({ brands, selectedBrand, setSelectedBrand }: Props) => {
-  const { locale } = useStore();
+  const locale = useLocale();
 
   return (
     <div className="w-full bg-white p-5">

@@ -16,9 +16,8 @@ import {
   type SectionKind,
   type Testimonial,
 } from "@/lib/homeSections";
-import type { Locale } from "@/lib/i18n";
-import { localeKey } from "@/lib/localize";
-import { INPUT, TextField } from "../brand/fields";
+import { localeKey, twinError, twinPatch } from "@/lib/localize";
+import { INPUT, TextField, type TwinLang } from "../brand/fields";
 import ImageField from "../brand/ImageField";
 
 const INCOMPLETE: Partial<Record<SectionKind, string>> = {
@@ -69,7 +68,8 @@ const NumberField = ({ label, value, min, max, error, onChange }: { label: strin
   </label>
 );
 
-const Testimonials = ({ items, errors, edit, onChange }: { items: Testimonial[]; errors: Record<string, string>; edit: Locale; onChange: (items: Testimonial[]) => void }) => {
+const Testimonials = ({ items, errors, lang, onChange }: { items: Testimonial[]; errors: Record<string, string>; lang: TwinLang; onChange: (items: Testimonial[]) => void }) => {
+  const { edit, primary, single } = lang;
   const textKey = localeKey("text", edit) as "text" | "textEn";
   const update = (i: number, patch: Partial<Testimonial>) => onChange(items.map((t, j) => (j === i ? { ...t, ...patch } : t)));
   return (
@@ -83,7 +83,7 @@ const Testimonials = ({ items, errors, edit, onChange }: { items: Testimonial[];
             </button>
           </div>
           <TextField label="Nombre" value={t.name} onChange={(v) => update(i, { name: v })} error={errors[`items.${i}.name`]} max={60} />
-          <TextField label="Opinión" multiline value={t[textKey]} onChange={(v) => update(i, { [textKey]: v } as Partial<Testimonial>)} error={errors[`items.${i}.${textKey}`]} max={300} />
+          <TextField label="Opinión" multiline value={t[textKey]} onChange={(v) => update(i, twinPatch("text", v, edit, single) as Partial<Testimonial>)} error={twinError(errors, `items.${i}.`, "text", edit, primary)} max={300} />
           <div>
             <span className="text-xs font-semibold text-gray-700">Estrellas</span>
             <div className="mt-1 flex gap-0.5">
@@ -111,18 +111,20 @@ const Testimonials = ({ items, errors, edit, onChange }: { items: Testimonial[];
   );
 };
 
-const Fields = ({ section: s, errors, categories, edit, onChange }: { section: HomeSection; errors: Record<string, string>; categories: Option[]; edit: Locale; onChange: (s: HomeSection) => void }) => {
+const Fields = ({ section: s, errors, categories, lang, onChange }: { section: HomeSection; errors: Record<string, string>; categories: Option[]; lang: TwinLang; onChange: (s: HomeSection) => void }) => {
+  const { edit, primary, single } = lang;
   const titleKey = localeKey("title", edit) as "title" | "titleEn";
   const textKey = localeKey("text", edit) as "text" | "textEn";
   const labelKey = localeKey("label", edit) as "label" | "labelEn";
   const set = <K extends keyof HomeSection>(key: K, value: HomeSection[K]) => onChange({ ...s, [key]: value });
-  const title = <TextField label="Título" value={s[titleKey]} onChange={(v) => set(titleKey, v)} error={errors[titleKey]} max={80} />;
+  const setTwin = (key: string, v: string) => onChange({ ...s, ...twinPatch(key, v, edit, single) } as HomeSection);
+  const title = <TextField label="Título" value={s[titleKey]} onChange={(v) => setTwin("title", v)} error={twinError(errors, "", "title", edit, primary)} max={80} />;
   const text = (max: number, label = "Texto") => (
-    <TextField label={label} multiline value={s[textKey]} onChange={(v) => set(textKey, v)} error={errors[textKey]} max={max} />
+    <TextField label={label} multiline value={s[textKey]} onChange={(v) => setTwin("text", v)} error={twinError(errors, "", "text", edit, primary)} max={max} />
   );
   const button = (
     <div className="grid grid-cols-2 gap-2">
-      <TextField label="Botón: texto" value={s.button[labelKey]} onChange={(v) => set("button", { ...s.button, [labelKey]: v })} error={errors[`button.${labelKey}`]} max={30} />
+      <TextField label="Botón: texto" value={s.button[labelKey]} onChange={(v) => set("button", { ...s.button, ...twinPatch("label", v, edit, single) })} error={twinError(errors, "button.", "label", edit, primary)} max={30} />
       <TextField label="Enlace" placeholder="/shop" value={s.button.href} onChange={(v) => set("button", { ...s.button, href: v })} error={errors["button.href"]} max={200} />
     </div>
   );
@@ -204,7 +206,7 @@ const Fields = ({ section: s, errors, categories, edit, onChange }: { section: H
       return (
         <>
           {title}
-          <Testimonials items={s.items} errors={errors} edit={edit} onChange={(items) => set("items", items)} />
+          <Testimonials items={s.items} errors={errors} lang={lang} onChange={(items) => set("items", items)} />
         </>
       );
     case "newsletter":
@@ -227,7 +229,7 @@ const SectionForm = ({
   categoryGone,
   errors,
   categories,
-  edit,
+  lang,
   onChange,
   onBack,
   onRemove,
@@ -237,7 +239,7 @@ const SectionForm = ({
   categoryGone: boolean;
   errors: Record<string, string>;
   categories: Option[];
-  edit: Locale;
+  lang: TwinLang;
   onChange: (section: HomeSection) => void;
   onBack: () => void;
   onRemove: () => void;
@@ -256,7 +258,7 @@ const SectionForm = ({
           {categoryGone ? "La categoría elegida ya no existe; elige otra." : INCOMPLETE[section.kind]}
         </p>
       )}
-      {section.kind !== "banner" && <Fields section={section} errors={errors} categories={categories} edit={edit} onChange={onChange} />}
+      {section.kind !== "banner" && <Fields section={section} errors={errors} categories={categories} lang={lang} onChange={onChange} />}
       {!isBuiltIn(section.kind) &&
         (confirm ? (
           <div role="alert" className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-900">

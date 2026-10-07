@@ -1,5 +1,6 @@
 import { Product } from "@/sanity.types";
 import useStore from "@/store";
+import { useLocale } from "@/components/StoreSettingsProvider";
 import React from "react";
 import { Button } from "./ui/button";
 import { Minus, Plus } from "lucide-react";
@@ -12,7 +13,9 @@ interface Props {
   className?: string;
 }
 const QuantityButtons = ({ product, className }: Props) => {
-  const { addItem, removeItem, getItemCount, locale } = useStore();
+  const { addItem, removeItem, getItemCount } = useStore();
+
+  const locale = useLocale();
   const itemCount = getItemCount(product?._id);
   const isOutOfStock = product?.stock === 0;
 
@@ -21,7 +24,7 @@ const QuantityButtons = ({ product, className }: Props) => {
     if (itemCount > 1) {
       toast.success(t(locale, "quantityDecreased"));
     } else {
-      toast.success(`${product?.name?.substring(0, 12)} removed successfully!`);
+      toast.success(t(locale, "productRemovedFromCart"));
     }
   };
 

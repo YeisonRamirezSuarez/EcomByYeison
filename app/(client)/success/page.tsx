@@ -1,6 +1,7 @@
 "use client";
 
 import useStore from "@/store";
+import { useLocale } from "@/components/StoreSettingsProvider";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect } from "react";
 import { motion } from "motion/react";
@@ -10,7 +11,9 @@ import { t } from "@/lib/i18n";
 import { ensureOrder } from "@/actions/ensureOrder";
 
 const SuccessPageContent = () => {
-  const { resetCart, locale } = useStore();
+  const { resetCart } = useStore();
+
+  const locale = useLocale();
   const searchParams = useSearchParams();
   const orderNumber = searchParams.get("orderNumber");
   const sessionId = searchParams.get("session_id");

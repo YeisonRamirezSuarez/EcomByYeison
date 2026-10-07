@@ -3,7 +3,7 @@
 import { cn } from "@/lib/utils";
 import { motion } from "motion/react";
 import { Loader2 } from "lucide-react";
-import useStore from "@/store";
+import { useLocale } from "@/components/StoreSettingsProvider";
 import { t } from "@/lib/i18n";
 
 const NoProductAvailable = ({
@@ -13,7 +13,7 @@ const NoProductAvailable = ({
   selectedTab?: string;
   className?: string;
 }) => {
-  const { locale } = useStore();
+  const locale = useLocale();
 
   return (
     <div

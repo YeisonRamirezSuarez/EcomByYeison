@@ -14,7 +14,7 @@ import {
 import Image from "next/image";
 import { urlFor } from "@/sanity/lib/image";
 import PriceFormatter from "./PriceFormatter";
-import useStore from "@/store";
+import { useLocale } from "@/components/StoreSettingsProvider";
 import { t } from "@/lib/i18n";
 
 interface OrderDetailsDialogProps {
@@ -28,7 +28,7 @@ const OrderDetailDialog: React.FC<OrderDetailsDialogProps> = ({
   isOpen,
   onClose,
 }) => {
-  const { locale } = useStore();
+  const locale = useLocale();
 
   if (!order) return null;
 

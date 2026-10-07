@@ -54,6 +54,7 @@ const AppearanceEditor = ({ initial, initialHasDraft, categories, previewLocale 
   const [sections, setSections] = useState<HomeSection[]>(() => withBuiltIns(initial.homeSections ?? DEFAULT_HOME_SECTIONS));
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const [edit, setEdit] = useState<Locale>(previewLocale);
+  const lang = { edit, primary: initial.primary, single: initial.languages.length < 2 };
 
   const post = (message: EditorMessage) => frameRef.current?.contentWindow?.postMessage(message, window.location.origin);
   // The preview follows the language being edited: same cookie as the store's ES/EN button.
@@ -245,7 +246,7 @@ const AppearanceEditor = ({ initial, initialHasDraft, categories, previewLocale 
               <SectionForm
                 key={selected._key}
                 section={selected}
-                edit={edit}
+                lang={lang}
                 shown={isShown(selected)}
                 categoryGone={categoryGone(selected)}
                 errors={selectedErrors}
@@ -271,7 +272,7 @@ const AppearanceEditor = ({ initial, initialHasDraft, categories, previewLocale 
             )}
             {/* Kept mounted so the banner form keeps its state when going back to the list. */}
             <div className={selected?.kind === "banner" ? "" : "hidden"}>
-              <BannerSection initial={initial.banner} edit={edit} primary={initial.primary} {...events} />
+              <BannerSection initial={initial.banner} lang={lang} {...events} />
             </div>
           </div>
           <div role="tabpanel" className={tab === "estilos" ? "" : "hidden"}>
@@ -280,11 +281,11 @@ const AppearanceEditor = ({ initial, initialHasDraft, categories, previewLocale 
           <div role="tabpanel" className={tab === "datos" ? "flex flex-col gap-6" : "hidden"}>
             <section className="flex flex-col gap-3">
               <h2 className="font-bold text-gray-900">Logo y nombre</h2>
-              <IdentitySection initial={{ storeName, tagline, taglineEn, description, descriptionEn, logoType, logoText, logoSubtext, logoImage, favicon }} edit={edit} {...events} />
+              <IdentitySection initial={{ storeName, tagline, taglineEn, description, descriptionEn, logoType, logoText, logoSubtext, logoImage, favicon }} lang={lang} {...events} />
             </section>
             <section className="flex flex-col gap-3">
               <h2 className="font-bold text-gray-900">Contacto</h2>
-              <ContactSection initial={initial.contact} edit={edit} {...events} />
+              <ContactSection initial={initial.contact} lang={lang} {...events} />
             </section>
             <section className="flex flex-col gap-3">
               <h2 className="font-bold text-gray-900">Redes sociales</h2>

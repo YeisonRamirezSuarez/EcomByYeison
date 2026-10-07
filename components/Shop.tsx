@@ -9,7 +9,7 @@ import PriceList from "./shop/PriceList";
 import { Loader2, SlidersHorizontal, X } from "lucide-react";
 import NoProductAvailable from "./NoProductAvailable";
 import ProductCard from "./ProductCard";
-import useStore from "@/store";
+import { useLocale } from "@/components/StoreSettingsProvider";
 import { t } from "@/lib/i18n";
 import { readShopFilters, shopQuery, type ShopFilterKey } from "@/lib/shopFilters";
 
@@ -19,7 +19,7 @@ interface Props {
   products: Product[];
 }
 const Shop = ({ categories, brands, products }: Props) => {
-  const { locale } = useStore();
+  const locale = useLocale();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [loading, startTransition] = useTransition();

@@ -55,6 +55,18 @@ export function pickText(es: unknown, en: unknown, locale: Locale): string {
 // Field edited for a language: "title" (Spanish) or "titleEn" (English).
 export const localeKey = (key: string, locale: Locale): string => (locale === "en" ? `${key}En` : key);
 
+// The fields an edit writes: the edited language's field, plus — in a store with one language —
+// the other language's twin cleared, so a cleared text never falls back to a hidden default.
+export function twinPatch(key: string, text: string, edit: Locale, single: boolean): Record<string, string> {
+  const patch = { [localeKey(key, edit)]: text };
+  return single ? { ...patch, [localeKey(key, edit === "en" ? "es" : "en")]: "" } : patch;
+}
+
+// Error shown under a twin field: its own, else the one on the main-language field (hidden while
+// the other language is being edited). `prefix` is the path before the field, e.g. "stats.0.".
+export const twinError = (errors: Record<string, string>, prefix: string, key: string, edit: Locale, primary: Locale) =>
+  errors[prefix + localeKey(key, edit)] ?? errors[prefix + localeKey(key, primary)];
+
 // Same text as the copies in lib/validation.ts, lib/catalog.ts and lib/homeSections.ts
 // (pure modules cannot import each other); the check script compares them.
 export const requiredIn = (locale: Locale) => `Campo obligatorio (${locale === "en" ? "inglés" : "español"})`;

@@ -4,6 +4,7 @@ import { Button } from "./ui/button";
 import { cn } from "@/lib/utils";
 import { ShoppingBag } from "lucide-react";
 import useStore from "@/store";
+import { useLocale } from "@/components/StoreSettingsProvider";
 import toast from "react-hot-toast";
 import PriceFormatter from "./PriceFormatter";
 import QuantityButtons from "./QuantityButtons";
@@ -15,7 +16,9 @@ interface Props {
 }
 
 const AddToCartButton = ({ product, className }: Props) => {
-  const { addItem, getItemCount, locale } = useStore();
+  const { addItem, getItemCount } = useStore();
+
+  const locale = useLocale();
   const itemCount = getItemCount(product?._id);
   const isOutOfStock = product?.stock === 0;
 

@@ -8,11 +8,11 @@ import { Flame, Star, ShoppingBag } from "lucide-react";
 import PriceView from "./PriceView";
 import ProductSideMenu from "./ProductSideMenu";
 import AddToCartButton from "./AddToCartButton";
-import useStore from "@/store";
+import { useLocale } from "@/components/StoreSettingsProvider";
 import { t } from "@/lib/i18n";
 
 const ProductCard = ({ product }: { product: Product }) => {
-  const { locale } = useStore();
+  const locale = useLocale();
   const isOutOfStock = (product?.stock ?? 0) === 0;
 
   return (
@@ -53,7 +53,7 @@ const ProductCard = ({ product }: { product: Product }) => {
             </span>
           ) : product?.status === "new" ? (
             <span className="bg-shop_light_green text-white text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider shadow-sm">
-              Nuevo
+              {t(locale, "productBadgeNew")}
             </span>
           ) : product?.status === "hot" ? (
             <Link href="/deal">

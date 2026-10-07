@@ -1,6 +1,7 @@
 "use client";
 
 import useStore from "@/store";
+import { useLocale } from "@/components/StoreSettingsProvider";
 import { productName } from "@/lib/localize";
 import { useState } from "react";
 import Container from "./Container";
@@ -17,7 +18,9 @@ import { t } from "@/lib/i18n";
 
 const WishListProducts = () => {
   const [visibleProducts, setVisibleProducts] = useState(7);
-  const { favoriteProduct, removeFromFavorite, resetFavorite, locale } = useStore();
+  const { favoriteProduct, removeFromFavorite, resetFavorite } = useStore();
+
+  const locale = useLocale();
   const loadMore = () => {
     setVisibleProducts((prev) => Math.min(prev + 5, favoriteProduct.length));
   };

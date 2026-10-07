@@ -10,7 +10,7 @@ import { deleteBrand, deleteCategory, saveBrand, saveCategory } from "@/actions/
 import { slugify, validateBrand, validateCategory } from "@/lib/catalog";
 import type { TaxonomyKind, TaxonomyRow } from "@/sanity/queries/adminCatalog";
 import type { Locale } from "@/lib/i18n";
-import { lacksLanguage, localeKey, type StoreLanguages } from "@/lib/localize";
+import { lacksLanguage, localeKey, twinError, twinPatch, type StoreLanguages } from "@/lib/localize";
 import { INPUT, TextField } from "../brand/fields";
 import EditorLocale from "../EditorLocale";
 import ImageField from "../brand/ImageField";
@@ -28,6 +28,7 @@ const TaxonomyManager = ({ kind, rows, languages }: { kind: TaxonomyKind; rows: 
   const [edit, setEdit] = useState<Locale>(primary);
   const titleKey = localeKey("title", edit) as "title" | "titleEn";
   const descriptionKey = localeKey("description", edit) as "description" | "descriptionEn";
+  const single = languages.languages.length < 2;
   const validate = (row: TaxonomyRow, locale: Locale) => (kind === "category" ? validateCategory(row, locale) : validateBrand(row, locale));
   const [query, setQuery] = useState("");
   const [editing, setEditing] = useState<TaxonomyRow | null>(null);
@@ -125,12 +126,12 @@ const TaxonomyManager = ({ kind, rows, languages }: { kind: TaxonomyKind; rows: 
                   {languages.languages.length > 1 && (
                     <EditorLocale value={edit} onChange={setEdit} missing={lacksLanguage(validate(editing, other), other) ? [other] : []} />
                   )}
-                  <TextField label="Título" value={editing[titleKey]} max={80} error={errors[titleKey]}
-                    onChange={(text) => update((slugTouched || edit !== primary ? { [titleKey]: text } : { [titleKey]: text, slug: slugify(text) }) as Partial<TaxonomyRow>)} />
+                  <TextField label="Título" value={editing[titleKey]} max={80} error={twinError(errors, "", "title", edit, primary)}
+                    onChange={(text) => update({ ...twinPatch("title", text, edit, single), ...(slugTouched || edit !== primary ? {} : { slug: slugify(text) }) } as Partial<TaxonomyRow>)} />
                   <TextField label="Slug" value={editing.slug} max={96} error={errors.slug}
                     onChange={(slug) => { setSlugTouched(true); update({ slug }); }} />
-                  <TextField label="Descripción" value={editing[descriptionKey]} max={500} multiline error={errors[descriptionKey]}
-                    onChange={(text) => update({ [descriptionKey]: text } as Partial<TaxonomyRow>)} />
+                  <TextField label="Descripción" value={editing[descriptionKey]} max={500} multiline error={twinError(errors, "", "description", edit, primary)}
+                    onChange={(text) => update(twinPatch("description", text, edit, single) as Partial<TaxonomyRow>)} />
                   {kind === "category" && (
                     <>
                       <label className="block">

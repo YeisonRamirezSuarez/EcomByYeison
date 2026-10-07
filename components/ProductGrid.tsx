@@ -10,7 +10,7 @@ import Container from "./Container";
 import HomeTabbar from "./HomeTabbar";
 import { getProductType } from "@/constants/data";
 import { Product } from "@/sanity.types";
-import useStore from "@/store";
+import { useLocale } from "@/components/StoreSettingsProvider";
 import { localizeProduct } from "@/lib/localize";
 import { t } from "@/lib/i18n";
 
@@ -20,7 +20,7 @@ interface ProductGridProps {
 }
 
 const ProductGrid = ({ initialProducts = [], initialTab }: ProductGridProps) => {
-  const { locale } = useStore();
+  const locale = useLocale();
   const productType = getProductType(locale);
   const defaultTab = initialTab || productType[0]?.title || "";
   const [products, setProducts] = useState<Product[]>(initialProducts);

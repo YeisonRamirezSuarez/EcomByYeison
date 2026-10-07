@@ -27,6 +27,7 @@ import { getUserAddresses } from "@/actions/getUserAddresses";
 import AddAddressDialog from "@/components/AddAddressDialog";
 import { urlFor } from "@/sanity/lib/image";
 import useStore from "@/store";
+import { useLocale } from "@/components/StoreSettingsProvider";
 import { t } from "@/lib/i18n";
 import { productName } from "@/lib/localize";
 import { useAuth, useUser } from "@clerk/nextjs";
@@ -37,14 +38,9 @@ import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 
 const CartPage = () => {
-  const {
-    deleteCartProduct,
-    getTotalPrice,
-    getItemCount,
-    getSubTotalPrice,
-    resetCart,
-    locale,
-  } = useStore();
+  const { deleteCartProduct, getTotalPrice, getItemCount, getSubTotalPrice, resetCart } = useStore();
+
+  const locale = useLocale();
   const [loading, setLoading] = useState(false);
   const groupedItems = useStore((state) => state.getGroupedItems());
   const { isSignedIn } = useAuth();

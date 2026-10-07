@@ -109,7 +109,7 @@ const OrderDrawer = ({
                           ) : (
                             <span className="w-12 h-12 rounded-lg bg-gray-100" />
                           )}
-                          <span className="flex-1 text-sm text-gray-800">{item.product?.name ?? "Producto eliminado"}</span>
+                          <span className="flex-1 text-sm text-gray-800">{item.product?.name || "Producto eliminado"}</span>
                           <span className="text-sm text-gray-500">x{item.quantity ?? 1}</span>
                           <PriceFormatter amount={item.product?.price} currency={order.currency} />
                         </li>

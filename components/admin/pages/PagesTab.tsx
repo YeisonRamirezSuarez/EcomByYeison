@@ -4,7 +4,7 @@ import { useState } from "react";
 import { savePage } from "@/actions/brand";
 import type { PageContent } from "@/lib/brand";
 import type { Locale } from "@/lib/i18n";
-import { lacksLanguage, localeKey, type StoreLanguages } from "@/lib/localize";
+import { lacksLanguage, localeKey, twinError, twinPatch, type StoreLanguages } from "@/lib/localize";
 import { PAGE_KEYS, PAGE_LABELS, validatePage, type PageKey } from "@/lib/validation";
 import { SectionCard, TextField, useSave } from "../brand/fields";
 import EditorLocale from "../EditorLocale";
@@ -23,6 +23,7 @@ const PagesTab = ({ initialPages, languages }: { initialPages: Record<PageKey, P
   const other: Locale = primary === "es" ? "en" : "es";
   const [edit, setEdit] = useState<Locale>(primary);
   const introKey = localeKey("intro", edit) as "intro" | "introEn";
+  const lang = { edit, primary, single: languages.languages.length < 2 };
   const [saved, setSaved] = useState(initialPages);
   const [key, setKey] = useState<PageKey>("about");
   const [draft, setDraft] = useState<PageContent>(initialPages.about);
@@ -108,11 +109,11 @@ const PagesTab = ({ initialPages, languages }: { initialPages: Record<PageKey, P
           multiline
           max={2000}
           value={draft[introKey]}
-          onChange={(v) => setDraft((d) => ({ ...d, [introKey]: v }))}
-          error={errors[introKey]}
+          onChange={(v) => setDraft((d) => ({ ...d, ...twinPatch("intro", v, edit, lang.single) }))}
+          error={twinError(errors, "", "intro", edit, primary)}
         />
         <p className="text-xs text-gray-500 -mt-2">Separa los párrafos con una línea en blanco.</p>
-        <BlockEditor blocks={draft.blocks} onChange={(blocks) => setDraft((d) => ({ ...d, blocks }))} errors={errors} edit={edit} />
+        <BlockEditor blocks={draft.blocks} onChange={(blocks) => setDraft((d) => ({ ...d, blocks }))} errors={errors} lang={lang} />
       </SectionCard>
       </div>
     </div>

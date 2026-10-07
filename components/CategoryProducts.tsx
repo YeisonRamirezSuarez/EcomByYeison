@@ -8,7 +8,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { Loader2 } from "lucide-react";
 import NoProductAvailable from "./NoProductAvailable";
 import ProductCard from "./ProductCard";
-import useStore from "@/store";
+import { useLocale } from "@/components/StoreSettingsProvider";
 import { localizeProduct } from "@/lib/localize";
 import { t } from "@/lib/i18n";
 interface Props {
@@ -17,7 +17,7 @@ interface Props {
 }
 
 const CategoryProducts = ({ categories, slug }: Props) => {
-  const { locale } = useStore();
+  const locale = useLocale();
   const [currentSlug, setCurrentSlug] = useState(slug);
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(false);

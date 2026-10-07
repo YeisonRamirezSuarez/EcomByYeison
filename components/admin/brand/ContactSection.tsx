@@ -3,10 +3,9 @@
 import { useState } from "react";
 import { saveAppearanceDraft } from "@/actions/appearance";
 import type { ContactSettings } from "@/lib/brand";
-import type { Locale } from "@/lib/i18n";
-import { localeKey } from "@/lib/localize";
+import { localeKey, twinError, twinPatch } from "@/lib/localize";
 import { validateContact } from "@/lib/validation";
-import { TextField, useAutosave, SavingNote, type AutosaveEvents } from "./fields";
+import { TextField, useAutosave, type TwinLang, SavingNote, type AutosaveEvents } from "./fields";
 
 const FIELDS: { key: "email" | "phone" | "address" | "hours"; label: string; max: number; translated?: boolean }[] = [
   { key: "email", label: "Correo", max: 254 },
@@ -15,7 +14,7 @@ const FIELDS: { key: "email" | "phone" | "address" | "hours"; label: string; max
   { key: "hours", label: "Horario", max: 80, translated: true },
 ];
 
-const ContactSection = ({ initial, edit, ...events }: { initial: ContactSettings; edit: Locale } & AutosaveEvents) => {
+const ContactSection = ({ initial, lang, ...events }: { initial: ContactSettings; lang: TwinLang } & AutosaveEvents) => {
   const [value, setValue] = useState(initial);
   const { errors, pending } = useAutosave(value, validateContact, (v) => saveAppearanceDraft("contact", v), events);
 
@@ -23,9 +22,11 @@ const ContactSection = ({ initial, edit, ...events }: { initial: ContactSettings
     <div className="flex flex-col gap-3">
       <p className="text-xs text-gray-500">Los campos vacíos no se muestran en la tienda.</p>
       {FIELDS.map(({ key, label, max, translated }) => {
-        const field = (translated ? localeKey(key, edit) : key) as keyof ContactSettings;
+        const field = (translated ? localeKey(key, lang.edit) : key) as keyof ContactSettings;
+        const patch = (v: string) => (translated ? twinPatch(key, v, lang.edit, lang.single) : { [key]: v });
+        const error = translated ? twinError(errors, "", key, lang.edit, lang.primary) : errors[key];
         return (
-          <TextField key={key} label={label} value={value[field]} onChange={(v) => setValue((prev) => ({ ...prev, [field]: v }))} error={errors[field]} max={max} />
+          <TextField key={key} label={label} value={value[field]} onChange={(v) => setValue((prev) => ({ ...prev, ...patch(v) }))} error={error} max={max} />
         );
       })}
       <SavingNote pending={pending} />

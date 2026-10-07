@@ -4,7 +4,7 @@ import { RadioGroup, RadioGroupItem } from "../ui/radio-group";
 import { Label } from "../ui/label";
 import { priceRanges } from "@/constants/currencies";
 import { useCurrency } from "../StoreSettingsProvider";
-import useStore from "@/store";
+import { useLocale } from "@/components/StoreSettingsProvider";
 import { t } from "@/lib/i18n";
 
 interface Props {
@@ -12,7 +12,7 @@ interface Props {
   setSelectedPrice: (value: string | null) => void;
 }
 const PriceList = ({ selectedPrice, setSelectedPrice }: Props) => {
-  const { locale } = useStore();
+  const locale = useLocale();
   const priceArray = priceRanges(useCurrency(), {
     under: t(locale, "shopPriceUnder"),
     over: t(locale, "shopPriceOver"),

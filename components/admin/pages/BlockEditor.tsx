@@ -2,11 +2,10 @@
 
 import { ArrowDown, ArrowUp, Trash2 } from "lucide-react";
 import type { ContentBlock } from "@/lib/brand";
-import type { Locale } from "@/lib/i18n";
-import { localeKey } from "@/lib/localize";
+import { localeKey, twinError, twinPatch } from "@/lib/localize";
 import { CONTENT_ICONS, MAX_BLOCKS, type ContentIconKey } from "@/lib/validation";
 import { CONTENT_ICON_COMPONENTS } from "@/components/contentIcons";
-import { INPUT, TextField } from "../brand/fields";
+import { INPUT, TextField, type TwinLang } from "../brand/fields";
 
 const ICON_BUTTON =
   "w-7 h-7 flex items-center justify-center rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-40";
@@ -16,13 +15,14 @@ const BlockEditor = ({
   blocks,
   onChange,
   errors,
-  edit,
+  lang,
 }: {
   blocks: ContentBlock[];
   onChange: (blocks: ContentBlock[]) => void;
   errors: Record<string, string>;
-  edit: Locale;
+  lang: TwinLang;
 }) => {
+  const { edit, primary, single } = lang;
   const titleKey = localeKey("title", edit) as "title" | "titleEn";
   const textKey = localeKey("text", edit) as "text" | "textEn";
   const update = (i: number, patch: Partial<ContentBlock>) =>
@@ -73,8 +73,8 @@ const BlockEditor = ({
                 <span className="block text-xs text-red-600 mt-1">{errors[`blocks.${i}.icon`]}</span>
               )}
             </label>
-            <TextField label="Título" max={120} value={block[titleKey]} onChange={(v) => update(i, { [titleKey]: v } as Partial<ContentBlock>)} error={errors[`blocks.${i}.${titleKey}`]} />
-            <TextField label="Texto" multiline max={1000} value={block[textKey]} onChange={(v) => update(i, { [textKey]: v } as Partial<ContentBlock>)} error={errors[`blocks.${i}.${textKey}`]} />
+            <TextField label="Título" max={120} value={block[titleKey]} onChange={(v) => update(i, twinPatch("title", v, edit, single) as Partial<ContentBlock>)} error={twinError(errors, `blocks.${i}.`, "title", edit, primary)} />
+            <TextField label="Texto" multiline max={1000} value={block[textKey]} onChange={(v) => update(i, twinPatch("text", v, edit, single) as Partial<ContentBlock>)} error={twinError(errors, `blocks.${i}.`, "text", edit, primary)} />
             <TextField label="Enlace (opcional)" placeholder="/faqs" max={300} value={block.href} onChange={(v) => update(i, { href: v })} error={errors[`blocks.${i}.href`]} />
           </div>
         );

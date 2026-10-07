@@ -64,6 +64,13 @@ type Messages = {
   cartAddToFavorite: string;
   cartDeleteProduct: string;
   cartDeleteSuccess: string;
+  productBadgeNew: string;
+  homeBlogSubtitle: string;
+  productBrand: string;
+  productCollection: string;
+  productType: string;
+  productStock: string;
+  productRemovedFromCart: string;
   cartResetButton: string;
   cartOrderSummary: string;
   cartSubtotal: string;
@@ -338,6 +345,13 @@ export const MESSAGES: Record<Locale, Messages> = {
     cartAddToFavorite: "Agregar a favoritos",
     cartDeleteProduct: "Eliminar producto",
     cartDeleteSuccess: "¡Producto eliminado correctamente!",
+    productBadgeNew: "Nuevo",
+    homeBlogSubtitle: "Noticias, reviews y consejos tech",
+    productBrand: "Marca:",
+    productCollection: "Colección:",
+    productType: "Tipo:",
+    productStock: "Stock:",
+    productRemovedFromCart: "Producto eliminado del carrito",
     cartResetButton: "Vaciar carrito",
     cartOrderSummary: "Resumen del pedido",
     cartSubtotal: "Subtotal",
@@ -610,6 +624,13 @@ export const MESSAGES: Record<Locale, Messages> = {
     cartAddToFavorite: "Add to Favorite",
     cartDeleteProduct: "Delete product",
     cartDeleteSuccess: "Product deleted successfully!",
+    productBadgeNew: "New",
+    homeBlogSubtitle: "News, reviews and tech tips",
+    productBrand: "Brand:",
+    productCollection: "Collection:",
+    productType: "Type:",
+    productStock: "Stock:",
+    productRemovedFromCart: "Product removed from cart",
     cartResetButton: "Reset Cart",
     cartOrderSummary: "Order Summary",
     cartSubtotal: "Subtotal",

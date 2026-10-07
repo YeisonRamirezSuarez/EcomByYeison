@@ -7,7 +7,7 @@ import { CheckCircle2, X } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
-import useStore from "@/store";
+import { useLocale } from "@/components/StoreSettingsProvider";
 import { t } from "@/lib/i18n";
 import { useBrand } from "./StoreSettingsProvider";
 
@@ -18,7 +18,7 @@ interface AuthModalProps {
 
 export const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
   const { isSignedIn } = useAuth();
-  const { locale } = useStore();
+  const locale = useLocale();
   const { storeName } = useBrand();
   const [mounted, setMounted] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);

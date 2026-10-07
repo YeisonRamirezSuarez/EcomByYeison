@@ -8,7 +8,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import SocialMedia from "./SocialMedia";
 import { useOutsideClick } from "@/hooks";
-import useStore from "@/store";
+import { useLocale } from "@/components/StoreSettingsProvider";
 interface SidebarProps {
   isOpen: boolean;
   onClose: () => void;
@@ -16,7 +16,7 @@ interface SidebarProps {
 
 const SideMenu: FC<SidebarProps> = ({ isOpen, onClose }) => {
   const pathname = usePathname();
-  const { locale } = useStore();
+  const locale = useLocale();
   const headerData = getHeaderData(locale);
   const sidebarRef = useOutsideClick<HTMLDivElement>(onClose);
 

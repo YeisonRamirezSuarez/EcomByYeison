@@ -9,9 +9,7 @@ import { t } from "@/lib/i18n";
 import dayjs from "dayjs";
 import "dayjs/locale/es";
 
-dayjs.locale("es");
-
-const LatestBlog = async ({ title = "Últimas entradas", count = null }: { title?: string; count?: number | null }) => {
+const LatestBlog = async ({ title, count = null }: { title?: string; count?: number | null }) => {
   const locale = await getServerLocale();
   const blogs = await getLatestBlogs();
   if (!blogs?.length) return null;
@@ -23,7 +21,7 @@ const LatestBlog = async ({ title = "Últimas entradas", count = null }: { title
           {title && (
             <>
               <h2 className="text-2xl font-bold text-darkColor">{title}</h2>
-              <p className="text-gray-500 text-sm mt-1">Noticias, reviews y consejos tech</p>
+              <p className="text-gray-500 text-sm mt-1">{t(locale, "homeBlogSubtitle")}</p>
             </>
           )}
         </div>
@@ -72,7 +70,7 @@ const LatestBlog = async ({ title = "Últimas entradas", count = null }: { title
               </h3>
               <p className="flex items-center gap-1 text-xs text-gray-400 mt-auto">
                 <Calendar size={12} />
-                {dayjs(blog.publishedAt).format("D MMM YYYY")}
+                {dayjs(blog.publishedAt).locale(locale).format("D MMM YYYY")}
               </p>
             </div>
           </Link>

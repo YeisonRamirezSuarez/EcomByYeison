@@ -3,11 +3,11 @@ import { getHeaderData } from "@/constants/data";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import React from "react";
-import useStore from "@/store";
+import { useLocale } from "@/components/StoreSettingsProvider";
 
 const HeaderMenu = () => {
   const pathname = usePathname();
-  const { locale } = useStore();
+  const locale = useLocale();
   const headerData = getHeaderData(locale);
 
   return (

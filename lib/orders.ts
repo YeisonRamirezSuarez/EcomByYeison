@@ -6,6 +6,8 @@ import { urlFor } from "@/sanity/lib/image";
 import { sendOrderConfirmationEmail } from "@/lib/email";
 import type { Metadata } from "@/actions/createCheckoutSession";
 import type { Locale } from "@/lib/i18n";
+import { resolveLocale } from "@/lib/localize";
+import { getSiteSettings } from "@/sanity/queries/siteSettings";
 import Stripe from "stripe";
 
 type OrderMetadata = Metadata & { address?: string };
@@ -68,7 +70,8 @@ export async function createOrderFromStripeSession(
     locale,
   } = session.metadata as unknown as OrderMetadata;
   const parsedAddress = address ? JSON.parse(address) : null;
-  const orderLocale: Locale = locale === "en" ? "en" : "es";
+  // An order without a language (or in one the store no longer offers) uses the store's main language.
+  const orderLocale: Locale = resolveLocale(locale, await getSiteSettings());
 
   const lineItems =
     session.line_items?.data ??
