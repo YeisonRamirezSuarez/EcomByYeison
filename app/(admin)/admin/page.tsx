@@ -2,6 +2,8 @@ import { DollarSign, PackageX, ShoppingBag, Truck } from "lucide-react";
 import PageHeader from "@/components/admin/shell/PageHeader";
 import StatCard from "@/components/admin/dashboard/StatCard";
 import RecentOrders, { type RecentOrder } from "@/components/admin/dashboard/RecentOrders";
+import { tr } from "@/lib/adminText";
+import { getAdminLocale } from "@/lib/adminLocale";
 import { requireSection } from "@/lib/adminAccess";
 import { monthSales, monthStart, type OrderSummary } from "@/lib/dashboard";
 import { formatPrice } from "@/constants/currencies";
@@ -19,6 +21,7 @@ type Dashboard = { month: OrderSummary[]; toShip: number; outOfStock: number; re
 
 export default async function AdminHomePage() {
   await requireSection("inicio");
+  const ui = await getAdminLocale();
   const { currency } = await getSiteSettings();
   let data: Dashboard | null = null;
   try {
@@ -33,17 +36,17 @@ export default async function AdminHomePage() {
 
   return (
     <>
-      <PageHeader title="Inicio" description="Resumen de tu tienda este mes." />
+      <PageHeader title={tr(ui, "Inicio")} description={tr(ui, "Resumen de tu tienda este mes.")} />
       {!data && (
         <p role="alert" className="mb-4 rounded-xl bg-amber-50 border border-amber-200 p-3 text-sm text-amber-900">
-          No pudimos cargar las cifras. Intenta recargar en unos minutos.
+          {tr(ui, "No pudimos cargar las cifras. Intenta recargar en unos minutos.")}
         </p>
       )}
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4 mb-6">
-        <StatCard label="Ventas del mes" icon={DollarSign} value={data ? formatPrice(monthSales(data.month, currency), currency) : "—"} />
-        <StatCard label="Pedidos del mes" icon={ShoppingBag} value={data ? data.month.length : "—"} />
-        <StatCard label="Por enviar" icon={Truck} value={data ? data.toShip : "—"} />
-        <StatCard label="Sin stock" icon={PackageX} value={data ? data.outOfStock : "—"} />
+        <StatCard label={tr(ui, "Ventas del mes")} icon={DollarSign} value={data ? formatPrice(monthSales(data.month, currency), currency) : "—"} />
+        <StatCard label={tr(ui, "Pedidos del mes")} icon={ShoppingBag} value={data ? data.month.length : "—"} />
+        <StatCard label={tr(ui, "Por enviar")} icon={Truck} value={data ? data.toShip : "—"} />
+        <StatCard label={tr(ui, "Sin stock")} icon={PackageX} value={data ? data.outOfStock : "—"} />
       </div>
       <RecentOrders orders={data?.recent ?? []} />
     </>

@@ -1328,4 +1328,11 @@ assert.equal(ck.checkoutLines([{ id: "p1", quantity: 1 }], [{ ...SERVER[0], pric
   }
 }
 
+// Image file check in the panel language (lib/validation.ts)
+{
+  const v = await import("../lib/validation.ts");
+  assert.equal(v.validateImageFile({ type: "text/plain", size: 10 }), "Solo JPG, PNG, WEBP o SVG de hasta 4 MB");
+  assert.equal(v.validateImageFile({ type: "text/plain", size: 10 }, undefined, "en"), "Only JPG, PNG, WEBP or SVG up to 4 MB");
+}
+
 console.log("check-permissions: ok");

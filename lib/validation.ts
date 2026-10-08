@@ -12,6 +12,7 @@ import type {
   Stat,
 } from "./brand";
 import type { Locale } from "./i18n";
+import { tr, type AdminText } from "./adminText/index.ts";
 
 export type ValidationResult<T> =
   | { ok: true; value: T }
@@ -72,8 +73,8 @@ export const isContentIcon = (value: unknown): value is ContentIconKey =>
 
 export const BRAND_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp", "image/svg+xml"];
 export const MAX_IMAGE_BYTES = 4 * 1024 * 1024;
-export const IMAGE_ERROR = "Solo JPG, PNG, WEBP o SVG de hasta 4 MB";
-export const INVALID_FORM = "Revisa los campos marcados";
+export const IMAGE_ERROR: AdminText = "Solo JPG, PNG, WEBP o SVG de hasta 4 MB";
+export const INVALID_FORM: AdminText = "Revisa los campos marcados";
 export const MAX_BLOCKS = 20;
 export const MAX_STATS = 3;
 
@@ -109,11 +110,12 @@ export function isEmail(value: unknown): boolean {
 
 export function validateImageFile(
   file: { type: string; size: number },
-  allowed: readonly string[] = BRAND_IMAGE_TYPES
+  allowed: readonly string[] = BRAND_IMAGE_TYPES,
+  ui: Locale = "es"
 ): string | null {
   return allowed.includes(file.type) && file.size > 0 && file.size <= MAX_IMAGE_BYTES
     ? null
-    : IMAGE_ERROR;
+    : tr(ui, IMAGE_ERROR);
 }
 
 const asObject = (value: unknown): Record<string, unknown> =>

@@ -4,6 +4,8 @@ import { useRef, useTransition } from "react";
 import toast from "react-hot-toast";
 import { uploadImage } from "@/actions/brand";
 import type { ImageValue } from "@/lib/brand";
+import { useAdminLocale } from "@/components/admin/AdminLocaleProvider";
+import { tr } from "@/lib/adminText";
 import { BRAND_IMAGE_TYPES, validateImageFile } from "@/lib/validation";
 
 const BUTTON =
@@ -20,11 +22,12 @@ const ImageField = ({
   onChange: (value: ImageValue | null) => void;
   error?: string;
 }) => {
+  const ui = useAdminLocale();
   const inputRef = useRef<HTMLInputElement>(null);
   const [pending, startTransition] = useTransition();
 
   const handleFile = (file: File) => {
-    const problem = validateImageFile(file);
+    const problem = validateImageFile(file, undefined, ui);
     if (problem) {
       toast.error(problem);
       return;
@@ -52,11 +55,11 @@ const ImageField = ({
           <div className="h-14 w-14 rounded-lg border border-dashed bg-gray-50" />
         )}
         <button type="button" onClick={() => inputRef.current?.click()} disabled={pending} className={BUTTON}>
-          {pending ? "Subiendo…" : "Subir"}
+          {pending ? tr(ui, "Subiendo…") : tr(ui, "Subir")}
         </button>
         {value && (
           <button type="button" onClick={() => onChange(null)} disabled={pending} className={BUTTON}>
-            Quitar
+            {tr(ui, "Quitar")}
           </button>
         )}
         <input

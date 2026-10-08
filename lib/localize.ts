@@ -1,6 +1,7 @@
 // Store languages and how texts written in the panel reach the visitor. A text field ("name")
 // is Spanish; its twin ("nameEn") is English. An empty text falls back to the other language,
 // so the store never shows a blank. Pure: only type imports, so scripts/check-permissions.mjs can run it.
+import type { AdminText } from "./adminText/index.ts";
 import type { Brand as StoreBrand, PageContent } from "./brand";
 import type { HomeSection } from "./homeSections";
 import type { Locale } from "./i18n";
@@ -12,7 +13,7 @@ export type LanguageChoice = "es" | "en" | "both";
 
 // No setting saved: both languages, Spanish first (how every store worked before).
 export const DEFAULT_LANGUAGES: StoreLanguages = { languages: ["es", "en"], primary: "es" };
-export const LANGUAGE_NAMES: Record<Locale, string> = { es: "Español", en: "Inglés" };
+export const LANGUAGE_NAMES: Record<Locale, AdminText> = { es: "Español", en: "Inglés" };
 export const LANGUAGE_CHOICES: Record<LanguageChoice, string> = {
   es: "Solo español",
   en: "Solo inglés",

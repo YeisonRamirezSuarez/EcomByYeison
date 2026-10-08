@@ -1,2 +1,26 @@
 // Admin panel texts: Spanish (the key) → English. See lib/adminText/index.ts.
-export const shell = {} as const;
+export const shell = {
+  "Abrir menú": "Open menu",
+  "Ver tienda": "View store",
+  "Ventas": "Sales",
+  "Tienda": "Store",
+  "Inicio": "Home",
+  "Pedidos": "Orders",
+  "Productos": "Products",
+  "Categorías": "Categories",
+  "Marcas": "Brands",
+  "Apariencia": "Appearance",
+  "Páginas": "Pages",
+  "Boletín": "Newsletter",
+  "Usuarios": "Users",
+  "Ajustes": "Settings",
+  "Últimos pedidos": "Latest orders",
+  "Ver todos": "View all",
+  "Todavía no hay pedidos.": "No orders yet.",
+  "Resumen de tu tienda este mes.": "Summary of your store this month.",
+  "No pudimos cargar las cifras. Intenta recargar en unos minutos.": "We couldn't load the figures. Try reloading in a few minutes.",
+  "Ventas del mes": "Sales this month",
+  "Pedidos del mes": "Orders this month",
+  "Por enviar": "To ship",
+  "Sin stock": "Out of stock",
+} as const;

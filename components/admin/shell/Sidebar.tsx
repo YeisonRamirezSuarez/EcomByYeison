@@ -7,6 +7,8 @@ import { ExternalLink } from "lucide-react";
 import type { AdminSection } from "@/lib/permissions";
 import AdminLanguageToggle from "./AdminLanguageToggle";
 import PanelBrand from "./PanelBrand";
+import { useAdminLocale } from "@/components/admin/AdminLocaleProvider";
+import { tr } from "@/lib/adminText";
 import { NAV_GROUPS, SECTION_PATHS } from "./nav";
 
 const isActive = (pathname: string, href: string) =>
@@ -22,6 +24,7 @@ const Sidebar = ({
   onNavigate: () => void;
 }) => {
   const pathname = usePathname();
+  const ui = useAdminLocale();
 
   return (
     <aside
@@ -33,13 +36,13 @@ const Sidebar = ({
         <PanelBrand />
       </div>
 
-      <nav className="flex-1 overflow-y-auto px-3 py-4 flex flex-col gap-5" aria-label="Administración">
+      <nav className="flex-1 overflow-y-auto px-3 py-4 flex flex-col gap-5" aria-label={tr(ui, "Administración")}>
         {NAV_GROUPS.map((group) => {
           const items = group.items.filter((item) => sections.includes(item.section));
           if (items.length === 0) return null;
           return (
             <div key={group.title}>
-              <p className="px-3 mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-white/50">{group.title}</p>
+              <p className="px-3 mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-white/50">{tr(ui, group.title)}</p>
               <ul className="flex flex-col gap-0.5">
                 {items.map(({ section, label, icon: Icon }) => {
                   const href = SECTION_PATHS[section];
@@ -55,7 +58,7 @@ const Sidebar = ({
                         }`}
                       >
                         <Icon size={18} className={active ? "text-shop_orange" : undefined} />
-                        {label}
+                        {tr(ui, label)}
                       </Link>
                     </li>
                   );
@@ -75,7 +78,7 @@ const Sidebar = ({
           rel="noopener noreferrer"
           className="flex items-center gap-1.5 text-sm font-medium hover:text-white"
         >
-          Ver tienda <ExternalLink size={14} />
+          {tr(ui, "Ver tienda")} <ExternalLink size={14} />
         </a>
       </div>
     </aside>

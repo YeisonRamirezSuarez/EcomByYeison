@@ -11,9 +11,10 @@ import {
   Users,
   type LucideIcon,
 } from "lucide-react";
+import type { AdminText } from "@/lib/adminText";
 import type { AdminSection } from "@/lib/permissions";
 
-export type NavItem = { section: AdminSection; label: string; icon: LucideIcon };
+export type NavItem = { section: AdminSection; label: AdminText; icon: LucideIcon };
 
 export const SECTION_PATHS: Record<AdminSection, string> = {
   inicio: "/admin",
@@ -28,7 +29,7 @@ export const SECTION_PATHS: Record<AdminSection, string> = {
   ajustes: "/admin/ajustes",
 };
 
-export const NAV_GROUPS: { title: string; items: NavItem[] }[] = [
+export const NAV_GROUPS: { title: AdminText; items: NavItem[] }[] = [
   {
     title: "Ventas",
     items: [

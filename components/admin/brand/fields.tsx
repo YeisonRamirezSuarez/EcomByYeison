@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState, useTransition } from "react";
 import toast from "react-hot-toast";
 import type { ActionResult } from "@/lib/actionResult";
+import { useAdminLocale } from "@/components/admin/AdminLocaleProvider";
+import { tr } from "@/lib/adminText";
 import { INVALID_FORM, type ValidationResult } from "@/lib/validation";
 import { createSaveQueue } from "@/lib/saveQueue";
 import type { Locale } from "@/lib/i18n";
@@ -87,6 +89,7 @@ export function SectionCard({
   onSave: () => void;
   children: React.ReactNode;
 }) {
+  const ui = useAdminLocale();
   return (
     <section className="flex flex-col gap-3">
       <h3 className="font-bold text-gray-900 text-sm">{title}</h3>
@@ -97,7 +100,7 @@ export function SectionCard({
         disabled={pending}
         className="self-start bg-shop_dark_green text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-shop_dark_green/90 disabled:opacity-60"
       >
-        {pending ? "Guardando…" : "Guardar"}
+        {pending ? tr(ui, "Guardando…") : tr(ui, "Guardar")}
       </button>
     </section>
   );
@@ -109,6 +112,7 @@ export function useSave<T>(
   action: (value: T) => Promise<ActionResult<null>>,
   onSaved?: (value: T) => void
 ) {
+  const ui = useAdminLocale();
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [pending, startTransition] = useTransition();
 
@@ -116,7 +120,7 @@ export function useSave<T>(
     const checked = validate(input);
     if (!checked.ok) {
       setErrors(checked.errors);
-      toast.error(INVALID_FORM);
+      toast.error(tr(ui, INVALID_FORM));
       return;
     }
     startTransition(async () => {
@@ -128,7 +132,7 @@ export function useSave<T>(
       }
       setErrors({});
       onSaved?.(checked.value);
-      toast.success("Cambios guardados");
+      toast.success(tr(ui, "Cambios guardados"));
     });
   };
 
@@ -192,5 +196,7 @@ export function useAutosave<T, V = T>(
   return { errors, pending };
 }
 
-export const SavingNote = ({ pending }: { pending: boolean }) =>
-  pending ? <p className="text-xs text-gray-400">Guardando borrador…</p> : null;
+export const SavingNote = ({ pending }: { pending: boolean }) => {
+  const ui = useAdminLocale();
+  return pending ? <p className="text-xs text-gray-400">{tr(ui, "Guardando borrador…")}</p> : null;
+};
