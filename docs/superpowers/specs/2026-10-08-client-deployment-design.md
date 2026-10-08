@@ -22,7 +22,7 @@ Dejar un proceso repetible para montar la tienda de un cliente nuevo: una guía 
 |---|---|
 | Alcance | Proceso repetible, sin cliente concreto todavía. |
 | Forma | Guía en español (para el dueño del repo, no para el cliente) + scripts. |
-| Ramas | Todas las tiendas siguen la rama `production`; se trabaja en `master` y se entrega con `git push origin master:production`. |
+| Ramas | Todas las tiendas siguen `master`, que es la rama de producción (decidido después de la implementación: no hay rama `production`). |
 | Colombia | Nota en la guía; la pasarela local (Wompi, Mercado Pago) es un proyecto aparte. |
 | Íconos y pantallas de inicio | Se generan desde el logo del panel con `ImageResponse` (opción A). |
 | Datos iniciales | Ninguno por script. La tienda arranca vacía y el dueño la llena desde el panel. `scripts/seed.mjs` queda como paso opcional para una demo. |
@@ -108,12 +108,11 @@ Termina con código de salida distinto de 0 si algo falla. La lógica de las reg
 - `check:env --self-test` cubre todas las reglas sin conexión.
 - `make:superadmin` y `stripe:webhook` no se pueden probar sin claves; su primera prueba real la hace el dueño del repo con claves de prueba.
 
-## 3. Rama `production`
+## 3. Rama de producción: `master`
 
-- Se crea desde `master` y se sube a GitHub (con aprobación del dueño del repo en ese paso).
-- Entregar a todas las tiendas: `git push origin master:production`. Cada proyecto de Vercel se reconstruye solo.
+- No hay rama `production`: `master` es producción. Cada push a `master` reconstruye todas las tiendas; el trabajo se hace en otras ramas y se une cuando está probado.
 - Volver atrás en una tienda: "Instant Rollback" de Vercel al despliegue anterior, sin tocar git.
-- `vercel.json` con `ignoreCommand` para que los proyectos no construyan vistas previas (`VERCEL_ENV = preview`). Motivo: una vista previa de `master` usaría las claves y los datos reales del cliente con código no entregado, y gasta minutos de compilación. La documentación de Vercel confirma que el "Ignored Build Step" ve `VERCEL_ENV` (su opción "Only build production" usa esa variable). Una compilación cancelada cuenta igual en la cuota de despliegues de Vercel.
+- `vercel.json` con `ignoreCommand` para que los proyectos no construyan vistas previas (`VERCEL_ENV = preview`). Motivo: una vista previa de otra rama usaría las claves y los datos reales del cliente con código no entregado, y gasta minutos de compilación. La documentación de Vercel confirma que el "Ignored Build Step" ve `VERCEL_ENV` (su opción "Only build production" usa esa variable). Una compilación cancelada cuenta igual en la cuota de despliegues de Vercel.
 
 ## 4. Guía `docs/despliegue-cliente.md`
 
@@ -124,12 +123,12 @@ En español, para el dueño del repo. Secciones, en orden:
 2. **Clerk:** crear la aplicación y su instancia de producción; agregar los registros DNS que muestra Clerk y esperar la verificación; copiar `pk_live_`/`sk_live_`; `NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in` y `NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up`.
 3. **Stripe:** cuenta del cliente; empezar con claves de prueba.
 4. **Archivo `.env.<cliente>`:** de dónde sale cada variable; comando para generar `EMAIL_ENCRYPTION_KEY` con el aviso de no cambiarla después (la contraseña SMTP guardada se vuelve ilegible y los enlaces de baja enviados dejan de funcionar); las `NEXT_PUBLIC_*` se fijan al compilar y un cambio exige volver a desplegar; `SMTP_*` opcionales (el dueño también puede configurar el correo en Ajustes → Correo); correr `stripe:webhook` (solo necesita la clave de Stripe y el dominio) y copiar el secreto al archivo; correr `check:env`.
-5. **Vercel:** proyecto nuevo desde el mismo repo de GitHub; rama de producción `production`; pegar las variables; agregar el dominio y sus registros DNS; desplegar.
+5. **Vercel:** proyecto nuevo desde el mismo repo de GitHub; rama de producción `master`; pegar las variables; agregar el dominio y sus registros DNS; desplegar.
 6. **Después del despliegue:** el dueño se registra en la tienda y se corre `make:superadmin`; `check:env --online`.
 7. **Prueba de compra en modo test** con la tarjeta `4242 4242 4242 4242`: el pedido aparece en el panel y llega el correo.
 8. **Pasar a real:** claves `live` de Stripe en Vercel, `stripe:webhook` otra vez y el secreto nuevo en Vercel, volver a desplegar, `check:env --online`.
 9. **Lista final** de verificación (casillas).
-10. **Entregas y vuelta atrás:** `git push origin master:production` e "Instant Rollback".
+10. **Entregas y vuelta atrás:** push a `master` e "Instant Rollback".
 
 ## 5. README
 

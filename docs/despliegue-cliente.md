@@ -1,6 +1,6 @@
 # Despliegue de una tienda para un cliente
 
-Guía para montar la tienda de un cliente nuevo. Cada cliente tiene su propio proyecto de Vercel, su dominio, su aplicación de Clerk, su proyecto de Sanity y su cuenta de Stripe. Todas las tiendas usan el mismo código: la rama `production` de GitHub.
+Guía para montar la tienda de un cliente nuevo. Cada cliente tiene su propio proyecto de Vercel, su dominio, su aplicación de Clerk, su proyecto de Sanity y su cuenta de Stripe. Todas las tiendas usan el mismo código: la rama `master` de GitHub, que es la de producción.
 
 Los scripts de esta guía leen el archivo de variables del cliente y nunca muestran las claves. La única excepción es el secreto del webhook de Stripe, que se muestra una vez. En los ejemplos el cliente se llama `ana`, su archivo es `.env.ana` (en la raíz del repositorio; `.gitignore` ya ignora los archivos `.env*`) y su dominio es `tiendaana.com`.
 
@@ -94,12 +94,11 @@ Las variables que empiezan por `NEXT_PUBLIC_` quedan fijas al compilar: si cambi
 
 1. En [vercel.com/new](https://vercel.com/new) importa el repositorio de GitHub de la tienda. Ponle al proyecto el nombre del cliente.
 2. En **Environment Variables**, pega el contenido completo de `.env.ana`. Vercel separa las variables solo.
-3. Pulsa **Deploy**. Este primer despliegue usa la rama principal; el paso 6 lo cambia a `production`.
-4. En **Settings → Environments → Production → Branch Tracking**, cambia la rama a `production`.
+3. Pulsa **Deploy**. Vercel publica la rama `master`.
+4. En **Settings → Environments → Production → Branch Tracking**, confirma que la rama es `master`.
 5. En **Settings → Domains**, agrega `tiendaana.com` (y `www.tiendaana.com` si lo quieres) y pon en el DNS los registros que muestra Vercel.
-6. Despliega la rama `production` solo en esta tienda: en **Settings → Git → Deploy Hooks**, crea un hook para la rama `production`, copia su URL y corre `curl -X POST "<url del hook>"`. Cuando termine, puedes borrar el hook.
 
-El repositorio trae `vercel.json`: Vercel solo compila despliegues de producción. Un push a `master` no crea vistas previas en los proyectos de los clientes, que usarían sus claves y datos reales con código no entregado. Una compilación cancelada así cuenta igual en la cuota de despliegues de Vercel.
+El repositorio trae `vercel.json`: Vercel solo compila despliegues de producción (la rama `master`). Las demás ramas no crean vistas previas en los proyectos de los clientes, que usarían sus claves y datos reales con código sin terminar. Una compilación cancelada así cuenta igual en la cuota de despliegues de Vercel.
 
 ## 6. Después del despliegue
 
@@ -153,9 +152,7 @@ Cuando la cuenta Stripe del cliente esté activada:
 
 ## 10. Entregas y vuelta atrás
 
-- **Entregar cambios a todas las tiendas.** Cuando `master` esté listo, cada proyecto de Vercel compila y publica solo:
-  ```bash
-  git push origin master:production
-  ```
+- **Entregar cambios a todas las tiendas.** Cada push a `master` publica en todas las tiendas: cada proyecto de Vercel compila y publica solo.
+  Trabaja en otra rama y únela a `master` solo cuando esté probada.
 - **Volver atrás en una tienda.** En Vercel, **Deployments**, abre el despliegue anterior que funcionaba y usa **Instant Rollback**. Solo afecta esa tienda; la siguiente entrega la vuelve a actualizar.
-- No hagas commits directamente en `production`: todo pasa primero por `master`.
+- No subas a `master` trabajo a medias: llega a todos los clientes.
