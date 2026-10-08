@@ -4,7 +4,7 @@ import { pickText } from "@/lib/localize";
 import { THEMES } from "@/constants/themes";
 
 // Served at /manifest.webmanifest. Name and colors come from the store settings;
-// icons are static files regenerated per client with `npm run icons`.
+// the icons are drawn from the store's favicon or logo (lib/appIconImage.tsx).
 export default async function manifest(): Promise<MetadataRoute.Manifest> {
   const { storeName, description, descriptionEn, theme, primary } = await getSiteSettings();
   const palette = THEMES[theme];

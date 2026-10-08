@@ -1,6 +1,5 @@
-// Splash screens generated once for the current images in public/splash; regenerate per client if the brand changes.
-// Splash screens de iOS para la PWA. Se renderizan como <link
-// rel="apple-touch-startup-image"> en app/layout.tsx.
+// iOS splash screens for the PWA, linked from app/layout.tsx as <link rel="apple-touch-startup-image">.
+// app/splash/[file]/route.ts draws each one from the store's logo; only these sizes exist.
 
 export const splashScreens = [
   {

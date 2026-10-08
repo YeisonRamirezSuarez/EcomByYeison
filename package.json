@@ -6,7 +6,6 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "icons": "node scripts/gen-icons.mjs",
     "lint": "eslint .",
     "typegen": "sanity schema extract && sanity typegen generate",
     "check:permissions": "node --experimental-strip-types scripts/check-permissions.mjs",
