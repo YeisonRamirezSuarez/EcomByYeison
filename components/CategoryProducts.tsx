@@ -11,6 +11,7 @@ import NoProductAvailable from "./NoProductAvailable";
 import ProductCard from "./ProductCard";
 import { useLocale } from "@/components/StoreSettingsProvider";
 import { localizeProduct } from "@/lib/localize";
+import { BY_NAME } from "@/sanity/queries/sort";
 import { t } from "@/lib/i18n";
 interface Props {
   categories: Category[];
@@ -33,7 +34,7 @@ const CategoryProducts = ({ categories, slug }: Props) => {
     setLoading(true);
     try {
       const query = `
-        *[_type == 'product' && archived != true && references(*[_type == "category" && slug.current == $categorySlug]._id)] | order(name asc){
+        *[_type == 'product' && archived != true && references(*[_type == "category" && slug.current == $categorySlug]._id)] | ${BY_NAME}{
         ...,"categories": categories[]->{ title, titleEn }}
       `;
       const data = await client.fetch(query, { categorySlug });

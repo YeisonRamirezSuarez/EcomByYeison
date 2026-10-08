@@ -1,9 +1,10 @@
 import { defineQuery } from "next-sanity";
+import { BY_NAME, BY_TITLE } from "./sort";
 
-const BRANDS_QUERY = defineQuery(`*[_type=='brand'] | order(title asc) `);
+const BRANDS_QUERY = defineQuery(`*[_type=='brand'] | ${BY_TITLE} `);
 
 const LATEST_BLOG_QUERY = defineQuery(
-  ` *[_type == 'blog' && isLatest == true]|order(name asc){
+  ` *[_type == 'blog' && isLatest == true] | ${BY_TITLE}{
       ...,
       blogcategories[]->{
       title, titleEn
@@ -12,7 +13,7 @@ const LATEST_BLOG_QUERY = defineQuery(
 );
 
 const DEAL_PRODUCTS = defineQuery(
-  `*[_type == 'product' && archived != true && status == 'hot'] | order(name asc){
+  `*[_type == 'product' && archived != true && status == 'hot'] | ${BY_NAME}{
     ...,"categories": categories[]->{ title, titleEn }
   }`
 );
@@ -42,7 +43,7 @@ const SHOP_PRODUCTS_QUERY = defineQuery(`*[_type == 'product' && archived != tru
   && (!defined($selectedCategory) || references(*[_type == "category" && slug.current == $selectedCategory]._id))
   && (!defined($selectedBrand) || references(*[_type == "brand" && slug.current == $selectedBrand]._id))
   && price >= $minPrice && (!defined($maxPrice) || price <= $maxPrice)
-] | order(name asc) {
+] | ${BY_NAME} {
   ...,"categories": categories[]->{ title, titleEn }
 }`);
 const GET_ALL_BLOG = defineQuery(

@@ -3,6 +3,7 @@ import { DEFAULT_DAILY_LIMIT, EMPTY_SMTP, PAGE_SIZE, type CampaignContent, type 
 import type { Cta, ImageValue } from "@/lib/brand";
 import type { Locale } from "@/lib/i18n";
 import { backendClient } from "../lib/backendClient";
+import { BY_NAME } from "./sort";
 
 // Panel and sending reads are never cached.
 export const FRESH = { useCdn: false, cache: "no-store" } as const;
@@ -199,7 +200,7 @@ export async function getProductsByIds(ids: string[]): Promise<EmailProductDoc[]
 
 export async function searchProductDocs(term: string): Promise<EmailProductDoc[]> {
   const filter = term ? `${PUBLISHED_PRODUCT} && (name match $q || nameEn match $q)` : PUBLISHED_PRODUCT;
-  return backendClient.fetch(`*[${filter}] | order(name asc) [0...10]${PRODUCT_FIELDS}`, { q: `${term}*` }, FRESH);
+  return backendClient.fetch(`*[${filter}] | ${BY_NAME} [0...10]${PRODUCT_FIELDS}`, { q: `${term}*` }, FRESH);
 }
 
 // Always the same order (by _id), so a campaign resumes exactly after its cursor.

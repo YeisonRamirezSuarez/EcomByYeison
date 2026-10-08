@@ -118,14 +118,16 @@ export const productType = defineType({
   preview: {
     select: {
       title: "name",
+      titleEn: "nameEn",
       media: "images",
       subtitle: "price",
     },
     prepare(selection) {
-      const { title, subtitle, media } = selection;
+      const { title, titleEn, subtitle, media } = selection;
       const image = media && media[0];
       return {
-        title: title,
+        // English-only stores leave the Spanish name empty.
+        title: title || titleEn,
         subtitle: `$${subtitle}`,
         media: image,
       };

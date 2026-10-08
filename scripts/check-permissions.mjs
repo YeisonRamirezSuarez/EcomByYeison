@@ -1222,6 +1222,27 @@ assert.equal(ck.checkoutLines([{ id: "p1", quantity: 1 }], [{ ...SERVER[0], pric
   assert.deepEqual(lz.localizeEmailProducts([{ name: "Parlante", nameEn: "Speaker" }, { name: "Mesa" }], "en").map((p) => p.name), ["Speaker", "Mesa"]);
 }
 
+// Sort keys (sanity/queries/sort.ts): a doc with no Spanish text sorts by its English one
+{
+  const { parse, evaluate } = await import("groq-js");
+  const { BY_NAME, BY_TITLE } = await import("../sanity/queries/sort.ts");
+  const run = async (query, dataset) => (await evaluate(parse(query), { dataset })).get();
+
+  const products = [
+    { _id: "1", _type: "product", name: "", nameEn: "Zebra lamp" },
+    { _id: "2", _type: "product", nameEn: "Apple stand" },
+    { _id: "3", _type: "product", name: "Mesa", nameEn: "Table" },
+  ];
+  assert.deepEqual((await run(`*[_type == "product"] | ${BY_NAME}{ _id }`, products)).map((p) => p._id), ["2", "3", "1"]);
+
+  const categories = [
+    { _id: "1", _type: "category", title: "", titleEn: "Toys" },
+    { _id: "2", _type: "category", titleEn: "Audio" },
+    { _id: "3", _type: "category", title: "Cocina", titleEn: "Kitchen" },
+  ];
+  assert.deepEqual((await run(`*[_type == "category"] | ${BY_TITLE}{ _id }`, categories)).map((c) => c._id), ["2", "3", "1"]);
+}
+
 // Order emails: customer, product and store names are escaped in the HTML, never in the subject
 {
   const oe = await import("../lib/orderEmail.ts");

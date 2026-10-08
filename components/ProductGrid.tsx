@@ -13,6 +13,7 @@ import type { StoreProduct } from "@/lib/localize";
 import { useLocale } from "@/components/StoreSettingsProvider";
 import { localizeProduct } from "@/lib/localize";
 import { t } from "@/lib/i18n";
+import { BY_NAME } from "@/sanity/queries/sort";
 
 interface ProductGridProps {
   initialProducts?: StoreProduct[];
@@ -26,7 +27,7 @@ const ProductGrid = ({ initialProducts = [], initialTab }: ProductGridProps) => 
   const [products, setProducts] = useState<StoreProduct[]>(initialProducts);
   const [loading, setLoading] = useState(false);
   const [selectedTab, setSelectedTab] = useState(defaultTab);
-  const query = `*[_type == "product" && archived != true && variant == $variant] | order(name asc){
+  const query = `*[_type == "product" && archived != true && variant == $variant] | ${BY_NAME}{
   ...,"categories": categories[]->{ title, titleEn }
 }`;
 

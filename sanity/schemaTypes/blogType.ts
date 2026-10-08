@@ -58,14 +58,17 @@ export const blogType = defineType({
   preview: {
     select: {
       title: "title",
+      titleEn: "titleEn",
       author: "author.name",
       media: "mainImage",
       isLatest: "isLatest",
     },
     prepare(selection) {
-      const { author, isLatest } = selection;
+      const { title, titleEn, author, isLatest } = selection;
       return {
         ...selection,
+        // English-only stores leave the Spanish title empty.
+        title: title || titleEn,
         subtitle: author && `${isLatest ? "Latest | " : ""} By ${author}`,
       };
     },

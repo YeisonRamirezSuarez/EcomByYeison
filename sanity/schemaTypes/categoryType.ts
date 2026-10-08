@@ -50,8 +50,12 @@ export const categoryType = defineType({
   preview: {
     select: {
       title: "title",
+      titleEn: "titleEn",
       subtitle: "description",
+      subtitleEn: "descriptionEn",
       media: "image",
     },
+    // English-only stores leave the Spanish texts empty.
+    prepare: ({ title, titleEn, subtitle, subtitleEn, media }) => ({ title: title || titleEn, subtitle: subtitle || subtitleEn, media }),
   },
 });

@@ -2,6 +2,7 @@ import "server-only";
 import type { ImageValue } from "@/lib/brand";
 import { countUses, isDocId, mergeProductRows, type ProductDocRow, type ProductRow } from "@/lib/catalog";
 import { backendClient } from "../lib/backendClient";
+import { BY_TITLE } from "./sort";
 
 // Panel reads see drafts and fresh data.
 const RAW = { perspective: "raw", useCdn: false, cache: "no-store" } as const;
@@ -120,8 +121,8 @@ export type Option = { _id: string; title: string };
 export async function getCatalogOptions(): Promise<{ categories: Option[]; brands: Option[] }> {
   return backendClient.fetch(
     `{
-      "categories": *[_type == "category"] | order(title asc){ _id, "title": select(length(title) > 0 => title, length(titleEn) > 0 => titleEn, "Sin título") },
-      "brands": *[_type == "brand"] | order(title asc){ _id, "title": select(length(title) > 0 => title, length(titleEn) > 0 => titleEn, "Sin título") }
+      "categories": *[_type == "category"] | ${BY_TITLE}{ _id, "title": select(length(title) > 0 => title, length(titleEn) > 0 => titleEn, "Sin título") },
+      "brands": *[_type == "brand"] | ${BY_TITLE}{ _id, "title": select(length(title) > 0 => title, length(titleEn) > 0 => titleEn, "Sin título") }
     }`,
     {},
     FRESH
@@ -150,7 +151,7 @@ export async function getTaxonomy(kind: TaxonomyKind): Promise<TaxonomyRow[]> {
     products: { _id: string; refs: (string | null)[] | null }[];
   }>(
     `{
-      "rows": *[_type == $kind && !(_id in path("drafts.**")) && ${NOT_VERSIONS}] | order(title asc){
+      "rows": *[_type == $kind && !(_id in path("drafts.**")) && ${NOT_VERSIONS}] | ${BY_TITLE}{
         _id, "title": coalesce(title, ""), "titleEn": coalesce(titleEn, ""), "slug": coalesce(slug.current, ""), "description": coalesce(description, ""), "descriptionEn": coalesce(descriptionEn, ""),
         range, "featured": featured == true,
         "image": select(defined(image.asset) => { "assetId": image.asset._ref, "url": image.asset->url }, null)

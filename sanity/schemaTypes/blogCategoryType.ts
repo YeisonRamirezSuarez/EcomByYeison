@@ -24,4 +24,9 @@ export const blogCategoryType = defineType({
       type: "text",
     }),
   ],
+  preview: {
+    select: { title: "title", titleEn: "titleEn", subtitle: "description" },
+    // English-only stores leave the Spanish title empty.
+    prepare: ({ title, titleEn, subtitle }) => ({ title: title || titleEn, subtitle }),
+  },
 });

@@ -14,6 +14,7 @@ import {
   SINGLE_BLOG_QUERY,
 } from "./query";
 import { parsePriceRange } from "@/constants/currencies";
+import { BY_NAME, BY_TITLE } from "./sort";
 import type { ShopFilters } from "@/lib/shopFilters";
 import type {
   BLOG_CATEGORIES_RESULT,
@@ -43,7 +44,7 @@ const getCategories = async (quantity?: number) => {
     // subquery per category and scaled linearly with the number of categories.
     const slice = quantity ? "[0...$quantity]" : "";
     const query = `{
-      "categories": *[_type == 'category'] | order(title asc) ${slice}{ ... },
+      "categories": *[_type == 'category'] | ${BY_TITLE} ${slice}{ ... },
       "refs": *[_type == "product" && archived != true && defined(categories)].categories[]._ref
     }`;
     const { data } = await sanityFetch({
@@ -241,7 +242,7 @@ const searchProducts = async (searchTerm: string) => {
   try {
     // Parameterized: the term (incl. the wildcards) is a value, never spliced
     // into the query structure, so this is injection-safe.
-    const query = `*[_type == "product" && archived != true && (name match $q || nameEn match $q)] | order(name asc){
+    const query = `*[_type == "product" && archived != true && (name match $q || nameEn match $q)] | ${BY_NAME}{
       ..., ${PRODUCT_CATEGORIES}
     }`;
     const { data } = await sanityFetch({
@@ -258,7 +259,7 @@ const searchProducts = async (searchTerm: string) => {
 const getProductsByVariant = async (variant: string) => {
   const locale = await getServerLocale();
   try {
-    const query = `*[_type == "product" && archived != true && variant == $variant] | order(name asc){
+    const query = `*[_type == "product" && archived != true && variant == $variant] | ${BY_NAME}{
   ...,${PRODUCT_CATEGORIES}
 }`;
     const { data } = await sanityFetch({ query, params: { variant } });
@@ -279,7 +280,7 @@ const SECTION_FILTERS: Record<ProductSource, string> = {
 const getSectionProducts = async ({ source, category, count }: { source: ProductSource; category: string; count: number }) => {
   const locale = await getServerLocale();
   try {
-    const query = `*[_type == "product" && archived != true && ${SECTION_FILTERS[source]}] | order(name asc)[0...$count]{
+    const query = `*[_type == "product" && archived != true && ${SECTION_FILTERS[source]}] | ${BY_NAME}[0...$count]{
       ..., ${PRODUCT_CATEGORIES}
     }`;
     const { data } = await sanityFetch({ query, params: { category, count } });

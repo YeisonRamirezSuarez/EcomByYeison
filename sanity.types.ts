@@ -785,7 +785,7 @@ export declare const internalGroqTypeReferenceTo: unique symbol;
 
 // Source: sanity/queries/query.ts
 // Variable: BRANDS_QUERY
-// Query: *[_type=='brand'] | order(title asc)
+// Query: *[_type=='brand'] | order(select(length(title) > 0 => title, titleEn) asc)
 export type BRANDS_QUERY_RESULT = Array<{
   _id: string;
   _type: "brand";
@@ -808,7 +808,7 @@ export type BRANDS_QUERY_RESULT = Array<{
 
 // Source: sanity/queries/query.ts
 // Variable: LATEST_BLOG_QUERY
-// Query: *[_type == 'blog' && isLatest == true]|order(name asc){      ...,      blogcategories[]->{      title, titleEn    }    }
+// Query: *[_type == 'blog' && isLatest == true] | order(select(length(title) > 0 => title, titleEn) asc){      ...,      blogcategories[]->{      title, titleEn    }    }
 export type LATEST_BLOG_QUERY_RESULT = Array<{
   _id: string;
   _type: "blog";
@@ -838,7 +838,7 @@ export type LATEST_BLOG_QUERY_RESULT = Array<{
 
 // Source: sanity/queries/query.ts
 // Variable: DEAL_PRODUCTS
-// Query: *[_type == 'product' && archived != true && status == 'hot'] | order(name asc){    ...,"categories": categories[]->{ title, titleEn }  }
+// Query: *[_type == 'product' && archived != true && status == 'hot'] | order(select(length(name) > 0 => name, nameEn) asc){    ...,"categories": categories[]->{ title, titleEn }  }
 export type DEAL_PRODUCTS_RESULT = Array<{
   _id: string;
   _type: "product";
@@ -1050,7 +1050,7 @@ export type ADMIN_ORDERS_QUERY_RESULT = Array<{
 
 // Source: sanity/queries/query.ts
 // Variable: SHOP_PRODUCTS_QUERY
-// Query: *[_type == 'product' && archived != true  && (!defined($selectedCategory) || references(*[_type == "category" && slug.current == $selectedCategory]._id))  && (!defined($selectedBrand) || references(*[_type == "brand" && slug.current == $selectedBrand]._id))  && price >= $minPrice && (!defined($maxPrice) || price <= $maxPrice)] | order(name asc) {  ...,"categories": categories[]->{ title, titleEn }}
+// Query: *[_type == 'product' && archived != true  && (!defined($selectedCategory) || references(*[_type == "category" && slug.current == $selectedCategory]._id))  && (!defined($selectedBrand) || references(*[_type == "brand" && slug.current == $selectedBrand]._id))  && price >= $minPrice && (!defined($maxPrice) || price <= $maxPrice)] | order(select(length(name) > 0 => name, nameEn) asc) {  ...,"categories": categories[]->{ title, titleEn }}
 export type SHOP_PRODUCTS_QUERY_RESULT = Array<{
   _id: string;
   _type: "product";
@@ -1203,14 +1203,14 @@ export type OTHERS_BLOG_QUERY_RESULT = Array<{
 import "@sanity/client";
 declare module "@sanity/client" {
   interface SanityQueries {
-    "*[_type=='brand'] | order(title asc) ": BRANDS_QUERY_RESULT;
-    " *[_type == 'blog' && isLatest == true]|order(name asc){\n      ...,\n      blogcategories[]->{\n      title, titleEn\n    }\n    }": LATEST_BLOG_QUERY_RESULT;
-    "*[_type == 'product' && archived != true && status == 'hot'] | order(name asc){\n    ...,\"categories\": categories[]->{ title, titleEn }\n  }": DEAL_PRODUCTS_RESULT;
+    "*[_type=='brand'] | order(select(length(title) > 0 => title, titleEn) asc) ": BRANDS_QUERY_RESULT;
+    " *[_type == 'blog' && isLatest == true] | order(select(length(title) > 0 => title, titleEn) asc){\n      ...,\n      blogcategories[]->{\n      title, titleEn\n    }\n    }": LATEST_BLOG_QUERY_RESULT;
+    "*[_type == 'product' && archived != true && status == 'hot'] | order(select(length(name) > 0 => name, nameEn) asc){\n    ...,\"categories\": categories[]->{ title, titleEn }\n  }": DEAL_PRODUCTS_RESULT;
     '*[_type == "product" && archived != true && slug.current == $slug] | order(name asc) [0]': PRODUCT_BY_SLUG_QUERY_RESULT;
     '*[_type == "product" && archived != true && slug.current == $slug]{\n  "brandName": brand->title, "brandNameEn": brand->titleEn\n  }': BRAND_QUERY_RESULT;
     "*[_type == 'order' && clerkUserId == $userId] | order(orderDate desc){\n...,products[]{\n  ...,product->\n}\n}": MY_ORDERS_QUERY_RESULT;
     '*[_type == \'order\'] | order(orderDate desc){\n  _id, orderNumber, customerName, email, status, orderDate, totalPrice, currency, amountDiscount, address,\n  products[]{ _key, quantity, product->{ _id, "name": select(length(name) > 0 => name, nameEn), price, "images": images[0...1] } }\n}': ADMIN_ORDERS_QUERY_RESULT;
-    '*[_type == \'product\' && archived != true\n  && (!defined($selectedCategory) || references(*[_type == "category" && slug.current == $selectedCategory]._id))\n  && (!defined($selectedBrand) || references(*[_type == "brand" && slug.current == $selectedBrand]._id))\n  && price >= $minPrice && (!defined($maxPrice) || price <= $maxPrice)\n] | order(name asc) {\n  ...,"categories": categories[]->{ title, titleEn }\n}': SHOP_PRODUCTS_QUERY_RESULT;
+    '*[_type == \'product\' && archived != true\n  && (!defined($selectedCategory) || references(*[_type == "category" && slug.current == $selectedCategory]._id))\n  && (!defined($selectedBrand) || references(*[_type == "brand" && slug.current == $selectedBrand]._id))\n  && price >= $minPrice && (!defined($maxPrice) || price <= $maxPrice)\n] | order(select(length(name) > 0 => name, nameEn) asc) {\n  ...,"categories": categories[]->{ title, titleEn }\n}': SHOP_PRODUCTS_QUERY_RESULT;
     "*[_type == 'blog'] | order(publishedAt desc)[0...$quantity]{\n  ...,  \n     blogcategories[]->{\n    title, titleEn\n}\n    }\n  ": GET_ALL_BLOG_RESULT;
     '*[_type == "blog" && slug.current == $slug][0]{\n  ..., \n    author->{\n    name,\n    image,\n  },\n  blogcategories[]->{\n    title,\n    titleEn,\n    "slug": slug.current,\n  },\n}': SINGLE_BLOG_QUERY_RESULT;
     '*[_type == "blog"]{\n     blogcategories[]->{\n    ...\n    }\n  }': BLOG_CATEGORIES_RESULT;
