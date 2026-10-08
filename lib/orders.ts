@@ -139,6 +139,8 @@ export async function createOrderFromStripeSession(
       amountDiscount: session.total_details?.amount_discount
         ? session.total_details.amount_discount / 100
         : 0,
+      amountShipping: (session.total_details?.amount_shipping ?? 0) / 100,
+      amountTax: (session.total_details?.amount_tax ?? 0) / 100,
       products: sanityProducts,
       totalPrice: session.amount_total ? session.amount_total / 100 : 0,
       status: "paid",

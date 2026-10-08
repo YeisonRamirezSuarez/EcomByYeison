@@ -13,6 +13,7 @@ import { withDefaults, type Brand } from "@/lib/brand";
 import { readHomeSections, type HomeSection } from "@/lib/homeSections";
 import { DEFAULT_STYLES, readStyles, type Styles } from "@/lib/styles";
 import { DEFAULT_LANGUAGES, readLanguages, type StoreLanguages } from "@/lib/localize";
+import { readCheckoutSettings, type CheckoutSettings } from "@/lib/shipping";
 import { getActor } from "@/lib/roles";
 import { can } from "@/lib/permissions";
 
@@ -27,7 +28,7 @@ const image = (path: string) =>
   `select(defined(${path}.asset) => { "assetId": ${path}.asset._ref, "url": ${path}.asset->url })`;
 
 const SITE_SETTINGS_QUERY = `*[_id == "siteSettings"][0]{
-  theme, currency, languages, defaultLocale, storeName, tagline, taglineEn, description, descriptionEn, logoType, logoText, logoSubtext,
+  theme, currency, checkout, languages, defaultLocale, storeName, tagline, taglineEn, description, descriptionEn, logoType, logoText, logoSubtext,
   "logoImage": ${image("logoImage")},
   "favicon": ${image("favicon")},
   banner{ badge, badgeEn, title, titleEn, highlight, highlightEn, subtitle, subtitleEn, description, descriptionEn, primaryCta, secondaryCta, stats, "image": ${image("image")} },
@@ -41,16 +42,18 @@ const SITE_SETTINGS_QUERY = `*[_id == "siteSettings"][0]{
   styles
 }`;
 
-export type SiteSettings = { theme: ThemeKey; currency: CurrencyCode; homeSections: HomeSection[] | null; styles: Styles } & Brand & StoreLanguages;
+export type SiteSettings = { theme: ThemeKey; currency: CurrencyCode; checkout: CheckoutSettings; homeSections: HomeSection[] | null; styles: Styles } & Brand & StoreLanguages;
 
 function normalize(data: Record<string, unknown> | null): SiteSettings {
   const theme = data?.theme;
-  const currency = data?.currency;
+  const rawCurrency = data?.currency;
+  const currency = isCurrencyCode(rawCurrency) ? rawCurrency : DEFAULT_CURRENCY;
   return {
     ...withDefaults(data, BRAND_DEFAULTS),
     ...readLanguages(data),
     theme: isThemeKey(theme) ? theme : DEFAULT_THEME,
-    currency: isCurrencyCode(currency) ? currency : DEFAULT_CURRENCY,
+    currency,
+    checkout: readCheckoutSettings(data?.checkout, currency),
     homeSections: readHomeSections(data?.homeSections),
     styles: readStyles(data?.styles),
   };
@@ -92,7 +95,7 @@ const loadSiteSettings = cache(async (draft: boolean): Promise<SiteSettings> => 
     return normalize(data);
   } catch (error) {
     console.log("Error fetching site settings", error);
-    return { ...BRAND_DEFAULTS, ...DEFAULT_LANGUAGES, theme: DEFAULT_THEME, currency: DEFAULT_CURRENCY, homeSections: null, styles: DEFAULT_STYLES };
+    return { ...BRAND_DEFAULTS, ...DEFAULT_LANGUAGES, theme: DEFAULT_THEME, currency: DEFAULT_CURRENCY, checkout: readCheckoutSettings(null, DEFAULT_CURRENCY), homeSections: null, styles: DEFAULT_STYLES };
   }
 });
 

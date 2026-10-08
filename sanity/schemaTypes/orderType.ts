@@ -114,6 +114,8 @@ export const orderType = defineType({
       type: "number",
       validation: (Rule) => Rule.required(),
     }),
+    defineField({ name: "amountShipping", title: "Amount Shipping", type: "number" }),
+    defineField({ name: "amountTax", title: "Amount Tax", type: "number" }),
     defineField({
       name: "address",
       title: "Shipping Address",

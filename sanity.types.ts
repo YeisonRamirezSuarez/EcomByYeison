@@ -67,6 +67,11 @@ export type SiteSettings = {
   currency?: "USD" | "COP";
   languages?: Array<string>;
   defaultLocale?: string;
+  checkout?: {
+    shippingCost?: number;
+    freeShippingFrom?: number;
+    stripeTax?: boolean;
+  };
   storeName?: string;
   tagline?: string;
   taglineEn?: string;
@@ -550,6 +555,8 @@ export type Order = {
   totalPrice?: number;
   currency?: string;
   amountDiscount?: number;
+  amountShipping?: number;
+  amountTax?: number;
   address?: {
     state?: string;
     zip?: string;
@@ -981,6 +988,8 @@ export type MY_ORDERS_QUERY_RESULT = Array<{
   totalPrice?: number;
   currency?: string;
   amountDiscount?: number;
+  amountShipping?: number;
+  amountTax?: number;
   address?: {
     state?: string;
     zip?: string;
@@ -1003,7 +1012,7 @@ export type MY_ORDERS_QUERY_RESULT = Array<{
 
 // Source: sanity/queries/query.ts
 // Variable: ADMIN_ORDERS_QUERY
-// Query: *[_type == 'order'] | order(orderDate desc){  _id, orderNumber, customerName, email, status, orderDate, totalPrice, currency, amountDiscount, address,  products[]{ _key, quantity, product->{ _id, "name": select(length(name) > 0 => name, nameEn), price, "images": images[0...1] } }}
+// Query: *[_type == 'order'] | order(orderDate desc){  _id, orderNumber, customerName, email, status, orderDate, totalPrice, currency, amountDiscount, amountShipping, amountTax, address,  products[]{ _key, quantity, product->{ _id, "name": select(length(name) > 0 => name, nameEn), price, "images": images[0...1] } }}
 export type ADMIN_ORDERS_QUERY_RESULT = Array<{
   _id: string;
   orderNumber: string | null;
@@ -1022,6 +1031,8 @@ export type ADMIN_ORDERS_QUERY_RESULT = Array<{
   totalPrice: number | null;
   currency: string | null;
   amountDiscount: number | null;
+  amountShipping: number | null;
+  amountTax: number | null;
   address: {
     state?: string;
     zip?: string;
@@ -1209,7 +1220,7 @@ declare module "@sanity/client" {
     '*[_type == "product" && archived != true && slug.current == $slug] | order(name asc) [0]': PRODUCT_BY_SLUG_QUERY_RESULT;
     '*[_type == "product" && archived != true && slug.current == $slug]{\n  "brandName": brand->title, "brandNameEn": brand->titleEn\n  }': BRAND_QUERY_RESULT;
     "*[_type == 'order' && clerkUserId == $userId] | order(orderDate desc){\n...,products[]{\n  ...,product->\n}\n}": MY_ORDERS_QUERY_RESULT;
-    '*[_type == \'order\'] | order(orderDate desc){\n  _id, orderNumber, customerName, email, status, orderDate, totalPrice, currency, amountDiscount, address,\n  products[]{ _key, quantity, product->{ _id, "name": select(length(name) > 0 => name, nameEn), price, "images": images[0...1] } }\n}': ADMIN_ORDERS_QUERY_RESULT;
+    '*[_type == \'order\'] | order(orderDate desc){\n  _id, orderNumber, customerName, email, status, orderDate, totalPrice, currency, amountDiscount, amountShipping, amountTax, address,\n  products[]{ _key, quantity, product->{ _id, "name": select(length(name) > 0 => name, nameEn), price, "images": images[0...1] } }\n}': ADMIN_ORDERS_QUERY_RESULT;
     '*[_type == \'product\' && archived != true\n  && (!defined($selectedCategory) || references(*[_type == "category" && slug.current == $selectedCategory]._id))\n  && (!defined($selectedBrand) || references(*[_type == "brand" && slug.current == $selectedBrand]._id))\n  && price >= $minPrice && (!defined($maxPrice) || price <= $maxPrice)\n] | order(select(length(name) > 0 => name, nameEn) asc) {\n  ...,"categories": categories[]->{ title, titleEn }\n}': SHOP_PRODUCTS_QUERY_RESULT;
     "*[_type == 'blog'] | order(publishedAt desc)[0...$quantity]{\n  ...,  \n     blogcategories[]->{\n    title, titleEn\n}\n    }\n  ": GET_ALL_BLOG_RESULT;
     '*[_type == "blog" && slug.current == $slug][0]{\n  ..., \n    author->{\n    name,\n    image,\n  },\n  blogcategories[]->{\n    title,\n    titleEn,\n    "slug": slug.current,\n  },\n}': SINGLE_BLOG_QUERY_RESULT;

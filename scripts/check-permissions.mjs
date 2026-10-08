@@ -664,6 +664,52 @@ assert.equal(ck.checkoutLines([{ id: "p1", quantity: 1.5 }], SERVER).ok, false);
 assert.equal(ck.checkoutLines([], SERVER).ok, false);
 assert.equal(ck.checkoutLines([{ id: "p1", quantity: 1 }], [{ ...SERVER[0], price: null }]).ok, false);
 
+// Shipping and taxes (Ajustes → Envío e impuestos)
+{
+  const sh = await import("../lib/shipping.ts");
+  // Nothing saved: no shipping charge, free-shipping amount from the currency, no taxes
+  assert.deepEqual(sh.readCheckoutSettings(undefined, "USD"), { shippingCost: 0, freeShippingFrom: 99, stripeTax: false });
+  assert.equal(sh.readCheckoutSettings(null, "COP").freeShippingFrom, 400000);
+  assert.deepEqual(sh.readCheckoutSettings({ shippingCost: 7.5, freeShippingFrom: 150, stripeTax: true }, "USD"), { shippingCost: 7.5, freeShippingFrom: 150, stripeTax: true });
+  assert.deepEqual(sh.readCheckoutSettings({ shippingCost: -1, freeShippingFrom: "x", stripeTax: "yes" }, "USD"), { shippingCost: 0, freeShippingFrom: 99, stripeTax: false });
+
+  const paid = { shippingCost: 10, freeShippingFrom: 100, stripeTax: false };
+  assert.equal(sh.shippingFor(99.99, paid), 10);
+  assert.equal(sh.shippingFor(100, paid), 0);
+  assert.equal(sh.shippingFor(5, { ...paid, shippingCost: 0 }), 0);
+
+  const good = ck.validateCheckoutSettings({ shippingCost: "12.5", freeShippingFrom: "200", stripeTax: true });
+  assert.deepEqual(good, { ok: true, value: { shippingCost: 12.5, freeShippingFrom: 200, stripeTax: true } });
+  assert.deepEqual(ck.validateCheckoutSettings({ shippingCost: "0", freeShippingFrom: "0" }).value, { shippingCost: 0, freeShippingFrom: 0, stripeTax: false });
+  const bad = ck.validateCheckoutSettings({ shippingCost: "-3", freeShippingFrom: "" });
+  assert.equal(bad.ok, false);
+  assert.ok(bad.errors.shippingCost && bad.errors.freeShippingFrom);
+  assert.equal(ck.validateCheckoutSettings({ shippingCost: "abc", freeShippingFrom: "1" }).ok, false);
+  assert.equal(ck.validateCheckoutSettings(null).ok, false);
+
+  const labels = { shipping: "Envío", free: "Envío gratis" };
+  // Taxes off: one shipping line, nothing else changes
+  assert.deepEqual(ck.checkoutExtras({ subtotal: 50, settings: paid, currency: "USD", hasCustomer: true, labels }), {
+    params: { shipping_options: [{ shipping_rate_data: { type: "fixed_amount", fixed_amount: { amount: 1000, currency: "usd" }, display_name: "Envío" } }] },
+    taxBehavior: undefined,
+  });
+  assert.equal(
+    ck.checkoutExtras({ subtotal: 150, settings: paid, currency: "USD", hasCustomer: false, labels }).params.shipping_options[0].shipping_rate_data.display_name,
+    "Envío gratis"
+  );
+  // Taxes on in USD: added on top; an existing Stripe customer gets the address Checkout collects
+  const taxed = ck.checkoutExtras({ subtotal: 50, settings: { ...paid, stripeTax: true }, currency: "USD", hasCustomer: true, labels });
+  assert.equal(taxed.taxBehavior, "exclusive");
+  assert.deepEqual(taxed.params.automatic_tax, { enabled: true });
+  assert.deepEqual(taxed.params.customer_update, { address: "auto" });
+  const rate = taxed.params.shipping_options[0].shipping_rate_data;
+  assert.equal(rate.tax_behavior, "exclusive");
+  assert.equal(rate.tax_code, "txcd_92010001");
+  assert.equal(ck.checkoutExtras({ subtotal: 50, settings: { ...paid, stripeTax: true }, currency: "USD", hasCustomer: false, labels }).params.customer_update, undefined);
+  // Colombia: IVA is already inside the price
+  assert.equal(ck.checkoutExtras({ subtotal: 50, settings: { ...paid, stripeTax: true }, currency: "COP", hasCustomer: false, labels }).taxBehavior, "inclusive");
+}
+
 // Home sections (Apariencia → Inicio)
 {
   const hs = await import("../lib/homeSections.ts");

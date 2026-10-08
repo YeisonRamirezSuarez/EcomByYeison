@@ -6,7 +6,7 @@ import { urlFor } from "@/sanity/lib/image";
 import { getServerLocale } from "@/lib/locale";
 import { t } from "@/lib/i18n";
 import { getSiteSettings } from "@/sanity/queries/siteSettings";
-import { CURRENCIES, formatPrice } from "@/constants/currencies";
+import { formatPrice } from "@/constants/currencies";
 import { GitCompareArrows, Headset, ShieldCheck, Truck, ArrowRight } from "lucide-react";
 
 const brandColors: Record<string, { bg: string; text: string; border: string }> = {
@@ -18,8 +18,8 @@ const brandColors: Record<string, { bg: string; text: string; border: string }> 
 };
 
 const ShopByBrands = async ({ title }: { title?: string }) => {
-  const [locale, { currency }] = await Promise.all([getServerLocale(), getSiteSettings()]);
-  const amount = formatPrice(CURRENCIES[currency].freeShippingFrom, currency, 0);
+  const [locale, { currency, checkout }] = await Promise.all([getServerLocale(), getSiteSettings()]);
+  const amount = formatPrice(checkout.freeShippingFrom, currency, 0);
   const brands = await getAllBrands();
   const extraData = [
     { title: t(locale, "perksShippingTitle"), description: t(locale, "perksShippingText", { amount }), icon: <Truck size={28} /> },

@@ -10,6 +10,8 @@ export type AdminOrder = {
   totalPrice?: number;
   currency?: string;
   amountDiscount?: number;
+  amountShipping?: number;
+  amountTax?: number;
   address?: { name?: string; address?: string; city?: string; state?: string; zip?: string };
   products?: {
     _key: string;

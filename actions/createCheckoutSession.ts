@@ -7,7 +7,7 @@ import Stripe from "stripe";
 import { pickText, resolveLocale } from "@/lib/localize";
 import { getSiteSettings } from "@/sanity/queries/siteSettings";
 import { backendClient } from "@/sanity/lib/backendClient";
-import { checkoutLines, type CheckoutProduct } from "@/lib/checkout";
+import { checkoutExtras, checkoutLines, type CheckoutProduct } from "@/lib/checkout";
 import type { ActionResult } from "@/lib/actionResult";
 import { t } from "@/lib/i18n";
 
@@ -53,8 +53,17 @@ export async function createCheckoutSession(
     const customerId = customers?.data?.length > 0 ? customers.data[0].id : "";
     // Store currency comes from the server, never from the browser.
     const { currency } = settings;
+    const subtotal = checked.lines.reduce((sum, { product, quantity }) => sum + product.price! * quantity, 0);
+    const extras = checkoutExtras({
+      subtotal,
+      settings: settings.checkout,
+      currency,
+      hasCustomer: Boolean(customerId),
+      labels: { shipping: t(locale, "cartShipping"), free: t(locale, "checkoutFreeShipping") },
+    });
 
     const sessionPayload: Stripe.Checkout.SessionCreateParams = {
+      ...extras.params,
       locale,
       metadata: {
         orderNumber: metadata.orderNumber,
@@ -78,6 +87,7 @@ export async function createCheckoutSession(
         price_data: {
           currency: currency.toLowerCase(),
           unit_amount: Math.round(product.price! * 100),
+          ...(extras.taxBehavior ? { tax_behavior: extras.taxBehavior } : {}),
           product_data: {
             name: pickText(product.name, product.nameEn, locale) || t(locale, "checkoutUnknownProduct"),
             description: pickText(product.description, product.descriptionEn, locale) || undefined,

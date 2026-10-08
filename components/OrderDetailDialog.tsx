@@ -16,6 +16,7 @@ import { urlFor } from "@/sanity/lib/image";
 import PriceFormatter from "./PriceFormatter";
 import { useLocale } from "@/components/StoreSettingsProvider";
 import { t } from "@/lib/i18n";
+import { CURRENCIES, isCurrencyCode } from "@/constants/currencies";
 
 interface OrderDetailsDialogProps {
   order: MyOrder | null;
@@ -36,6 +37,13 @@ const OrderDetailDialog: React.FC<OrderDetailsDialogProps> = ({
   const orderDate = order.orderDate
     ? new Intl.DateTimeFormat(localeCode).format(new Date(order.orderDate))
     : "-";
+
+  // Totals as Stripe charged them. Tax included in the price (Colombian IVA) is not added again.
+  const code = order.currency?.toUpperCase();
+  const discount = order.amountDiscount ?? 0;
+  const shipping = order.amountShipping ?? 0;
+  const tax = isCurrencyCode(code) && CURRENCIES[code].taxBehavior === "exclusive" ? order.amountTax ?? 0 : 0;
+  const subtotal = (order.totalPrice ?? 0) + discount - shipping - tax;
 
   const translatedStatus =
     order.status === "paid"
@@ -149,25 +157,42 @@ const OrderDetailDialog: React.FC<OrderDetailsDialogProps> = ({
 
         <div className="mt-4 flex items-center justify-end text-right">
           <div className="w-44 flex flex-col gap-1">
-            {order?.amountDiscount !== 0 && (
-              <div className="w-full flex items-center justify-between">
-                <strong>{t(locale, "ordersDiscount")}: </strong>
-                <PriceFormatter
-                  currency={order?.currency}
-                  amount={order?.amountDiscount}
-                  className="text-black font-bold"
-                />
-              </div>
-            )}
-            {order?.amountDiscount !== 0 && (
+            {subtotal !== order.totalPrice && (
               <div className="w-full flex items-center justify-between">
                 <strong>{t(locale, "ordersSubtotal")}: </strong>
                 <PriceFormatter
                   currency={order?.currency}
-                  amount={
-                    (order?.totalPrice as number) +
-                    (order?.amountDiscount as number)
-                  }
+                  amount={subtotal}
+                  className="text-black font-bold"
+                />
+              </div>
+            )}
+            {discount !== 0 && (
+              <div className="w-full flex items-center justify-between">
+                <strong>{t(locale, "ordersDiscount")}: </strong>
+                <PriceFormatter
+                  currency={order?.currency}
+                  amount={discount}
+                  className="text-black font-bold"
+                />
+              </div>
+            )}
+            {shipping > 0 && (
+              <div className="w-full flex items-center justify-between">
+                <strong>{t(locale, "ordersShipping")}: </strong>
+                <PriceFormatter
+                  currency={order?.currency}
+                  amount={shipping}
+                  className="text-black font-bold"
+                />
+              </div>
+            )}
+            {tax > 0 && (
+              <div className="w-full flex items-center justify-between">
+                <strong>{t(locale, "ordersTaxes")}: </strong>
+                <PriceFormatter
+                  currency={order?.currency}
+                  amount={tax}
                   className="text-black font-bold"
                 />
               </div>

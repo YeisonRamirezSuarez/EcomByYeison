@@ -70,7 +70,7 @@ function slug(errors: Errors, value: unknown, ui: Locale) {
 }
 
 // Numbers come from form inputs as strings or numbers. Empty = fallback (or required error).
-function num(
+export function num(
   errors: Errors,
   key: string,
   value: unknown,

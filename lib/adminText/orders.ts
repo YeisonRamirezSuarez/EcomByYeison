@@ -14,6 +14,8 @@ export const orders = {
   "Al marcar \"Entregado\" se envía la factura por correo.": "Marking \"Delivered\" sends the invoice by email.",
   "Producto eliminado": "Deleted product",
   "Descuento": "Discount",
+  "Envío": "Shipping",
+  "Impuestos": "Taxes",
   "Total ({currency})": "Total ({currency})",
   "Todos": "All",
   "Buscar por número, nombre o correo": "Search by number, name or email",

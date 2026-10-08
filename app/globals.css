@@ -229,7 +229,7 @@ body:has([data-admin-shell]) {
    button) is never hidden behind it. Desktop has no bar, so scope to mobile. */
 @media (max-width: 767px) {
   html[data-cart-bar] #site-footer {
-    padding-bottom: calc(13rem + env(safe-area-inset-bottom));
+    padding-bottom: calc(16rem + env(safe-area-inset-bottom));
   }
 }
 

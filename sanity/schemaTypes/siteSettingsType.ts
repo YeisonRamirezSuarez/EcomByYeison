@@ -98,6 +98,18 @@ export const siteSettingsType = defineType({
       readOnly: true,
     }),
     defineField({ name: "defaultLocale", title: "Idioma principal", type: "string", readOnly: true }),
+    defineField({
+      name: "checkout",
+      title: "Envío e impuestos",
+      description: "Se cambia en el panel: Ajustes → Envío e impuestos.",
+      type: "object",
+      readOnly: true,
+      fields: [
+        defineField({ name: "shippingCost", title: "Costo de envío", type: "number" }),
+        defineField({ name: "freeShippingFrom", title: "Envío gratis desde", type: "number" }),
+        defineField({ name: "stripeTax", title: "Impuestos con Stripe Tax", type: "boolean" }),
+      ],
+    }),
     text("storeName", "Nombre de la tienda"),
     text("tagline", "Eslogan"),
     text("taglineEn", "Eslogan (inglés)"),

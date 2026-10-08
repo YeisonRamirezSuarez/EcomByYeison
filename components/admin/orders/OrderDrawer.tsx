@@ -128,6 +128,18 @@ const OrderDrawer = ({
                       <PriceFormatter amount={order.amountDiscount} currency={order.currency} />
                     </div>
                   )}
+                  {(order.amountShipping ?? 0) > 0 && (
+                    <div className="flex justify-between">
+                      <span>{tr(ui, "Envío")}</span>
+                      <PriceFormatter amount={order.amountShipping} currency={order.currency} />
+                    </div>
+                  )}
+                  {(order.amountTax ?? 0) > 0 && (
+                    <div className="flex justify-between">
+                      <span>{tr(ui, "Impuestos")}</span>
+                      <PriceFormatter amount={order.amountTax} currency={order.currency} />
+                    </div>
+                  )}
                   <div className="flex justify-between font-bold text-shop_dark_green">
                     <span>{tr(ui, "Total ({currency})", { currency: (order.currency ?? "").toUpperCase() })}</span>
                     <PriceFormatter amount={order.totalPrice} currency={order.currency} className="text-shop_dark_green font-bold" />

@@ -17,17 +17,13 @@ import { getServerLocale } from "@/lib/locale";
 import { t } from "@/lib/i18n";
 import AdminLink from "./AdminLink";
 import { getSiteSettings } from "@/sanity/queries/siteSettings";
-import { CURRENCIES, formatPrice } from "@/constants/currencies";
+import { formatPrice } from "@/constants/currencies";
 
 const Header = async () => {
   // auth() reads the session from the request (no network); the rest runs in parallel.
   const { userId } = await auth();
   const [locale, settings] = await Promise.all([getServerLocale(), getSiteSettings()]);
-  const freeShippingFrom = formatPrice(
-    CURRENCIES[settings.currency].freeShippingFrom,
-    settings.currency,
-    0
-  );
+  const freeShippingFrom = formatPrice(settings.checkout.freeShippingFrom, settings.currency, 0);
 
   return (
     <header className="sticky top-0 z-50">

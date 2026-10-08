@@ -113,6 +113,9 @@ El repositorio trae `vercel.json`: Vercel solo compila despliegues de producció
    npm run check:env -- .env.ana --online
    ```
 5. El dueño configura la tienda desde el panel: marca, logo, favicon, apariencia, productos y correo de salida (**Ajustes → Correo**).
+6. Envío e impuestos (**Ajustes → Envío e impuestos**): costo de envío fijo y monto desde el que el envío es gratis. Sin cambios, la tienda no cobra envío.
+   - Impuestos (opcional): primero activa **Stripe Tax** en el panel de Stripe del cliente (dirección de origen y registros en los estados o países donde cobra). Después marca **Calcular impuestos con Stripe Tax** en el panel; si Stripe Tax no está activo, el panel no deja guardarlo. Stripe cobra una comisión por cada venta con impuestos.
+   - En dólares el impuesto se suma al precio al pagar. En pesos colombianos el IVA ya va incluido en el precio; Stripe solo lo desglosa.
 
 Los íconos de la app y las pantallas de inicio de iPhone se generan solos con el favicon o el logo del panel. Un cambio de logo se ve en los íconos en máximo una hora. Funcionan mejor con un favicon cuadrado en PNG.
 
@@ -125,7 +128,8 @@ Con las claves `test` de Stripe:
 1. Compra un producto con la tarjeta `4242 4242 4242 4242`, cualquier fecha futura, cualquier CVC y cualquier código postal.
 2. Confirma que el pedido aparece en el panel (**Pedidos**) y en Stripe (**Payments**, modo de prueba).
 3. Si el correo está configurado, confirma que llegó el correo del pedido.
-4. Si creaste un producto solo para la prueba, bórralo desde el panel.
+4. Si la tienda cobra envío o impuestos, confirma que Stripe muestra la línea de envío y la de impuestos, y que el pedido en el panel muestra los mismos montos.
+5. Si creaste un producto solo para la prueba, bórralo desde el panel.
 
 ## 8. Pasar a cobros reales
 

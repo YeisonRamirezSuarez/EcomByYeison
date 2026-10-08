@@ -7,6 +7,8 @@ type Currency = {
   locale: string;
   decimals: number;
   freeShippingFrom: number;
+  // With Stripe Tax: US prices leave tax out (added at checkout); Colombian prices already include IVA.
+  taxBehavior: "exclusive" | "inclusive";
   // [min, max] pairs; max null = no upper bound.
   priceRanges: readonly (readonly [number, number | null])[];
 };
@@ -17,6 +19,7 @@ export const CURRENCIES = {
     locale: "en-US",
     decimals: 2,
     freeShippingFrom: 99,
+    taxBehavior: "exclusive",
     priceRanges: [
       [0, 100],
       [100, 200],
@@ -30,6 +33,7 @@ export const CURRENCIES = {
     locale: "es-CO",
     decimals: 0,
     freeShippingFrom: 400000,
+    taxBehavior: "inclusive",
     priceRanges: [
       [0, 400000],
       [400000, 800000],

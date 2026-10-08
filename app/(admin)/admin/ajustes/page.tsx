@@ -1,4 +1,5 @@
 import PageHeader from "@/components/admin/shell/PageHeader";
+import CheckoutSection from "@/components/admin/CheckoutSection";
 import CurrencySection from "@/components/admin/CurrencySection";
 import LanguageSection from "@/components/admin/LanguageSection";
 import SmtpSection from "@/components/admin/newsletter/SmtpSection";
@@ -12,7 +13,7 @@ import { getSiteSettings } from "@/sanity/queries/siteSettings";
 export default async function SettingsPage() {
   await requireSection("ajustes");
   const ui = await getAdminLocale();
-  const [{ currency, languages, primary }, smtp] = await Promise.all([getSiteSettings(), getSmtpView()]);
+  const [{ currency, checkout, languages, primary }, smtp] = await Promise.all([getSiteSettings(), getSmtpView()]);
   // A saved password that cannot be decrypted (key changed) is not the same as "not configured".
   const smtpUnreadable = await getMailer().then(() => false, () => Boolean(process.env.EMAIL_ENCRYPTION_KEY));
   return (
@@ -21,6 +22,9 @@ export default async function SettingsPage() {
       <div className="flex flex-col gap-4 max-w-xl">
         <div className="bg-white rounded-2xl shadow-sm p-5">
           <CurrencySection initialCurrency={currency} />
+        </div>
+        <div className="bg-white rounded-2xl shadow-sm p-5">
+          <CheckoutSection initial={checkout} currency={currency} />
         </div>
         <div className="bg-white rounded-2xl shadow-sm p-5">
           <LanguageSection initial={{ languages, primary }} />

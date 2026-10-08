@@ -75,6 +75,10 @@ type Messages = {
   cartOrderSummary: string;
   cartSubtotal: string;
   cartDiscount: string;
+  cartShipping: string;
+  cartFree: string;
+  cartTaxesAtCheckout: string;
+  checkoutFreeShipping: string;
   cartTotal: string;
   cartPleaseWait: string;
   cartProceedCheckout: string;
@@ -211,6 +215,8 @@ type Messages = {
   ordersQuantity: string;
   ordersPrice: string;
   ordersDiscount: string;
+  ordersShipping: string;
+  ordersTaxes: string;
   ordersSubtotal: string;
   adminOrdersManagement: string;
   adminOrdersDescription: string;
@@ -357,6 +363,10 @@ export const MESSAGES: Record<Locale, Messages> = {
     cartOrderSummary: "Resumen del pedido",
     cartSubtotal: "Subtotal",
     cartDiscount: "Descuento",
+    cartShipping: "Envío",
+    cartFree: "Gratis",
+    cartTaxesAtCheckout: "Los impuestos se calculan al pagar",
+    checkoutFreeShipping: "Envío gratis",
     cartTotal: "Total",
     cartPleaseWait: "Por favor espera...",
     cartProceedCheckout: "Proceder al pago",
@@ -493,6 +503,8 @@ export const MESSAGES: Record<Locale, Messages> = {
     ordersQuantity: "Cantidad",
     ordersPrice: "Precio",
     ordersDiscount: "Descuento",
+    ordersShipping: "Envío",
+    ordersTaxes: "Impuestos",
     ordersSubtotal: "Subtotal",
     adminOrdersManagement: "Gestión de órdenes",
     adminOrdersDescription: "Visualiza y actualiza el estado de todos los pedidos realizados",
@@ -637,6 +649,10 @@ export const MESSAGES: Record<Locale, Messages> = {
     cartOrderSummary: "Order Summary",
     cartSubtotal: "Subtotal",
     cartDiscount: "Discount",
+    cartShipping: "Shipping",
+    cartFree: "Free",
+    cartTaxesAtCheckout: "Taxes are calculated at checkout",
+    checkoutFreeShipping: "Free shipping",
     cartTotal: "Total",
     cartPleaseWait: "Please wait...",
     cartProceedCheckout: "Proceed to Checkout",
@@ -773,6 +789,8 @@ export const MESSAGES: Record<Locale, Messages> = {
     ordersQuantity: "Quantity",
     ordersPrice: "Price",
     ordersDiscount: "Discount",
+    ordersShipping: "Shipping",
+    ordersTaxes: "Taxes",
     ordersSubtotal: "Subtotal",
     adminOrdersManagement: "Order Management",
     adminOrdersDescription: "View and update the status of all customer orders",

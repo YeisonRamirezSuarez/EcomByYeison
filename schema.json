@@ -290,6 +290,36 @@
         },
         "optional": true
       },
+      "checkout": {
+        "type": "objectAttribute",
+        "value": {
+          "type": "object",
+          "attributes": {
+            "shippingCost": {
+              "type": "objectAttribute",
+              "value": {
+                "type": "number"
+              },
+              "optional": true
+            },
+            "freeShippingFrom": {
+              "type": "objectAttribute",
+              "value": {
+                "type": "number"
+              },
+              "optional": true
+            },
+            "stripeTax": {
+              "type": "objectAttribute",
+              "value": {
+                "type": "boolean"
+              },
+              "optional": true
+            }
+          }
+        },
+        "optional": true
+      },
       "storeName": {
         "type": "objectAttribute",
         "value": {
@@ -3204,6 +3234,20 @@
         "optional": true
       },
       "amountDiscount": {
+        "type": "objectAttribute",
+        "value": {
+          "type": "number"
+        },
+        "optional": true
+      },
+      "amountShipping": {
+        "type": "objectAttribute",
+        "value": {
+          "type": "number"
+        },
+        "optional": true
+      },
+      "amountTax": {
         "type": "objectAttribute",
         "value": {
           "type": "number"

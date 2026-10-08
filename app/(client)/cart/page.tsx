@@ -27,7 +27,9 @@ import { getUserAddresses } from "@/actions/getUserAddresses";
 import AddAddressDialog from "@/components/AddAddressDialog";
 import { urlFor } from "@/sanity/lib/image";
 import useStore from "@/store";
-import { useLocale } from "@/components/StoreSettingsProvider";
+import { useCheckoutSettings, useCurrency, useLocale } from "@/components/StoreSettingsProvider";
+import { CURRENCIES } from "@/constants/currencies";
+import { shippingFor } from "@/lib/shipping";
 import { t } from "@/lib/i18n";
 import { productName } from "@/lib/localize";
 import { useAuth, useUser } from "@clerk/nextjs";
@@ -41,6 +43,11 @@ const CartPage = () => {
   const { deleteCartProduct, getTotalPrice, getItemCount, getSubTotalPrice, resetCart } = useStore();
 
   const locale = useLocale();
+  const checkout = useCheckoutSettings();
+  const currency = useCurrency();
+  // Same rule the checkout charges; taxes are only known once Stripe has the address.
+  const shipping = shippingFor(getTotalPrice(), checkout);
+  const taxesLater = checkout.stripeTax && CURRENCIES[currency].taxBehavior === "exclusive";
   const [loading, setLoading] = useState(false);
   const groupedItems = useStore((state) => state.getGroupedItems());
   const { isSignedIn } = useAuth();
@@ -231,14 +238,19 @@ const CartPage = () => {
                             amount={getSubTotalPrice() - getTotalPrice()}
                           />
                         </div>
+                        <div className="flex items-center justify-between">
+                          <span>{t(locale, "cartShipping")}</span>
+                          {shipping > 0 ? <PriceFormatter amount={shipping} /> : <span>{t(locale, "cartFree")}</span>}
+                        </div>
                         <Separator />
                         <div className="flex items-center justify-between font-semibold text-lg">
                           <span>{t(locale, "cartTotal")}</span>
                           <PriceFormatter
-                            amount={getTotalPrice()}
+                            amount={getTotalPrice() + shipping}
                             className="text-lg font-bold text-black"
                           />
                         </div>
+                        {taxesLater && <p className="text-xs text-gray-500">{t(locale, "cartTaxesAtCheckout")}</p>}
                         <Button
                           className="w-full rounded-full font-semibold tracking-wide hoverEffect"
                           size="lg"
@@ -313,14 +325,19 @@ const CartPage = () => {
                         amount={getSubTotalPrice() - getTotalPrice()}
                       />
                     </div>
+                    <div className="flex items-center justify-between text-sm text-gray-600">
+                      <span>{t(locale, "cartShipping")}</span>
+                      {shipping > 0 ? <PriceFormatter amount={shipping} /> : <span>{t(locale, "cartFree")}</span>}
+                    </div>
                     <Separator />
                     <div className="flex items-center justify-between font-semibold">
                       <span>{t(locale, "cartTotal")}</span>
                       <PriceFormatter
-                        amount={getTotalPrice()}
+                        amount={getTotalPrice() + shipping}
                         className="text-lg font-bold text-black"
                       />
                     </div>
+                    {taxesLater && <p className="text-xs text-gray-500">{t(locale, "cartTaxesAtCheckout")}</p>}
                     <Button
                       className="w-full rounded-full font-semibold tracking-wide hoverEffect"
                       size="lg"

@@ -12,7 +12,11 @@ import {
   type Role,
 } from "@/lib/permissions";
 import { NOT_AUTHORIZED, requirePermission } from "@/lib/roles";
-import { run, type ActionResult } from "@/lib/actionResult";
+import { ActionError, run, type ActionResult } from "@/lib/actionResult";
+import { tr } from "@/lib/adminText";
+import { getAdminLocale } from "@/lib/adminLocale";
+import { validateCheckoutSettings } from "@/lib/checkout";
+import { INVALID_FORM } from "@/lib/validation";
 import { backendClient } from "@/sanity/lib/backendClient";
 import { SITE_SETTINGS_DRAFT_ID, SITE_SETTINGS_ID, SITE_SETTINGS_TAG, hasAppearanceDraft } from "@/sanity/queries/siteSettings";
 
@@ -46,6 +50,32 @@ export async function saveCurrency(currency: string): Promise<ActionResult<null>
   });
 }
 
+// Shipping and taxes. Turning Stripe Tax on is refused until it is active in the store's Stripe
+// account: otherwise every checkout would fail.
+export async function saveCheckoutSettings(input: unknown): Promise<ActionResult<null>> {
+  const allowed = await run(() => requirePermission("configurar"));
+  if (!allowed.ok) return allowed;
+  const ui = await getAdminLocale();
+  const checked = validateCheckoutSettings(input, ui);
+  if (!checked.ok) return { ok: false, error: tr(ui, INVALID_FORM), errors: checked.errors };
+  return run(async () => {
+    if (checked.value.stripeTax) {
+      // Lazy: lib/stripe throws at import when STRIPE_SECRET_KEY is missing.
+      const { default: stripe } = await import("@/lib/stripe");
+      const status = await stripe.tax.settings.retrieve().then((s) => s.status, () => null);
+      if (status !== "active") throw new ActionError("Stripe Tax no está activo en tu cuenta de Stripe. Actívalo en el panel de Stripe (Impuestos) y vuelve a intentar.");
+    }
+    const fields = { checkout: checked.value };
+    const tx = backendClient
+      .transaction()
+      .createIfNotExists({ _id: SITE_SETTINGS_ID, _type: "siteSettings" })
+      .patch(SITE_SETTINGS_ID, { set: fields });
+    if (await hasAppearanceDraft()) tx.patch(SITE_SETTINGS_DRAFT_ID, { set: fields });
+    await tx.commit();
+    updateTag(SITE_SETTINGS_TAG);
+    return null;
+  });
+}
 // Saved like the currency (not through the appearance draft). Also copied onto the draft when
 // there is one, so the appearance editor and its preview see the new languages.
 export async function saveLanguages(choice: string, primary: string): Promise<ActionResult<null>> {
