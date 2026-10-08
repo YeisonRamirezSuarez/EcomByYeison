@@ -5,6 +5,8 @@ import useStore from "@/store";
 import { Heart } from "lucide-react";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
+import { useLocale } from "@/components/StoreSettingsProvider";
+import { t } from "@/lib/i18n";
 
 const ProductSideMenu = ({
   product,
@@ -14,6 +16,7 @@ const ProductSideMenu = ({
   className?: string;
 }) => {
   const { favoriteProduct, addToFavorite } = useStore();
+  const locale = useLocale();
   const [existingProduct, setExistingProduct] = useState<Product | null>(null);
   useEffect(() => {
     const availableProduct = favoriteProduct?.find(
@@ -27,8 +30,8 @@ const ProductSideMenu = ({
       addToFavorite(product).then(() => {
         toast.success(
           existingProduct
-            ? "Product removed successfully!"
-            : "Product added successfully!"
+            ? t(locale, "wishlistRemoveSuccess")
+            : t(locale, "wishlistAddSuccess")
         );
       });
     }

@@ -71,7 +71,7 @@ const WishListProducts = () => {
                           size={18}
                           className="hover:text-red-600 hover:cursor-pointer hoverEffect"
                         />
-                        {product?.images && (
+                        {product?.images?.[0] && (
                           <Link
                             href={`/product/${product?.slug?.current}`}
                             className="border rounded-md group hidden md:inline-flex"

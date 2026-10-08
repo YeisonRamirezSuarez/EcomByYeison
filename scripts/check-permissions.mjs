@@ -1222,4 +1222,29 @@ assert.equal(ck.checkoutLines([{ id: "p1", quantity: 1 }], [{ ...SERVER[0], pric
   assert.deepEqual(lz.localizeEmailProducts([{ name: "Parlante", nameEn: "Speaker" }, { name: "Mesa" }], "en").map((p) => p.name), ["Speaker", "Mesa"]);
 }
 
+// Order emails: customer, product and store names are escaped in the HTML, never in the subject
+{
+  const oe = await import("../lib/orderEmail.ts");
+  const brand = { storeName: "Tienda & Co", theme: { primary: "#111111", light: "#222222", accent: "#333333", bg: "#444444" } };
+  const confirm = oe.orderConfirmationEmail({
+    brand,
+    customerName: '<a href="https://malo.co">Gana</a>',
+    orderNumber: "A1",
+    total: "$ 10",
+    products: [{ name: "Mesa <b>", quantity: 1, price: "$ 10", image: 'https://cdn.sanity.io/x.png" onerror="x' }],
+    locale: "es",
+  });
+  assert.ok(!confirm.html.includes('<a href="https://malo.co">'));
+  assert.ok(confirm.html.includes("Hola &lt;a href=&quot;https://malo.co&quot;&gt;Gana&lt;/a&gt;,"));
+  assert.ok(confirm.html.includes("Mesa &lt;b&gt;"));
+  assert.ok(!confirm.html.includes('" onerror="x'));
+  assert.ok(confirm.html.includes("Tienda &amp; Co"));
+  assert.equal(confirm.subject, "Confirmación de Pedido #A1 - Tienda & Co");
+
+  const invoice = oe.invoiceEmail({ brand, customerName: "<i>Ana</i>", orderNumber: "A1", invoiceUrl: "https://pay.stripe.com/i", invoiceNumber: "F-1", locale: "en" });
+  assert.ok(invoice.html.includes("Hi &lt;i&gt;Ana&lt;/i&gt;,"));
+  assert.ok(invoice.html.includes("Thank you for choosing Tienda &amp; Co."));
+  assert.equal(invoice.subject, "Invoice for order #A1 - Tienda & Co");
+}
+
 console.log("check-permissions: ok");

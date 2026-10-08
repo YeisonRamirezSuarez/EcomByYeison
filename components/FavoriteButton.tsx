@@ -5,6 +5,8 @@ import { Heart } from "lucide-react";
 import Link from "next/link";
 import React, { useEffect, useState } from "react";
 import toast from "react-hot-toast";
+import { useLocale } from "@/components/StoreSettingsProvider";
+import { t } from "@/lib/i18n";
 
 const FavoriteButton = ({
   showProduct = false,
@@ -14,6 +16,7 @@ const FavoriteButton = ({
   product?: Product | null | undefined;
 }) => {
   const { favoriteProduct, addToFavorite } = useStore();
+  const locale = useLocale();
   const [existingProduct, setExistingProduct] = useState<Product | null>(null);
   useEffect(() => {
     const availableItem = favoriteProduct.find(
@@ -28,8 +31,8 @@ const FavoriteButton = ({
       addToFavorite(product).then(() => {
         toast.success(
           existingProduct
-            ? "Product removed successfully!"
-            : "Product added successfully!"
+            ? t(locale, "wishlistRemoveSuccess")
+            : t(locale, "wishlistAddSuccess")
         );
       });
     }

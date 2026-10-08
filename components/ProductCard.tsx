@@ -23,7 +23,7 @@ const ProductCard = ({ product }: { product: Product }) => {
     >
       {/* Image area */}
       <div className="relative bg-shop_light_bg overflow-hidden h-52 rounded-t-2xl">
-        {product?.images ? (
+        {product?.images?.[0] ? (
           <Link href={`/product/${product?.slug?.current}`}>
             <Image
               src={urlFor(product.images[0]).url()}

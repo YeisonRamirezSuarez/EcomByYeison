@@ -11,7 +11,7 @@ const ProductTabsSection = async ({ title }: { title: string }) => {
   return (
     <>
       {title && <SectionTitle className="mt-10">{title}</SectionTitle>}
-      <ProductGrid initialProducts={initialProducts} initialTab={productType[0]?.title} />
+      <ProductGrid initialProducts={initialProducts} initialTab={productType[0]?.value} />
     </>
   );
 };

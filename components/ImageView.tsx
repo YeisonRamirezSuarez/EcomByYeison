@@ -7,6 +7,7 @@ import {
 import { urlFor } from "@/sanity/lib/image";
 import { AnimatePresence, motion } from "motion/react";
 import Image from "next/image";
+import { ShoppingBag } from "lucide-react";
 import React, { useState } from "react";
 
 interface Props {
@@ -26,7 +27,7 @@ interface Props {
 }
 
 const ImageView = ({ images = [], isStock }: Props) => {
-  const [active, setActive] = useState(images[0]);
+  const [active, setActive] = useState(images?.[0]);
   console.log(active);
 
   return (
@@ -40,17 +41,23 @@ const ImageView = ({ images = [], isStock }: Props) => {
           transition={{ duration: 0.5 }}
           className="w-full max-h-[550px] min-h-[450px] border border-darkColor/10 rounded-md group overflow-hidden"
         >
-          <Image
-            src={urlFor(active).url()}
-            alt="productImage"
-            width={700}
-            height={700}
-            priority
-            sizes="(max-width: 768px) 100vw, 50vw"
-            className={`w-full h-96 max-h-[550px] min-h-[500px] object-contain group-hover:scale-110 hoverEffect rounded-md ${
-              isStock === 0 ? "opacity-50" : ""
-            }`}
-          />
+          {active ? (
+            <Image
+              src={urlFor(active).url()}
+              alt="productImage"
+              width={700}
+              height={700}
+              priority
+              sizes="(max-width: 768px) 100vw, 50vw"
+              className={`w-full h-96 max-h-[550px] min-h-[500px] object-contain group-hover:scale-110 hoverEffect rounded-md ${
+                isStock === 0 ? "opacity-50" : ""
+              }`}
+            />
+          ) : (
+            <div className="w-full min-h-[450px] flex items-center justify-center">
+              <ShoppingBag className="text-gray-300" size={64} />
+            </div>
+          )}
         </motion.div>
       </AnimatePresence>
       <div className="grid grid-cols-6 gap-2 h-20 md:h-24">

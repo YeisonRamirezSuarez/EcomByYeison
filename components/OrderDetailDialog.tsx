@@ -84,7 +84,7 @@ const OrderDetailDialog: React.FC<OrderDetailsDialogProps> = ({
           {order.products?.map((product, index) => (
             <div key={index} className="rounded-xl border border-gray-200 p-3">
               <div className="flex items-start gap-3">
-                {product?.product?.images && (
+                {product?.product?.images?.[0] && (
                   <Image
                     src={urlFor(product?.product?.images[0]).url()}
                     alt="productImage"
@@ -122,7 +122,7 @@ const OrderDetailDialog: React.FC<OrderDetailsDialogProps> = ({
               {order.products?.map((product, index) => (
                 <TableRow key={index}>
                   <TableCell className="flex items-center gap-2">
-                    {product?.product?.images && (
+                    {product?.product?.images?.[0] && (
                       <Image
                         src={urlFor(product?.product?.images[0]).url()}
                         alt="productImage"

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import ProductCard from "./ProductCard";
 import { motion, AnimatePresence } from "motion/react";
 import { client } from "@/sanity/lib/client";
@@ -22,7 +22,7 @@ interface ProductGridProps {
 const ProductGrid = ({ initialProducts = [], initialTab }: ProductGridProps) => {
   const locale = useLocale();
   const productType = getProductType(locale);
-  const defaultTab = initialTab || productType[0]?.title || "";
+  const defaultTab = initialTab || productType[0]?.value || "";
   const [products, setProducts] = useState<Product[]>(initialProducts);
   const [loading, setLoading] = useState(false);
   const [selectedTab, setSelectedTab] = useState(defaultTab);
@@ -30,26 +30,26 @@ const ProductGrid = ({ initialProducts = [], initialTab }: ProductGridProps) => 
   ...,"categories": categories[]->{ title, titleEn }
 }`;
 
-  useEffect(() => {
+  const selectTab = async (tab: string) => {
+    setSelectedTab(tab);
     // Si ya tenemos datos iniciales para este tab, no re-fetchear
-    if (selectedTab === defaultTab && initialProducts.length > 0) return;
-    const fetchData = async () => {
-      setLoading(true);
-      try {
-        const response = await client.fetch(query, { variant: selectedTab.toLowerCase() });
-        setProducts(response);
-      } catch (error) {
-        console.log("Product fetching Error", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
-  }, [selectedTab]);
+    if (tab === defaultTab && initialProducts.length > 0) {
+      setProducts(initialProducts);
+      return;
+    }
+    setLoading(true);
+    try {
+      setProducts(await client.fetch(query, { variant: tab }));
+    } catch (error) {
+      console.log("Product fetching Error", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <Container className="flex flex-col lg:px-0 my-10">
-      <HomeTabbar selectedTab={selectedTab} onTabSelect={setSelectedTab} />
+      <HomeTabbar selectedTab={selectedTab} onTabSelect={selectTab} />
       {loading ? (
         <div className="flex flex-col items-center justify-center py-10 min-h-80 space-y-4 text-center bg-gray-100 rounded-lg w-full mt-10">
           <motion.div className="flex items-center space-x-2 text-blue-600">
@@ -75,7 +75,7 @@ const ProductGrid = ({ initialProducts = [], initialTab }: ProductGridProps) => 
           </>
         </div>
       ) : (
-        <NoProductAvailable selectedTab={selectedTab} />
+        <NoProductAvailable selectedTab={productType.find((type) => type.value === selectedTab)?.title} />
       )}
     </Container>
   );

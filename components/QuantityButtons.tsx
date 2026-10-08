@@ -7,6 +7,7 @@ import { Minus, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import toast from "react-hot-toast";
 import { t } from "@/lib/i18n";
+import { productName } from "@/lib/localize";
 
 interface Props {
   product: Product;
@@ -24,7 +25,7 @@ const QuantityButtons = ({ product, className }: Props) => {
     if (itemCount > 1) {
       toast.success(t(locale, "quantityDecreased"));
     } else {
-      toast.success(t(locale, "productRemovedFromCart"));
+      toast.success(t(locale, "productRemovedFromCart", { name: productName(product, locale) }));
     }
   };
 

@@ -28,9 +28,7 @@ const SingleProductPage = async ({
   }
   return (
     <Container className="flex flex-col md:flex-row gap-10 py-10">
-      {product?.images && (
-        <ImageView images={product?.images} isStock={product?.stock} />
-      )}
+      <ImageView images={product?.images} isStock={product?.stock} />
       <div className="w-full md:w-1/2 flex flex-col gap-5">
         <div className="space-y-1">
           <h2 className="text-2xl font-bold">{product?.name}</h2>

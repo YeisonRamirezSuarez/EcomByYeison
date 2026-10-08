@@ -175,6 +175,7 @@ type Messages = {
   wishlistConfirmReset: string;
   wishlistResetSuccess: string;
   wishlistRemoveSuccess: string;
+  wishlistAddSuccess: string;
   wishlistTableImage: string;
   wishlistTableCategory: string;
   wishlistTableType: string;
@@ -351,7 +352,7 @@ export const MESSAGES: Record<Locale, Messages> = {
     productCollection: "Colección:",
     productType: "Tipo:",
     productStock: "Stock:",
-    productRemovedFromCart: "Producto eliminado del carrito",
+    productRemovedFromCart: "{name} eliminado del carrito",
     cartResetButton: "Vaciar carrito",
     cartOrderSummary: "Resumen del pedido",
     cartSubtotal: "Subtotal",
@@ -456,6 +457,7 @@ export const MESSAGES: Record<Locale, Messages> = {
     wishlistConfirmReset: "¿Seguro que deseas vaciar tu lista de deseos?",
     wishlistResetSuccess: "¡Lista de deseos vaciada!",
     wishlistRemoveSuccess: "¡Producto removido de la lista!",
+    wishlistAddSuccess: "¡Producto agregado a la lista!",
     wishlistTableImage: "Imagen",
     wishlistTableCategory: "Categoría",
     wishlistTableType: "Tipo",
@@ -630,7 +632,7 @@ export const MESSAGES: Record<Locale, Messages> = {
     productCollection: "Collection:",
     productType: "Type:",
     productStock: "Stock:",
-    productRemovedFromCart: "Product removed from cart",
+    productRemovedFromCart: "{name} removed from cart",
     cartResetButton: "Reset Cart",
     cartOrderSummary: "Order Summary",
     cartSubtotal: "Subtotal",
@@ -735,6 +737,7 @@ export const MESSAGES: Record<Locale, Messages> = {
     wishlistConfirmReset: "Are you sure you want to clear your wishlist?",
     wishlistResetSuccess: "Wishlist cleared successfully!",
     wishlistRemoveSuccess: "Product removed from wishlist!",
+    wishlistAddSuccess: "Product added to wishlist!",
     wishlistTableImage: "Image",
     wishlistTableCategory: "Category",
     wishlistTableType: "Type",

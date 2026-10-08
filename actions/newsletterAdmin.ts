@@ -223,7 +223,10 @@ async function createDraft(content: CampaignContent): Promise<string> {
 export async function createCampaign(): Promise<ActionResult<{ id: string }>> {
   return run(async () => {
     await requirePermission("configurar");
-    return { id: await createDraft(EMPTY_CAMPAIGN) };
+    // Fixed at creation, so a later change of the store's main language never switches an
+    // already-written campaign to the other language.
+    const { primary } = await getSiteSettings();
+    return { id: await createDraft({ ...EMPTY_CAMPAIGN, language: primary }) };
   });
 }
 
