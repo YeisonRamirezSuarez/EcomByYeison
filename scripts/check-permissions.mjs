@@ -1296,4 +1296,36 @@ assert.equal(ck.checkoutLines([{ id: "p1", quantity: 1 }], [{ ...SERVER[0], pric
   assert.equal(invoice.subject, "Invoice for order #A1 - Tienda & Co");
 }
 
+// Admin panel texts (lib/adminText): the Spanish text is the key, the area maps give the English
+{
+  const at = await import("../lib/adminText/index.ts");
+  assert.equal(at.tr("es", "Administración"), "Administración");
+  assert.equal(at.tr("en", "Administración"), "Admin");
+  assert.equal(at.tr("es", "Máximo {max} caracteres", { max: 60 }), "Máximo 60 caracteres");
+  assert.equal(at.tr("en", "Máximo {max} caracteres", { max: 60 }), "Up to 60 characters");
+  assert.equal(at.tr("en", "Máximo {max} caracteres"), "Up to {max} characters"); // no vars: left as is
+
+  // Panel language: the cookie if valid, else the store's main language
+  assert.equal(at.ADMIN_LOCALE_COOKIE, "admin-locale");
+  assert.equal(at.pickAdminLocale("en", "es"), "en");
+  assert.equal(at.pickAdminLocale("es", "en"), "es");
+  assert.equal(at.pickAdminLocale("fr", "en"), "en");
+  assert.equal(at.pickAdminLocale("", "es"), "es");
+  assert.equal(at.pickAdminLocale(undefined, "en"), "en");
+  assert.equal(at.dateLocale("en"), "en-US");
+  assert.equal(at.dateLocale("es"), "es");
+
+  // Every map: English present, same {variables}, and one translation per Spanish text
+  const vars = (s) => [...s.matchAll(/\{(\w+)\}/g)].map((m) => m[1]).sort().join(",");
+  const seen = new Map();
+  for (const [area, map] of Object.entries(at.AREAS)) {
+    for (const [es, en] of Object.entries(map)) {
+      assert.ok(typeof en === "string" && en.trim().length > 0, `${area}: "${es}" has no English`);
+      assert.equal(vars(en), vars(es), `${area}: "${es}" must keep its {variables}`);
+      if (seen.has(es)) assert.equal(seen.get(es), en, `"${es}" is translated differently in two areas`);
+      seen.set(es, en);
+    }
+  }
+}
+
 console.log("check-permissions: ok");

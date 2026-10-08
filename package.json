@@ -10,6 +10,7 @@
     "lint": "eslint .",
     "typegen": "sanity schema extract && sanity typegen generate",
     "check:permissions": "node --experimental-strip-types scripts/check-permissions.mjs",
+    "check:admin-text": "node scripts/check-admin-text.mjs",
     "seed:yeison": "node --env-file=.env.local scripts/seed-ecom-by-yeison.mjs"
   },
   "dependencies": {
