@@ -52,10 +52,10 @@ Las direcciones de hoy no cambian; dejan de ser archivos fijos y pasan a ser rut
 
 - Fondo: `bg` del tema (`THEMES[theme].bg`), el mismo `background_color` del manifiesto. El caso "inicial" usa `primary` de fondo.
 - Tamaño de la marca: cerca del 80 % del lado en los íconos normales; cerca del 60 % en el maskable (zona segura de Android); centrada y pequeña en las pantallas de inicio.
-- El logo se pide al CDN de Sanity ya convertido a PNG del tamaño justo (`fm=png`, `w`), así da igual si es JPG, WebP o SVG. **A verificar en el plan:** que Sanity rasterice un SVG con `fm=png`. Si no lo hace, ese caso cae a la inicial.
+- El logo se pide al CDN de Sanity ya convertido a PNG del tamaño justo (`fm=png`, `w`), así da igual si es JPG o WebP. La documentación de Sanity no promete convertir SVG: si Sanity devuelve el SVG sin convertir, se dibuja tal cual; si no se puede dibujar, se usa la inicial.
 - La regla de elección (qué marca usar y qué tamaños de splash son válidos) vive en una función pura, separada del dibujo, para poder probarla.
 
-**Caché:** los ajustes se leen con `getSiteSettings()`, que ya usa la etiqueta `SITE_SETTINGS_TAG`. Al publicar la apariencia o la marca, `updateTag` ya la invalida y los íconos se regeneran. Cada logo nuevo tiene una URL nueva en Sanity, así que la imagen descargada se puede guardar en caché por URL.
+**Caché:** las rutas son dinámicas (`getSiteSettings()` lee una cabecera). Los ajustes salen de la caché de datos con la etiqueta `SITE_SETTINGS_TAG`, que `updateTag` ya invalida al publicar; el logo se descarga con `cache: "force-cache"` (cada logo nuevo tiene una URL nueva en Sanity). La respuesta lleva `Cache-Control: public, max-age=3600, s-maxage=3600`, así que un logo nuevo aparece en los íconos en máximo una hora.
 
 **Errores:** si Sanity falla o el logo no carga o no se puede dibujar, la ruta dibuja la inicial. La tienda nunca se queda sin ícono.
 
@@ -68,7 +68,7 @@ Las direcciones de hoy no cambian; dejan de ser archivos fijos y pasan a ser rut
 ## 2. Scripts
 
 **Reglas comunes:**
-- Cada script recibe como argumento la ruta al archivo de variables del cliente; sin argumento usa `.env.local`. Se carga con `process.loadEnvFile` (Node 22). Los archivos `.env*` ya están en `.gitignore`.
+- Cada script recibe como argumento la ruta al archivo de variables del cliente; sin argumento usa `.env.local`. Se lee con `parseEnv` de `node:util` (Node 22), sin mezclarlo con las variables de la terminal. Los archivos `.env*` ya están en `.gitignore`.
 - Nunca imprimen claves: solo el nombre de la variable que falta o está mal. Única excepción: el secreto del webhook, que se muestra una vez.
 - Sin dependencias nuevas: `fetch` de Node y `stripe` (ya instalado).
 - Se agregan a `package.json`: `check:env`, `make:superadmin`, `stripe:webhook`.
@@ -81,7 +81,7 @@ Sin conexión revisa:
 - `STRIPE_WEBHOOK_SECRET` empieza por `whsec_`.
 - `NEXT_PUBLIC_BASE_URL` empieza por `https://` (se permite `http://localhost`) y no termina en `/`.
 - `EMAIL_ENCRYPTION_KEY` tiene al menos 32 caracteres. (El código la pasa por SHA-256, así que sirve cualquier texto; el mínimo es para que no sea débil.)
-- `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM_EMAIL`: todas o ninguna.
+- Correo por variables, como lo usa `lib/mailer.ts`: con `SMTP_HOST` hacen falta `SMTP_USER` y `SMTP_PASSWORD` (`SMTP_PORT`, por defecto 587, y `SMTP_FROM_EMAIL`, por defecto `SMTP_USER`, son opcionales); sin `SMTP_HOST` las demás `SMTP_*` no se usan y se marcan como error.
 
 Con `--online`, además, solo lecturas:
 - Sanity responde a una consulta con `SANITY_API_TOKEN` y con `SANITY_API_READ_TOKEN`.
@@ -113,7 +113,7 @@ Termina con código de salida distinto de 0 si algo falla. La lógica de las reg
 - Se crea desde `master` y se sube a GitHub (con aprobación del dueño del repo en ese paso).
 - Entregar a todas las tiendas: `git push origin master:production`. Cada proyecto de Vercel se reconstruye solo.
 - Volver atrás en una tienda: "Instant Rollback" de Vercel al despliegue anterior, sin tocar git.
-- `vercel.json` con `ignoreCommand` para que los proyectos no construyan vistas previas (`VERCEL_ENV = preview`). Motivo: una vista previa de `master` usaría las claves y los datos reales del cliente con código no entregado, y gasta minutos de compilación. **A verificar en el plan:** que `VERCEL_ENV` esté disponible en el "Ignored Build Step". Si no lo está, se quita `vercel.json` y la guía lo explica como ajuste manual del proyecto.
+- `vercel.json` con `ignoreCommand` para que los proyectos no construyan vistas previas (`VERCEL_ENV = preview`). Motivo: una vista previa de `master` usaría las claves y los datos reales del cliente con código no entregado, y gasta minutos de compilación. La documentación de Vercel confirma que el "Ignored Build Step" ve `VERCEL_ENV` (su opción "Only build production" usa esa variable). Una compilación cancelada cuenta igual en la cuota de despliegues de Vercel.
 
 ## 4. Guía `docs/despliegue-cliente.md`
 
@@ -123,9 +123,9 @@ En español, para el dueño del repo. Secciones, en orden:
 1. **Sanity:** crear el proyecto y el dataset `production`; agregar el dominio en CORS con credenciales (para `/studio`); dos tokens: Editor → `SANITY_API_TOKEN`, Viewer → `SANITY_API_READ_TOKEN`.
 2. **Clerk:** crear la aplicación y su instancia de producción; agregar los registros DNS que muestra Clerk y esperar la verificación; copiar `pk_live_`/`sk_live_`; `NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in` y `NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up`.
 3. **Stripe:** cuenta del cliente; empezar con claves de prueba.
-4. **Archivo `.env.<cliente>`:** de dónde sale cada variable; comando para generar `EMAIL_ENCRYPTION_KEY` con el aviso de no cambiarla después (la contraseña SMTP guardada se vuelve ilegible y los enlaces de baja enviados dejan de funcionar); las `NEXT_PUBLIC_*` se fijan al compilar y un cambio exige volver a desplegar; `SMTP_*` opcionales (el dueño también puede configurar el correo en Ajustes → Correo); correr `check:env`.
+4. **Archivo `.env.<cliente>`:** de dónde sale cada variable; comando para generar `EMAIL_ENCRYPTION_KEY` con el aviso de no cambiarla después (la contraseña SMTP guardada se vuelve ilegible y los enlaces de baja enviados dejan de funcionar); las `NEXT_PUBLIC_*` se fijan al compilar y un cambio exige volver a desplegar; `SMTP_*` opcionales (el dueño también puede configurar el correo en Ajustes → Correo); correr `stripe:webhook` (solo necesita la clave de Stripe y el dominio) y copiar el secreto al archivo; correr `check:env`.
 5. **Vercel:** proyecto nuevo desde el mismo repo de GitHub; rama de producción `production`; pegar las variables; agregar el dominio y sus registros DNS; desplegar.
-6. **Después del despliegue:** `stripe:webhook` y copiar el secreto a Vercel (y volver a desplegar); el dueño se registra en la tienda y se corre `make:superadmin`; `check:env --online`.
+6. **Después del despliegue:** el dueño se registra en la tienda y se corre `make:superadmin`; `check:env --online`.
 7. **Prueba de compra en modo test** con la tarjeta `4242 4242 4242 4242`: el pedido aparece en el panel y llega el correo.
 8. **Pasar a real:** claves `live` de Stripe en Vercel, `stripe:webhook` otra vez y el secreto nuevo en Vercel, volver a desplegar, `check:env --online`.
 9. **Lista final** de verificación (casillas).
