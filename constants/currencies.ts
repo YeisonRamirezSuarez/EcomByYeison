@@ -1,8 +1,9 @@
-// Store currencies. No imports: also run by scripts/check-permissions.mjs.
+// Store currencies. Type-only imports: also run by scripts/check-permissions.mjs.
 // A store has one currency; changing it does not convert product prices.
+import type { AdminText } from "../lib/adminText/index.ts";
 
 type Currency = {
-  name: string;
+  name: AdminText;
   locale: string;
   decimals: number;
   freeShippingFrom: number;

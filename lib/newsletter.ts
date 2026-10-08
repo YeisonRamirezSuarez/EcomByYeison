@@ -1,9 +1,9 @@
 // Newsletter rules shared by the admin panel (browser) and server actions: SMTP settings,
-// subscribers, CSV import/export, campaigns and sending. Pure: only type imports, so
+// subscribers, CSV import/export, campaigns and sending. Pure: only type imports (and ./adminText), so
 // scripts/check-permissions.mjs can run it.
 import type { Cta, ImageValue } from "./brand";
 import type { ValidationResult } from "./validation";
-import type { AdminText } from "./adminText/index.ts";
+import { tr, type AdminText } from "./adminText/index.ts";
 import type { Locale } from "./i18n";
 
 export const BATCH_SIZE = 20;
@@ -100,10 +100,10 @@ export function failuresPatch(known: number, added: CampaignFailure[]) {
 export type SendReadiness = { smtpReady: boolean; smtpUnreadable?: boolean; keyReady: boolean; baseUrl: string; address: string; activeCount: number };
 
 type Errors = Record<string, string>;
-const REQUIRED = "Campo obligatorio";
-const EMAIL_ERROR = "Ingresa un correo válido";
-const HREF_ERROR = "Usa una ruta que empiece por / o un enlace https://";
-const tooLong = (max: number) => `Máximo ${max} caracteres`;
+const REQUIRED = (ui: Locale) => tr(ui, "Campo obligatorio");
+const EMAIL_ERROR = (ui: Locale) => tr(ui, "Ingresa un correo válido");
+const HREF_ERROR = (ui: Locale) => tr(ui, "Usa una ruta que empiece por / o un enlace https://");
+const tooLong = (max: number, ui: Locale) => tr(ui, "Máximo {max} caracteres", { max });
 const ASSET_ID = /^image-[a-zA-Z0-9]+-\d+x\d+-[a-z0-9]+$/;
 const DOC_ID = /^[a-zA-Z0-9_-]{1,100}$/;
 const SUBSCRIBER_ID = /^subscriber\.[a-f0-9]{32}$/;
@@ -139,40 +139,40 @@ export function isValidHref(value: unknown): boolean {
 export const isSubscriberId = (value: unknown): value is string => typeof value === "string" && SUBSCRIBER_ID.test(value);
 export const isCampaignId = (value: unknown): value is string => typeof value === "string" && CAMPAIGN_ID.test(value);
 
-function text(errors: Errors, key: string, value: unknown, max: number, required = false): string {
+function text(errors: Errors, key: string, value: unknown, max: number, required = false, ui: Locale = "es"): string {
   const s = typeof value === "string" ? value.trim() : "";
-  if (s.length > max) errors[key] = tooLong(max);
-  else if (required && !s) errors[key] = REQUIRED;
+  if (s.length > max) errors[key] = tooLong(max, ui);
+  else if (required && !s) errors[key] = REQUIRED(ui);
   return s;
 }
 
-function int(errors: Errors, key: string, value: unknown, min: number, max: number, fallback: number): number {
+function int(errors: Errors, key: string, value: unknown, min: number, max: number, fallback: number, ui: Locale = "es"): number {
   if (value === undefined || value === null || value === "") return fallback;
   // Plain digits only: Number() would also take "1e3" or "0x10".
   const n = typeof value === "string" ? (/^\d+$/.test(value.trim()) ? Number(value) : NaN) : value;
   if (typeof n === "number" && Number.isInteger(n) && n >= min && n <= max) return n;
-  errors[key] = `Elige un número entre ${min} y ${max}`;
+  errors[key] = tr(ui, "Elige un número entre {min} y {max}", { min, max });
   return fallback;
 }
 
-export function validateSmtpSettings(input: unknown, { hasStoredPassword }: { hasStoredPassword: boolean }): ValidationResult<SmtpForm> {
+export function validateSmtpSettings(input: unknown, { hasStoredPassword }: { hasStoredPassword: boolean }, ui: Locale = "es"): ValidationResult<SmtpForm> {
   const v = asObject(input);
   const errors: Errors = {};
-  const host = text(errors, "host", v.host, 200, true);
-  if (host && /\s/.test(host)) errors.host = "Servidor inválido";
-  const port = int(errors, "port", v.port, 1, 65535, 587);
+  const host = text(errors, "host", v.host, 200, true, ui);
+  if (host && /\s/.test(host)) errors.host = tr(ui, "Servidor inválido");
+  const port = int(errors, "port", v.port, 1, 65535, 587, ui);
   const security: SmtpSecurity =
     typeof v.security === "string" && Object.hasOwn(SMTP_SECURITY, v.security) ? (v.security as SmtpSecurity) : "starttls";
-  const user = text(errors, "user", v.user, 200);
+  const user = text(errors, "user", v.user, 200, false, ui);
   const password = typeof v.password === "string" ? v.password : "";
-  if (password.length > 500) errors.password = tooLong(500);
-  else if (user && !password && !hasStoredPassword) errors.password = "Escribe la contraseña";
-  const fromName = text(errors, "fromName", v.fromName, 80);
-  const fromEmail = text(errors, "fromEmail", v.fromEmail, 254, true).toLowerCase();
-  if (fromEmail && !isEmail(fromEmail)) errors.fromEmail = EMAIL_ERROR;
-  const replyTo = text(errors, "replyTo", v.replyTo, 254).toLowerCase();
-  if (replyTo && !isEmail(replyTo)) errors.replyTo = EMAIL_ERROR;
-  const dailyLimit = int(errors, "dailyLimit", v.dailyLimit, 1, 100000, DEFAULT_DAILY_LIMIT);
+  if (password.length > 500) errors.password = tooLong(500, ui);
+  else if (user && !password && !hasStoredPassword) errors.password = tr(ui, "Escribe la contraseña");
+  const fromName = text(errors, "fromName", v.fromName, 80, false, ui);
+  const fromEmail = text(errors, "fromEmail", v.fromEmail, 254, true, ui).toLowerCase();
+  if (fromEmail && !isEmail(fromEmail)) errors.fromEmail = EMAIL_ERROR(ui);
+  const replyTo = text(errors, "replyTo", v.replyTo, 254, false, ui).toLowerCase();
+  if (replyTo && !isEmail(replyTo)) errors.replyTo = EMAIL_ERROR(ui);
+  const dailyLimit = int(errors, "dailyLimit", v.dailyLimit, 1, 100000, DEFAULT_DAILY_LIMIT, ui);
   return result(errors, { host, port, security, user, password, fromName, fromEmail, replyTo, dailyLimit });
 }
 
@@ -187,7 +187,7 @@ export function validateCampaign(input: unknown): ValidationResult<CampaignConte
   const b = asObject(v.button);
   const label = text(errors, "button.label", b.label, 30);
   const href = text(errors, "button.href", b.href, 200);
-  if (href && !errors["button.href"] && !isValidHref(href)) errors["button.href"] = HREF_ERROR;
+  if (href && !errors["button.href"] && !isValidHref(href)) errors["button.href"] = HREF_ERROR("es");
   let image: ImageValue | null = null;
   if (v.image !== null && v.image !== undefined) {
     const i = asObject(v.image);
@@ -360,16 +360,16 @@ export function isRecipientError(error: SmtpErrorInfo): boolean {
   return response >= 500 && response < 600;
 }
 
-export function smtpErrorMessage(error: SmtpErrorInfo): string {
+export function smtpErrorMessage(error: SmtpErrorInfo, ui: Locale = "es"): string {
   const { code, response, command } = errorParts(error);
-  if (code === "EAUTH" || response === 535) return "Usuario o contraseña incorrectos. Si usas Gmail, usa una contraseña de aplicación.";
-  if (code === "ETIMEDOUT") return "El servidor no respondió a tiempo. Revisa el servidor y el puerto.";
-  if (code === "ETLS") return "Falló la conexión segura. Prueba con otra opción de seguridad (STARTTLS o SSL).";
-  if (code === "ECONNECTION" || code === "EDNS" || code === "ESOCKET") return "No se pudo conectar al servidor. Revisa el servidor, el puerto y la seguridad.";
-  if (command.startsWith("MAIL FROM")) return "El servidor rechazó el remitente. Usa un correo de remitente permitido por ese servidor.";
-  if (response >= 400 && response < 500) return "El servidor pidió esperar (puede ser un límite de envío). Intenta más tarde.";
-  if (response >= 500) return "El servidor rechazó este correo.";
-  return "No se pudo enviar el correo.";
+  if (code === "EAUTH" || response === 535) return tr(ui, "Usuario o contraseña incorrectos. Si usas Gmail, usa una contraseña de aplicación.");
+  if (code === "ETIMEDOUT") return tr(ui, "El servidor no respondió a tiempo. Revisa el servidor y el puerto.");
+  if (code === "ETLS") return tr(ui, "Falló la conexión segura. Prueba con otra opción de seguridad (STARTTLS o SSL).");
+  if (code === "ECONNECTION" || code === "EDNS" || code === "ESOCKET") return tr(ui, "No se pudo conectar al servidor. Revisa el servidor, el puerto y la seguridad.");
+  if (command.startsWith("MAIL FROM")) return tr(ui, "El servidor rechazó el remitente. Usa un correo de remitente permitido por ese servidor.");
+  if (response >= 400 && response < 500) return tr(ui, "El servidor pidió esperar (puede ser un límite de envío). Intenta más tarde.");
+  if (response >= 500) return tr(ui, "El servidor rechazó este correo.");
+  return tr(ui, "No se pudo enviar el correo.");
 }
 
 export const errorDetail = (error: unknown): string => (error instanceof Error ? error.message : String(error)).slice(0, 300);

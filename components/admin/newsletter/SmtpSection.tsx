@@ -5,7 +5,9 @@ import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { Check, X } from "lucide-react";
 import { deleteSmtpSettings, saveSmtpSettings, testSmtp, type SmtpTest } from "@/actions/newsletterAdmin";
+import { useAdminLocale } from "@/components/admin/AdminLocaleProvider";
 import { INPUT } from "@/components/admin/brand/fields";
+import { tr } from "@/lib/adminText";
 import { SMTP_SECURITY, SMTP_UNREADABLE, type SmtpSecurity, type SmtpView } from "@/lib/newsletter";
 
 type Form = {
@@ -31,6 +33,7 @@ const Field = ({ label, error, children }: { label: string; error?: string; chil
 );
 
 const SmtpSection = ({ initial, keyReady, unreadable, envConfigured }: { initial: SmtpView; keyReady: boolean; unreadable: boolean; envConfigured: boolean }) => {
+  const ui = useAdminLocale();
   const [form, setForm] = useState<Form>({
     host: initial.host,
     port: String(initial.port),
@@ -69,7 +72,7 @@ const SmtpSection = ({ initial, keyReady, unreadable, envConfigured }: { initial
       setHasPassword(result.data.hasPassword);
       setSaved(true);
       setForm((f) => ({ ...f, password: "" }));
-      toast.success("Configuración del correo guardada");
+      toast.success(tr(ui, "Configuración del correo guardada"));
       router.refresh(); // the server re-checks the saved password (the "unreadable" notice)
     });
 
@@ -90,99 +93,97 @@ const SmtpSection = ({ initial, keyReady, unreadable, envConfigured }: { initial
 
   return (
     <div>
-      <h3 className="font-bold text-gray-900 text-sm">Correo de salida</h3>
+      <h3 className="font-bold text-gray-900 text-sm">{tr(ui, "Correo de salida")}</h3>
       <p className="text-xs text-gray-500 mt-0.5 mb-3">
-        Los correos de pedidos y del boletín salen por este servidor. Con Gmail usa una contraseña de aplicación; Gmail
-        permite unos 500 correos al día.
+        {tr(ui, "Los correos de pedidos y del boletín salen por este servidor. Con Gmail usa una contraseña de aplicación; Gmail permite unos 500 correos al día.")}
       </p>
       {!keyReady && (
         <p role="alert" className="mb-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
-          Falta la clave de cifrado en el servidor (EMAIL_ENCRYPTION_KEY). Sin ella no se puede guardar la contraseña ni
-          enviar campañas.
+          {tr(ui, "Falta la clave de cifrado en el servidor (EMAIL_ENCRYPTION_KEY). Sin ella no se puede guardar la contraseña ni enviar campañas.")}
         </p>
       )}
       {unreadable && (
         <p role="alert" className="mb-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
-          {SMTP_UNREADABLE}
+          {tr(ui, SMTP_UNREADABLE)}
         </p>
       )}
       {envConfigured && !saved && (
         <p className="mb-3 text-xs text-gray-500">
-          Ahora los correos salen con la configuración del servidor (variables SMTP_*). Si guardas aquí, se usará esta en su lugar.
+          {tr(ui, "Ahora los correos salen con la configuración del servidor (variables SMTP_*). Si guardas aquí, se usará esta en su lugar.")}
         </p>
       )}
       <div className="grid gap-3 sm:grid-cols-2">
-        <Field label="Servidor (SMTP)" error={errors.host}>
+        <Field label={tr(ui, "Servidor (SMTP)")} error={errors.host}>
           <input value={form.host} onChange={set("host")} placeholder="smtp.gmail.com" className={INPUT} />
         </Field>
         <div className="grid grid-cols-2 gap-3">
-          <Field label="Puerto" error={errors.port}>
+          <Field label={tr(ui, "Puerto")} error={errors.port}>
             <input type="number" min={1} max={65535} value={form.port} onChange={setPort} className={INPUT} />
           </Field>
-          <Field label="Seguridad">
+          <Field label={tr(ui, "Seguridad")}>
             <select value={form.security} onChange={set("security")} className={INPUT}>
               {(Object.keys(SMTP_SECURITY) as SmtpSecurity[]).map((key) => (
                 <option key={key} value={key}>
-                  {SMTP_SECURITY[key]}
+                  {key === "none" ? tr(ui, SMTP_SECURITY.none) : SMTP_SECURITY[key]}
                 </option>
               ))}
             </select>
           </Field>
         </div>
-        <Field label="Usuario" error={errors.user}>
+        <Field label={tr(ui, "Usuario")} error={errors.user}>
           <input value={form.user} onChange={set("user")} autoComplete="off" className={INPUT} />
         </Field>
-        <Field label="Contraseña" error={errors.password}>
+        <Field label={tr(ui, "Contraseña")} error={errors.password}>
           <input
             type="password"
             value={form.password}
             onChange={set("password")}
             autoComplete="new-password"
-            placeholder={hasPassword ? "•••• guardada (déjala vacía para no cambiarla)" : ""}
+            placeholder={hasPassword ? tr(ui, "•••• guardada (déjala vacía para no cambiarla)") : ""}
             className={INPUT}
           />
         </Field>
-        <Field label="Nombre del remitente" error={errors.fromName}>
-          <input value={form.fromName} onChange={set("fromName")} placeholder="El nombre de la tienda" className={INPUT} />
+        <Field label={tr(ui, "Nombre del remitente")} error={errors.fromName}>
+          <input value={form.fromName} onChange={set("fromName")} placeholder={tr(ui, "El nombre de la tienda")} className={INPUT} />
         </Field>
-        <Field label="Correo del remitente" error={errors.fromEmail}>
+        <Field label={tr(ui, "Correo del remitente")} error={errors.fromEmail}>
           <input type="email" value={form.fromEmail} onChange={set("fromEmail")} className={INPUT} />
         </Field>
-        <Field label="Responder a (opcional)" error={errors.replyTo}>
+        <Field label={tr(ui, "Responder a (opcional)")} error={errors.replyTo}>
           <input type="email" value={form.replyTo} onChange={set("replyTo")} className={INPUT} />
         </Field>
-        <Field label="Tope de envíos por día" error={errors.dailyLimit}>
+        <Field label={tr(ui, "Tope de envíos por día")} error={errors.dailyLimit}>
           <input type="number" min={1} max={100000} value={form.dailyLimit} onChange={set("dailyLimit")} className={INPUT} />
         </Field>
       </div>
       <div className="flex flex-wrap gap-2 mt-4">
         <button type="button" onClick={save} disabled={pending} className={`${BUTTON} bg-shop_dark_green text-white`}>
-          Guardar
+          {tr(ui, "Guardar")}
         </button>
         <button
           type="button"
           onClick={runTest}
           disabled={pending || !saved}
-          title="Usa la configuración guardada"
+          title={tr(ui, "Usa la configuración guardada")}
           className={`${BUTTON} border border-gray-300 bg-white text-gray-700`}
         >
-          Enviarme un correo de prueba
+          {tr(ui, "Enviarme un correo de prueba")}
         </button>
         {saved && !askRemove && (
           <button type="button" onClick={() => setAskRemove(true)} disabled={pending} className={`${BUTTON} text-red-700`}>
-            Quitar configuración
+            {tr(ui, "Quitar configuración")}
           </button>
         )}
       </div>
       {askRemove && (
         <div role="alert" className="mt-3 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-900">
-          ¿Quitar la configuración del correo? Los correos dejarán de salir por este servidor.
+          {tr(ui, "¿Quitar la configuración del correo? Los correos dejarán de salir por este servidor.")}
           <div className="mt-2 flex gap-2">
             <button type="button" onClick={remove} disabled={pending} className="rounded-lg bg-red-600 px-3 py-1.5 text-xs font-semibold text-white">
-              Quitar
+              {tr(ui, "Quitar")}
             </button>
             <button type="button" onClick={() => setAskRemove(false)} className="rounded-lg border border-red-300 px-3 py-1.5 text-xs font-semibold">
-              Cancelar
+              {tr(ui, "Cancelar")}
             </button>
           </div>
         </div>
@@ -203,7 +204,7 @@ const SmtpSection = ({ initial, keyReady, unreadable, envConfigured }: { initial
               </p>
               {test.detail && (
                 <details className="mt-2 text-xs text-gray-500">
-                  <summary className="cursor-pointer">Ver detalle</summary>
+                  <summary className="cursor-pointer">{tr(ui, "Ver detalle")}</summary>
                   <p className="mt-1 break-all">{test.detail}</p>
                 </details>
               )}

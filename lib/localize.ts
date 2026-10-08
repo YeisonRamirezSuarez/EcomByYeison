@@ -14,7 +14,7 @@ export type LanguageChoice = "es" | "en" | "both";
 // No setting saved: both languages, Spanish first (how every store worked before).
 export const DEFAULT_LANGUAGES: StoreLanguages = { languages: ["es", "en"], primary: "es" };
 export const LANGUAGE_NAMES: Record<Locale, AdminText> = { es: "Español", en: "Inglés" };
-export const LANGUAGE_CHOICES: Record<LanguageChoice, string> = {
+export const LANGUAGE_CHOICES: Record<LanguageChoice, AdminText> = {
   es: "Solo español",
   en: "Solo inglés",
   both: "Español e inglés",

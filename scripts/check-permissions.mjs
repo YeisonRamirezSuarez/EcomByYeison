@@ -967,6 +967,12 @@ assert.equal(ck.checkoutLines([{ id: "p1", quantity: 1 }], [{ ...SERVER[0], pric
   }
   assert.equal(nl.validateSmtpSettings({ ...smtp, port: "465", dailyLimit: 300 }, { hasStoredPassword: false }).value.port, 465);
   assert.equal(nl.validateSmtpSettings({ ...smtp, security: "rara" }, { hasStoredPassword: false }).value.security, "starttls");
+  // SMTP settings validator in the panel language
+  assert.deepEqual(nl.validateSmtpSettings({}, { hasStoredPassword: false }).errors, { host: "Campo obligatorio", fromEmail: "Campo obligatorio" });
+  assert.deepEqual(nl.validateSmtpSettings({}, { hasStoredPassword: false }, "en").errors, { host: "Required", fromEmail: "Required" });
+  assert.equal(nl.validateSmtpSettings({ host: "smtp.x.co", fromEmail: "a@x.co", port: "1e3" }, { hasStoredPassword: false }, "en").errors.port, "Choose a number between 1 and 65535");
+  assert.equal(nl.smtpErrorMessage({ code: "ETIMEDOUT" }), "El servidor no respondió a tiempo. Revisa el servidor y el puerto.");
+  assert.equal(nl.smtpErrorMessage({ code: "ETIMEDOUT" }, "en"), "The server did not respond in time. Check the server and the port.");
 
   // Campaign
   const content = { ...nl.EMPTY_CAMPAIGN, subject: " Ofertas ", title: "ZZ Hola", button: { label: "Ver", href: "/shop" }, products: ["p1", "p2", "p1"] };

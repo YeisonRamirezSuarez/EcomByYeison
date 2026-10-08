@@ -20,7 +20,7 @@ import { getSiteSettings } from "@/sanity/queries/siteSettings";
 // A failed usage count must not fail work already done.
 const countFailed = (error: unknown) => console.error("Could not count the sent email", error);
 
-const KEY_MISSING = "Falta la clave de cifrado en el servidor (EMAIL_ENCRYPTION_KEY)";
+const KEY_MISSING: AdminText = "Falta la clave de cifrado en el servidor (EMAIL_ENCRYPTION_KEY)";
 
 async function sessionEmail(): Promise<string> {
   const user = await currentUser();
@@ -32,13 +32,14 @@ async function sessionEmail(): Promise<string> {
 export async function saveSmtpSettings(input: unknown): Promise<ActionResult<{ hasPassword: boolean }>> {
   const allowed = await run(() => requirePermission("configurar"));
   if (!allowed.ok) return allowed;
+  const ui = await getAdminLocale();
   const stored = await run(getSmtpDoc);
   if (!stored.ok) return stored;
-  const checked = validateSmtpSettings(input, { hasStoredPassword: Boolean(stored.data?.password) });
-  if (!checked.ok) return { ok: false, error: tr(await getAdminLocale(), INVALID_FORM), errors: checked.errors };
+  const checked = validateSmtpSettings(input, { hasStoredPassword: Boolean(stored.data?.password) }, ui);
+  if (!checked.ok) return { ok: false, error: tr(ui, INVALID_FORM), errors: checked.errors };
   const { password, ...settings } = checked.value;
   const secret = process.env.EMAIL_ENCRYPTION_KEY;
-  if (password && !secret) return { ok: false, error: KEY_MISSING, errors: { password: KEY_MISSING } };
+  if (password && !secret) return { ok: false, error: tr(ui, KEY_MISSING), errors: { password: tr(ui, KEY_MISSING) } };
   return run(async () => {
     // An empty password keeps the saved one; no user means no login, so no password.
     const saved = !settings.user ? undefined : password ? encryptSecret(password, secret as string) : stored.data?.password;
@@ -62,6 +63,7 @@ export type SmtpTest = { ok: boolean; steps: string[]; message: string; detail: 
 export async function testSmtp(): Promise<ActionResult<SmtpTest>> {
   return run(async () => {
     await requirePermission("configurar");
+    const ui = await getAdminLocale();
     const to = await sessionEmail();
     let mailer;
     try {
@@ -70,15 +72,15 @@ export async function testSmtp(): Promise<ActionResult<SmtpTest>> {
       return {
         ok: false,
         steps: [],
-        message: "No se pudo leer la contraseña guardada. Revisa EMAIL_ENCRYPTION_KEY y vuelve a escribir la contraseña.",
+        message: tr(ui, "No se pudo leer la contraseña guardada. Revisa EMAIL_ENCRYPTION_KEY y vuelve a escribir la contraseña."),
         detail: errorDetail(error),
       };
     }
-    if (!mailer) return { ok: false, steps: [], message: "Primero guarda la configuración del correo.", detail: "" };
+    if (!mailer) return { ok: false, steps: [], message: tr(ui, "Primero guarda la configuración del correo."), detail: "" };
     const steps: string[] = [];
     try {
       await mailer.transporter.verify();
-      steps.push("Conectado al servidor", "Sesión iniciada");
+      steps.push(tr(ui, "Conectado al servidor"), tr(ui, "Sesión iniciada"));
       const { storeName } = await getSiteSettings();
       await mailer.transporter.sendMail({
         from: mailer.from,
@@ -87,11 +89,11 @@ export async function testSmtp(): Promise<ActionResult<SmtpTest>> {
         subject: `Prueba de correo de ${storeName}`,
         text: `Este es un correo de prueba de ${storeName}. Si lo recibes, el correo de salida funciona.`,
       });
-      steps.push(`Correo enviado a ${to}`);
+      steps.push(tr(ui, "Correo enviado a {to}", { to }));
       await addUsage(1).catch(countFailed);
       return { ok: true, steps, message: "", detail: "" };
     } catch (error) {
-      return { ok: false, steps, message: smtpErrorMessage(error as SmtpErrorInfo), detail: errorDetail(error) };
+      return { ok: false, steps, message: smtpErrorMessage(error as SmtpErrorInfo, ui), detail: errorDetail(error) };
     }
   });
 }
@@ -283,6 +285,7 @@ export async function searchCampaignProducts(term: string): Promise<ActionResult
 export async function sendCampaignTest(id: string): Promise<ActionResult<{ to: string }>> {
   return run(async () => {
     await requirePermission("configurar");
+    const ui = await getAdminLocale();
     const campaign = await findCampaign(id);
     const to = await sessionEmail();
     let mailer;
@@ -306,7 +309,7 @@ export async function sendCampaignTest(id: string): Promise<ActionResult<{ to: s
     try {
       await mailer.transporter.sendMail({ from: mailer.from, replyTo: mailer.replyTo, to, subject: `${language === "en" ? "[Test]" : "[Prueba]"} ${email.subject}`, html: email.html, text: email.text });
     } catch (error) {
-      throw ActionError.raw(smtpErrorMessage(error as SmtpErrorInfo));
+      throw ActionError.raw(smtpErrorMessage(error as SmtpErrorInfo, ui));
     }
     await addUsage(1).catch(countFailed);
     return { to };
