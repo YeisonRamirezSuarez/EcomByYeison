@@ -3,6 +3,7 @@
 // scripts/check-permissions.mjs can run it.
 import type { Cta, ImageValue } from "./brand";
 import type { ValidationResult } from "./validation";
+import type { AdminText } from "./adminText/index.ts";
 import type { Locale } from "./i18n";
 
 export const BATCH_SIZE = 20;
@@ -201,7 +202,7 @@ export function validateCampaign(input: unknown): ValidationResult<CampaignConte
   return result(errors, { subject, preheader, image, title, text: body, button: { label, href }, products, language: v.language === "es" || v.language === "en" ? v.language : null });
 }
 
-export const SMTP_UNREADABLE = "No se pudo leer la contraseña guardada. Vuelve a escribirla en Ajustes → Correo.";
+export const SMTP_UNREADABLE: AdminText = "No se pudo leer la contraseña guardada. Vuelve a escribirla en Ajustes → Correo.";
 
 export function campaignSendProblems(content: CampaignContent, ready: SendReadiness): string[] {
   const problems: string[] = [];

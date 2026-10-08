@@ -2,6 +2,7 @@ import "server-only";
 import { formatPrice, type CurrencyCode } from "@/constants/currencies";
 import { THEMES } from "@/constants/themes";
 import { ActionError } from "@/lib/actionResult";
+import type { AdminText } from "@/lib/adminText";
 import { localizeEmailBrand, localizeEmailProducts, resolveLocale, type StoreLanguages } from "@/lib/localize";
 import { renderCampaignEmail, type EmailBrand, type EmailProduct } from "@/lib/campaignEmail";
 import { addUsage, getMailer, remainingSendsToday, type Mailer } from "@/lib/mailer";
@@ -71,8 +72,8 @@ export async function sendReadiness(address: string): Promise<SendReadiness & { 
   };
 }
 
-export const OTHER_TAB = "Otra pestaña está enviando esta campaña";
-export const SEND_FAILED = "No se pudo continuar el envío";
+export const OTHER_TAB: AdminText = "Otra pestaña está enviando esta campaña";
+export const SEND_FAILED: AdminText = "No se pudo continuar el envío";
 export const isConflict = (error: unknown) => (error as { statusCode?: number } | null)?.statusCode === 409;
 
 async function pauseWith(campaign: CampaignDoc, reason: PauseReason, message: string): Promise<CampaignProgress> {

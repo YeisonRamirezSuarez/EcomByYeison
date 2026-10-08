@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { UserButton } from "@clerk/nextjs";
 import { ExternalLink } from "lucide-react";
 import type { AdminSection } from "@/lib/permissions";
+import AdminLanguageToggle from "./AdminLanguageToggle";
 import PanelBrand from "./PanelBrand";
 import { NAV_GROUPS, SECTION_PATHS } from "./nav";
 
@@ -67,6 +68,7 @@ const Sidebar = ({
 
       <div className="border-t border-white/10 p-4 flex items-center justify-between gap-2">
         <UserButton userProfileProps={{ apiKeysProps: { hide: true } }} />
+        <AdminLanguageToggle />
         <a
           href="/"
           target="_blank"

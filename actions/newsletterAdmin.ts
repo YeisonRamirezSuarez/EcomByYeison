@@ -2,6 +2,7 @@
 
 import { currentUser } from "@clerk/nextjs/server";
 import { ActionError, run, type ActionResult } from "@/lib/actionResult";
+import type { AdminText } from "@/lib/adminText";
 import { renderCampaignEmail } from "@/lib/campaignEmail";
 import { getEmailBrand, isConflict, loadEmailProducts, OTHER_TAB, runBatch, SEND_FAILED, sendReadiness, toPickerProduct, type PickerProduct } from "@/lib/campaignSend";
 import { localizeEmailBrand, localizeEmailProducts, resolveLocale } from "@/lib/localize";
@@ -187,7 +188,7 @@ export async function exportSubscribers(): Promise<ActionResult<string>> {
   });
 }
 
-const CAMPAIGN_NOT_FOUND = "Campaña no encontrada";
+const CAMPAIGN_NOT_FOUND: AdminText = "Campaña no encontrada";
 
 async function findCampaign(id: string): Promise<CampaignDoc> {
   if (!isCampaignId(id)) throw new ActionError(CAMPAIGN_NOT_FOUND);
@@ -304,7 +305,7 @@ export async function sendCampaignTest(id: string): Promise<ActionResult<{ to: s
     try {
       await mailer.transporter.sendMail({ from: mailer.from, replyTo: mailer.replyTo, to, subject: `${language === "en" ? "[Test]" : "[Prueba]"} ${email.subject}`, html: email.html, text: email.text });
     } catch (error) {
-      throw new ActionError(smtpErrorMessage(error as SmtpErrorInfo));
+      throw ActionError.raw(smtpErrorMessage(error as SmtpErrorInfo));
     }
     await addUsage(1).catch(countFailed);
     return { to };
@@ -322,7 +323,7 @@ export async function startCampaign(id: string): Promise<ActionResult<CampaignPr
     const ready = await sendReadiness(brand.address || brand.addressEn || "");
     // On resume, an empty list just lets the next batch mark the campaign as sent.
     const problems = campaignSendProblems(campaign.content, status === "draft" ? ready : { ...ready, activeCount: Math.max(ready.activeCount, 1) });
-    if (problems.length > 0) throw new ActionError(problems[0]);
+    if (problems.length > 0) throw ActionError.raw(problems[0]);
     const patch = backendClient.patch(campaign._id).ifRevisionId(campaign._rev).set({ status: "sending" }).unset(["pauseReason", "pauseMessage"]);
     if (status === "draft") {
       patch.set({ cursor: "", total: ready.activeCount, sent: 0, failed: 0, failures: [], startedAt: new Date().toISOString() });
