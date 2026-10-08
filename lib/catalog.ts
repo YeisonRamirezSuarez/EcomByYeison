@@ -1,27 +1,28 @@
 // Pure catalog rules (products, categories, brands) shared by the admin panel and server actions.
-// Only type imports: also run by scripts/check-permissions.mjs.
+// Only type imports (and the pure admin texts): also run by scripts/check-permissions.mjs.
+import { tr } from "./adminText/index.ts";
+import type { AdminText } from "./adminText/index.ts";
 import type { ImageValue } from "./brand";
 import type { Locale } from "./i18n";
 import type { ValidationResult } from "./validation";
 
-export const PRODUCT_STATUSES = { new: "Nuevo", hot: "Popular", sale: "Oferta" } as const;
+export const PRODUCT_STATUSES = { new: "Nuevo", hot: "Popular", sale: "Oferta" } as const satisfies Record<string, AdminText>;
 export type ProductStatus = keyof typeof PRODUCT_STATUSES;
 export const PRODUCT_VARIANTS = {
   gadget: "Gadget",
   appliances: "Electrodomésticos",
   refrigerators: "Refrigeradores",
   others: "Otros",
-} as const;
+} as const satisfies Record<string, AdminText>;
 export type ProductVariant = keyof typeof PRODUCT_VARIANTS;
 
 export const MAX_PRODUCT_IMAGES = 10;
-export const SLUG_TAKEN = "Ya existe otro con este slug";
+export const SLUG_TAKEN: AdminText = "Ya existe otro con este slug";
 
-const REQUIRED = "Campo obligatorio";
+const required = (ui: Locale) => tr(ui, "Campo obligatorio");
 // Same text as requiredIn in lib/localize.ts (pure modules cannot import each other).
-const requiredIn = (locale: Locale) => `${REQUIRED} (${locale === "en" ? "inglés" : "español"})`;
-const INVALID_NUMBER = "Número inválido";
-const tooLong = (max: number) => `Máximo ${max} caracteres`;
+const requiredIn = (locale: Locale, ui: Locale) => tr(ui, locale === "en" ? "Campo obligatorio (inglés)" : "Campo obligatorio (español)");
+const tooLong = (max: number, ui: Locale) => tr(ui, "Máximo {max} caracteres", { max });
 
 type Errors = Record<string, string>;
 
@@ -46,26 +47,25 @@ export const isDocId = (value: unknown): value is string =>
 const asObject = (value: unknown): Record<string, unknown> =>
   value && typeof value === "object" && !Array.isArray(value) ? (value as Record<string, unknown>) : {};
 
-function text(errors: Errors, key: string, value: unknown, max: number, required = false) {
+function text(errors: Errors, key: string, value: unknown, max: number, ui: Locale) {
   const s = typeof value === "string" ? value.trim() : "";
-  if (required && !s) errors[key] = REQUIRED;
-  else if (s.length > max) errors[key] = tooLong(max);
+  if (s.length > max) errors[key] = tooLong(max, ui);
   return s;
 }
 
 // A text with an English twin ("name" + "nameEn"): when required, only the store's main language must be filled.
-function texts(errors: Errors, v: Record<string, unknown>, name: string, max: number, required: Locale | null = null): [string, string] {
-  const es = text(errors, name, v[name], max);
-  const en = text(errors, `${name}En`, v[`${name}En`], max);
-  const field = required === "en" ? `${name}En` : name;
-  if (required && !(required === "en" ? en : es) && !errors[field]) errors[field] = requiredIn(required);
+function texts(errors: Errors, v: Record<string, unknown>, name: string, max: number, ui: Locale, primary: Locale | null = null): [string, string] {
+  const es = text(errors, name, v[name], max, ui);
+  const en = text(errors, `${name}En`, v[`${name}En`], max, ui);
+  const field = primary === "en" ? `${name}En` : name;
+  if (primary && !(primary === "en" ? en : es) && !errors[field]) errors[field] = requiredIn(primary, ui);
   return [es, en];
 }
 
-function slug(errors: Errors, value: unknown) {
+function slug(errors: Errors, value: unknown, ui: Locale) {
   const s = typeof value === "string" ? value.trim() : "";
-  if (!s) errors.slug = REQUIRED;
-  else if (!isValidSlug(s)) errors.slug = "Solo minúsculas, números y guiones (máx. 96)";
+  if (!s) errors.slug = required(ui);
+  else if (!isValidSlug(s)) errors.slug = tr(ui, "Solo minúsculas, números y guiones (máx. 96)");
   return s;
 }
 
@@ -74,15 +74,16 @@ function num(
   errors: Errors,
   key: string,
   value: unknown,
-  { min = 0, max = Number.MAX_SAFE_INTEGER, int = false, required = false } = {}
+  ui: Locale,
+  { min = 0, max = Number.MAX_SAFE_INTEGER, int = false, required: isRequired = false } = {}
 ): number | null {
   if (value === "" || value === null || value === undefined) {
-    if (required) errors[key] = REQUIRED;
+    if (isRequired) errors[key] = required(ui);
     return null;
   }
   const n = typeof value === "number" ? value : Number(value);
   if (!Number.isFinite(n) || n < min || n > max || (int && !Number.isInteger(n))) {
-    errors[key] = INVALID_NUMBER;
+    errors[key] = tr(ui, "Número inválido");
     return null;
   }
   return n;
@@ -97,17 +98,17 @@ function parseImage(value: unknown): ImageValue | null {
     : null;
 }
 
-function optionalImage(errors: Errors, value: unknown): ImageValue | null {
+function optionalImage(errors: Errors, value: unknown, ui: Locale): ImageValue | null {
   if (value === null || value === undefined) return null;
   const image = parseImage(value);
-  if (!image) errors.image = "Imagen inválida";
+  if (!image) errors.image = tr(ui, "Imagen inválida");
   return image;
 }
 
-function pick<T extends string>(errors: Errors, key: string, value: unknown, options: Record<T, string>): T | null {
+function pick<T extends string>(errors: Errors, key: string, value: unknown, options: Record<T, string>, ui: Locale): T | null {
   if (value === "" || value === null || value === undefined) return null;
   if (typeof value === "string" && value in options) return value as T;
-  errors[key] = "Opción inválida";
+  errors[key] = tr(ui, "Opción inválida");
   return null;
 }
 
@@ -131,7 +132,7 @@ export type ProductInput = {
   isFeatured: boolean;
 };
 
-export function validateProduct(input: unknown, primary: Locale = "es"): ValidationResult<ProductInput> {
+export function validateProduct(input: unknown, primary: Locale = "es", ui: Locale = "es"): ValidationResult<ProductInput> {
   const v = asObject(input);
   const errors: Errors = {};
 
@@ -139,38 +140,38 @@ export function validateProduct(input: unknown, primary: Locale = "es"): Validat
   const images: ImageValue[] = [];
   for (const item of rawImages) {
     const image = parseImage(item);
-    if (!image) errors.images = "Imagen inválida";
+    if (!image) errors.images = tr(ui, "Imagen inválida");
     else if (!images.some((i) => i.assetId === image.assetId)) images.push(image);
   }
-  if (images.length > MAX_PRODUCT_IMAGES) errors.images = `Máximo ${MAX_PRODUCT_IMAGES} fotos`;
+  if (images.length > MAX_PRODUCT_IMAGES) errors.images = tr(ui, "Máximo {max} fotos", { max: MAX_PRODUCT_IMAGES });
 
   const rawCategories = Array.isArray(v.categories) ? v.categories : [];
-  if (!rawCategories.every(isDocId)) errors.categories = "Categoría inválida";
+  if (!rawCategories.every(isDocId)) errors.categories = tr(ui, "Categoría inválida");
   const categories = [...new Set(rawCategories.filter(isDocId))];
 
   let brand: string | null = null;
   if (v.brand !== "" && v.brand !== null && v.brand !== undefined) {
     if (isDocId(v.brand)) brand = v.brand;
-    else errors.brand = "Marca inválida";
+    else errors.brand = tr(ui, "Marca inválida");
   }
 
-  const [name, nameEn] = texts(errors, v, "name", 120, primary);
-  const [description, descriptionEn] = texts(errors, v, "description", 2000);
+  const [name, nameEn] = texts(errors, v, "name", 120, ui, primary);
+  const [description, descriptionEn] = texts(errors, v, "description", 2000, ui);
 
   return result(errors, {
     name,
     nameEn,
-    slug: slug(errors, v.slug),
+    slug: slug(errors, v.slug, ui),
     images,
     description,
     descriptionEn,
-    price: num(errors, "price", v.price, { required: true }) ?? 0,
-    discount: num(errors, "discount", v.discount, { max: 100 }) ?? 0,
-    stock: num(errors, "stock", v.stock, { int: true }) ?? 0,
+    price: num(errors, "price", v.price, ui, { required: true }) ?? 0,
+    discount: num(errors, "discount", v.discount, ui, { max: 100 }) ?? 0,
+    stock: num(errors, "stock", v.stock, ui, { int: true }) ?? 0,
     categories,
     brand,
-    status: pick(errors, "status", v.status, PRODUCT_STATUSES),
-    variant: pick(errors, "variant", v.variant, PRODUCT_VARIANTS),
+    status: pick(errors, "status", v.status, PRODUCT_STATUSES, ui),
+    variant: pick(errors, "variant", v.variant, PRODUCT_VARIANTS, ui),
     isFeatured: v.isFeatured === true,
   });
 }
@@ -186,20 +187,20 @@ export type CategoryInput = {
   image: ImageValue | null;
 };
 
-export function validateCategory(input: unknown, primary: Locale = "es"): ValidationResult<CategoryInput> {
+export function validateCategory(input: unknown, primary: Locale = "es", ui: Locale = "es"): ValidationResult<CategoryInput> {
   const v = asObject(input);
   const errors: Errors = {};
-  const [title, titleEn] = texts(errors, v, "title", 80, primary);
-  const [description, descriptionEn] = texts(errors, v, "description", 500);
+  const [title, titleEn] = texts(errors, v, "title", 80, ui, primary);
+  const [description, descriptionEn] = texts(errors, v, "description", 500, ui);
   return result(errors, {
     title,
     titleEn,
-    slug: slug(errors, v.slug),
+    slug: slug(errors, v.slug, ui),
     description,
     descriptionEn,
-    range: num(errors, "range", v.range),
+    range: num(errors, "range", v.range, ui),
     featured: v.featured === true,
-    image: optionalImage(errors, v.image),
+    image: optionalImage(errors, v.image, ui),
   });
 }
 
@@ -212,18 +213,18 @@ export type BrandInput = {
   image: ImageValue | null;
 };
 
-export function validateBrand(input: unknown, primary: Locale = "es"): ValidationResult<BrandInput> {
+export function validateBrand(input: unknown, primary: Locale = "es", ui: Locale = "es"): ValidationResult<BrandInput> {
   const v = asObject(input);
   const errors: Errors = {};
-  const [title, titleEn] = texts(errors, v, "title", 80, primary);
-  const [description, descriptionEn] = texts(errors, v, "description", 500);
+  const [title, titleEn] = texts(errors, v, "title", 80, ui, primary);
+  const [description, descriptionEn] = texts(errors, v, "description", 500, ui);
   return result(errors, {
     title,
     titleEn,
-    slug: slug(errors, v.slug),
+    slug: slug(errors, v.slug, ui),
     description,
     descriptionEn,
-    image: optionalImage(errors, v.image),
+    image: optionalImage(errors, v.image, ui),
   });
 }
 
@@ -331,7 +332,7 @@ export function publishMutations(id: string, write: SanityWrite, stock: number, 
   ];
 }
 
-export const usesLabel = (n: number) => (n === 1 ? "La usa 1 producto" : `La usan ${n} productos`);
+export const usesLabel = (n: number, ui: Locale = "es") => (n === 1 ? tr(ui, "La usa 1 producto") : tr(ui, "La usan {n} productos", { n }));
 
 // Products using each category/brand id. A product and its draft count once.
 export function countUses(docs: { _id: string; refs: (string | null)[] | null }[]): Record<string, number> {
@@ -348,7 +349,7 @@ export function countUses(docs: { _id: string; refs: (string | null)[] | null }[
 }
 
 export type ProductState = "publicado" | "borrador" | "por-publicar" | "archivado";
-export const PRODUCT_STATE_LABELS: Record<ProductState, string> = {
+export const PRODUCT_STATE_LABELS: Record<ProductState, AdminText> = {
   publicado: "Publicado",
   borrador: "Borrador",
   "por-publicar": "Por publicar",

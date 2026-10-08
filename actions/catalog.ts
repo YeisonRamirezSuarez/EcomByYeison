@@ -4,6 +4,8 @@ import { randomUUID } from "node:crypto";
 import { requirePermission } from "@/lib/roles";
 import { run, type ActionResult } from "@/lib/actionResult";
 import { INVALID_FORM } from "@/lib/validation";
+import { tr } from "@/lib/adminText";
+import { getAdminLocale } from "@/lib/adminLocale";
 import { assertImagesExist } from "@/lib/brandWrites";
 import {
   SLUG_TAKEN,
@@ -54,10 +56,11 @@ const applyWrite = (write: SanityWrite) => (patch: ReturnType<typeof backendClie
   write.unset.length ? patch.set(write.set).unset(write.unset) : patch.set(write.set);
 
 export async function saveProductDraft(id: string | null, data: unknown): Promise<ActionResult<{ id: string }>> {
+  const ui = await getAdminLocale();
   const { primary } = await getSiteSettings();
-  const r = validateProduct(data, primary);
-  if (!r.ok) return fail(INVALID_FORM, r.errors);
-  if (id !== null && !isDocId(id)) return fail(INVALID_FORM);
+  const r = validateProduct(data, primary, ui);
+  if (!r.ok) return fail(tr(ui, INVALID_FORM), r.errors);
+  if (id !== null && !isDocId(id)) return fail(tr(ui, INVALID_FORM));
   return run(async () => {
     await requirePermission("productos");
     await assertImagesExist(r.value.images);
@@ -87,12 +90,13 @@ export async function saveProductDraft(id: string | null, data: unknown): Promis
 }
 
 export async function publishProduct(id: string): Promise<ActionResult<null>> {
-  if (!isDocId(id)) return fail(INVALID_FORM);
+  const ui = await getAdminLocale();
+  if (!isDocId(id)) return fail(tr(ui, INVALID_FORM));
   const allowed = await run(() => requirePermission("catalogo"));
   if (!allowed.ok) return allowed;
 
   const [draft, published] = await getPair(id);
-  if (!draft || !isType(draft, "product") || !isType(published, "product")) return fail("No hay cambios para publicar");
+  if (!draft || !isType(draft, "product") || !isType(published, "product")) return fail(tr(ui, "No hay cambios para publicar"));
 
   const form = await backendClient.fetch<Record<string, unknown>>(
     `*[_id == $draftId][0]{
@@ -103,29 +107,30 @@ export async function publishProduct(id: string): Promise<ActionResult<null>> {
     { draftId: draftOf(id) },
     RAW
   );
-  const r = validateProduct(form, (await getSiteSettings()).primary);
-  if (!r.ok) return fail("Completa los campos marcados antes de publicar", r.errors);
+  const r = validateProduct(form, (await getSiteSettings()).primary, ui);
+  if (!r.ok) return fail(tr(ui, "Completa los campos marcados antes de publicar"), r.errors);
 
   const taken = await backendClient.fetch<number>(
     `count(*[_type == "product" && slug.current == $slug && !(_id in [$id, $draftId])])`,
     { slug: r.value.slug, id, draftId: draftOf(id) },
     RAW
   );
-  if (taken > 0) return fail(INVALID_FORM, { slug: SLUG_TAKEN });
+  if (taken > 0) return fail(tr(ui, INVALID_FORM), { slug: tr(ui, SLUG_TAKEN) });
 
   const stock = publishedStock(r.value.stock, draft.stockBase, published?.stock);
   try {
     await backendClient.mutate(publishMutations(id, productWrite(r.value, imageExtras(draft.images)), stock, published as { _rev: string } | null) as Mutation[]);
   } catch (error) {
-    if (isConflictError(error)) return fail("Hubo una venta mientras publicabas; inténtalo de nuevo");
+    if (isConflictError(error)) return fail(tr(ui, "Hubo una venta mientras publicabas; inténtalo de nuevo"));
     console.log("Admin action failed", error);
-    return fail("No se pudo completar la acción");
+    return fail(tr(ui, "No se pudo completar la acción"));
   }
   return { ok: true, data: null };
 }
 
 export async function discardProductDraft(id: string): Promise<ActionResult<{ published: boolean }>> {
-  if (!isDocId(id)) return fail(INVALID_FORM);
+  const ui = await getAdminLocale();
+  if (!isDocId(id)) return fail(tr(ui, INVALID_FORM));
   return run(async () => {
     await requirePermission("catalogo");
     const [draft, published] = await getPair(id);
@@ -136,7 +141,8 @@ export async function discardProductDraft(id: string): Promise<ActionResult<{ pu
 }
 
 export async function setProductArchived(id: string, archived: boolean): Promise<ActionResult<null>> {
-  if (!isDocId(id) || typeof archived !== "boolean") return fail(INVALID_FORM);
+  const ui = await getAdminLocale();
+  if (!isDocId(id) || typeof archived !== "boolean") return fail(tr(ui, INVALID_FORM));
   return run(async () => {
     await requirePermission("catalogo");
     const [draft, published] = await getPair(id);
@@ -149,13 +155,14 @@ export async function setProductArchived(id: string, archived: boolean): Promise
 }
 
 export async function deleteProduct(id: string): Promise<ActionResult<null>> {
-  if (!isDocId(id)) return fail(INVALID_FORM);
+  const ui = await getAdminLocale();
+  if (!isDocId(id)) return fail(tr(ui, INVALID_FORM));
   const allowed = await run(() => requirePermission("catalogo"));
   if (!allowed.ok) return allowed;
   const [draft, published] = await getPair(id);
-  if ((!draft && !published) || !isType(draft, "product") || !isType(published, "product")) return fail("Producto inexistente");
+  if ((!draft && !published) || !isType(draft, "product") || !isType(published, "product")) return fail(tr(ui, "Producto inexistente"));
   const orders = await backendClient.fetch<number>(`count(*[_type == "order" && references($id)])`, { id }, RAW);
-  if (orders > 0) return fail("Este producto tiene pedidos; archívalo en lugar de borrarlo");
+  if (orders > 0) return fail(tr(ui, "Este producto tiene pedidos; archívalo en lugar de borrarlo"));
   return run(async () => {
     const tx = backendClient.transaction();
     if (published) tx.delete(id);
@@ -168,22 +175,23 @@ export async function deleteProduct(id: string): Promise<ActionResult<null>> {
 type Kind = "category" | "brand";
 
 async function saveTaxonomy(kind: Kind, id: string | null, data: unknown): Promise<ActionResult<{ id: string }>> {
+  const ui = await getAdminLocale();
   const { primary } = await getSiteSettings();
-  const r = kind === "category" ? validateCategory(data, primary) : validateBrand(data, primary);
-  if (!r.ok) return fail(INVALID_FORM, r.errors);
-  if (id !== null && !isDocId(id)) return fail(INVALID_FORM);
+  const r = kind === "category" ? validateCategory(data, primary, ui) : validateBrand(data, primary, ui);
+  if (!r.ok) return fail(tr(ui, INVALID_FORM), r.errors);
+  if (id !== null && !isDocId(id)) return fail(tr(ui, INVALID_FORM));
   const allowed = await run(() => requirePermission("catalogo"));
   if (!allowed.ok) return allowed;
 
   const docId = id ?? randomUUID();
   const existing = id ? await backendClient.fetch<string | null>(`*[_id == $id][0]._type`, { id }, RAW) : null;
-  if (id !== null && existing !== kind) return fail(INVALID_FORM);
+  if (id !== null && existing !== kind) return fail(tr(ui, INVALID_FORM));
   const taken = await backendClient.fetch<number>(
     `count(*[_type == $kind && slug.current == $slug && !(_id in [$id, $draftId])])`,
     { kind, slug: r.value.slug, id: docId, draftId: draftOf(docId) },
     RAW
   );
-  if (taken > 0) return fail(INVALID_FORM, { slug: SLUG_TAKEN });
+  if (taken > 0) return fail(tr(ui, INVALID_FORM), { slug: tr(ui, SLUG_TAKEN) });
 
   return run(async () => {
     await assertImagesExist(r.value.image ? [r.value.image] : []);
@@ -198,15 +206,16 @@ async function saveTaxonomy(kind: Kind, id: string | null, data: unknown): Promi
 }
 
 async function deleteTaxonomy(kind: Kind, id: string): Promise<ActionResult<null>> {
-  if (!isDocId(id)) return fail(INVALID_FORM);
+  const ui = await getAdminLocale();
+  if (!isDocId(id)) return fail(tr(ui, INVALID_FORM));
   const allowed = await run(() => requirePermission("catalogo"));
   if (!allowed.ok) return allowed;
   const type = await backendClient.fetch<string | null>(`*[_id == $id][0]._type`, { id }, RAW);
-  if (type !== kind) return fail(INVALID_FORM);
+  if (type !== kind) return fail(tr(ui, INVALID_FORM));
   // Raw perspective: product drafts count too.
   const ids = await backendClient.fetch<string[]>(`*[_type == "product" && references($id)]._id`, { id }, RAW);
   const uses = countUses(ids.map((_id) => ({ _id, refs: [id] })))[id] ?? 0;
-  if (uses > 0) return fail(usesLabel(uses));
+  if (uses > 0) return fail(usesLabel(uses, ui));
   return run(async () => {
     await backendClient.transaction().delete(id).delete(draftOf(id)).commit();
     return null;

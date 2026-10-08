@@ -10,6 +10,8 @@ import {
   saveProductDraft,
   setProductArchived,
 } from "@/actions/catalog";
+import { useAdminLocale } from "@/components/admin/AdminLocaleProvider";
+import { tr } from "@/lib/adminText";
 import type { ActionResult } from "@/lib/actionResult";
 import {
   PRODUCT_STATE_LABELS,
@@ -60,6 +62,7 @@ const ProductEditor = ({
   canPublish: boolean;
   languages: StoreLanguages;
 }) => {
+  const ui = useAdminLocale();
   const router = useRouter();
   const idRef = useRef(initialId);
   const [id, setId] = useState(initialId);
@@ -91,7 +94,7 @@ const ProductEditor = ({
     return { ok: true, data: null };
   };
 
-  const { errors: saveErrors, pending } = useAutosave(form, (input) => validateProduct(input, primary), save, {
+  const { errors: saveErrors, pending } = useAutosave(form, (input) => validateProduct(input, primary, ui), save, {
     onSaved: () => {
       setHasDraft(true);
       setSaveFailed(false);
@@ -119,7 +122,7 @@ const ProductEditor = ({
       }
       setHasDraft(false);
       setHasPublished(true);
-      toast.success("Producto publicado");
+      toast.success(tr(ui, "Producto publicado"));
       router.refresh();
     });
 
@@ -138,7 +141,7 @@ const ProductEditor = ({
       const result = await setProductArchived(idRef.current, !archived);
       if (!result.ok) return void toast.error(result.error);
       setArchived(!archived);
-      toast.success(archived ? "Producto reactivado" : "Producto archivado");
+      toast.success(tr(ui, archived ? "Producto reactivado" : "Producto archivado"));
     });
 
   const remove = () =>
@@ -149,7 +152,7 @@ const ProductEditor = ({
         setConfirm(null);
         return void toast.error(result.error);
       }
-      toast.success("Producto borrado");
+      toast.success(tr(ui, "Producto borrado"));
       router.push("/admin/productos");
     });
 
@@ -157,20 +160,20 @@ const ProductEditor = ({
 
   return (
     <>
-      <PageHeader title={pickText(form.name, form.nameEn, primary) || "Nuevo producto"} description="Los cambios se guardan solos como borrador.">
-        <span className="text-xs font-semibold rounded-full bg-gray-100 text-gray-700 px-2.5 py-1">{PRODUCT_STATE_LABELS[state]}</span>
+      <PageHeader title={pickText(form.name, form.nameEn, primary) || tr(ui, "Nuevo producto")} description={tr(ui, "Los cambios se guardan solos como borrador.")}>
+        <span className="text-xs font-semibold rounded-full bg-gray-100 text-gray-700 px-2.5 py-1">{tr(ui, PRODUCT_STATE_LABELS[state])}</span>
         {canPublish && id && (
           <>
             {hasPublished && (
               <button type="button" disabled={busy} onClick={toggleArchived} className={BUTTON}>
-                {archived ? "Reactivar" : "Archivar"}
+                {tr(ui, archived ? "Reactivar" : "Archivar")}
               </button>
             )}
-            <button type="button" disabled={busy} onClick={() => setConfirm("delete")} className={BUTTON}>Borrar</button>
-            <button type="button" disabled={busy || !hasDraft} onClick={() => setConfirm("discard")} className={BUTTON}>Descartar cambios</button>
+            <button type="button" disabled={busy} onClick={() => setConfirm("delete")} className={BUTTON}>{tr(ui, "Borrar")}</button>
+            <button type="button" disabled={busy || !hasDraft} onClick={() => setConfirm("discard")} className={BUTTON}>{tr(ui, "Descartar cambios")}</button>
             <button type="button" disabled={busy || !hasDraft || pending} onClick={publish}
               className="px-4 py-2 rounded-lg bg-shop_orange text-white text-sm font-semibold disabled:opacity-50">
-              {busy ? "Publicando…" : "Publicar"}
+              {busy ? tr(ui, "Publicando…") : tr(ui, "Publicar")}
             </button>
           </>
         )}
@@ -178,24 +181,24 @@ const ProductEditor = ({
 
       {!canPublish && (
         <p className="mb-4 rounded-xl bg-blue-50 border border-blue-200 p-3 text-sm text-blue-900">
-          Un administrador revisará y publicará tus cambios.
+          {tr(ui, "Un administrador revisará y publicará tus cambios.")}
         </p>
       )}
       {saveFailed && (
         <p role="alert" className="mb-4 rounded-xl bg-red-50 border border-red-200 p-3 text-sm text-red-800">
-          No se pudo guardar el borrador. Se intentará de nuevo con tu próximo cambio.
+          {tr(ui, "No se pudo guardar el borrador. Se intentará de nuevo con tu próximo cambio.")}
         </p>
       )}
       {confirm && (
         <div role="alert" className="mb-4 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
-          {confirm === "delete" ? "¿Borrar este producto para siempre?" : "¿Descartar los cambios sin publicar?"}
+          {tr(ui, confirm === "delete" ? "¿Borrar este producto para siempre?" : "¿Descartar los cambios sin publicar?")}
           <div className="flex gap-2 mt-2">
             <button type="button" disabled={busy} onClick={confirm === "delete" ? remove : discard}
               className="px-3 py-1.5 rounded-lg bg-amber-600 text-white text-xs font-semibold disabled:opacity-60">
-              {confirm === "delete" ? "Borrar" : "Descartar"}
+              {tr(ui, confirm === "delete" ? "Borrar" : "Descartar")}
             </button>
             <button type="button" onClick={() => setConfirm(null)} className="px-3 py-1.5 rounded-lg border border-amber-300 text-xs font-semibold">
-              Cancelar
+              {tr(ui, "Cancelar")}
             </button>
           </div>
         </div>
@@ -204,24 +207,24 @@ const ProductEditor = ({
       <div className="grid gap-6 lg:grid-cols-[1fr_320px] items-start">
         <div className="bg-white rounded-2xl shadow-sm p-5 flex flex-col gap-4">
           {languages.languages.length > 1 && <EditorLocale value={edit} onChange={setEdit} missing={missing} />}
-          <TextField label="Nombre" value={form[nameKey]} max={120} error={twinError(errors, "", "name", edit, primary)}
+          <TextField label={tr(ui, "Nombre")} value={form[nameKey]} max={120} error={twinError(errors, "", "name", edit, primary)}
             onChange={(text) => update({ ...twinPatch("name", text, edit, single), ...(slugTouched || edit !== primary ? {} : { slug: slugify(text) }) } as Partial<ProductForm>)} />
-          <TextField label="Slug (dirección del producto)" value={form.slug} max={96} error={errors.slug}
+          <TextField label={tr(ui, "Slug (dirección del producto)")} value={form.slug} max={96} error={errors.slug}
             onChange={(slug) => { setSlugTouched(true); update({ slug }); }} />
           <ProductImages value={form.images} onChange={(change) => setForm((f) => ({ ...f, images: change(f.images) }))} error={errors.images} />
-          <TextField label="Descripción" value={form[descriptionKey]} max={2000} multiline error={twinError(errors, "", "description", edit, primary)}
+          <TextField label={tr(ui, "Descripción")} value={form[descriptionKey]} max={2000} multiline error={twinError(errors, "", "description", edit, primary)}
             onChange={(text) => update(twinPatch("description", text, edit, single) as Partial<ProductForm>)} />
           <div className="grid grid-cols-3 gap-3">
-            <NumberField label="Precio" step="0.01" value={form.price} error={errors.price} onChange={(price) => update({ price })} />
-            <NumberField label="Descuento (%)" value={form.discount} error={errors.discount} onChange={(discount) => update({ discount })} />
-            <NumberField label="Stock" value={form.stock} error={errors.stock} onChange={(stock) => update({ stock })} />
+            <NumberField label={tr(ui, "Precio")} step="0.01" value={form.price} error={errors.price} onChange={(price) => update({ price })} />
+            <NumberField label={tr(ui, "Descuento (%)")} value={form.discount} error={errors.discount} onChange={(discount) => update({ discount })} />
+            <NumberField label={tr(ui, "Stock")} value={form.stock} error={errors.stock} onChange={(stock) => update({ stock })} />
           </div>
           <SavingNote pending={pending} />
         </div>
 
         <div className="bg-white rounded-2xl shadow-sm p-5 flex flex-col gap-4">
           <fieldset>
-            <legend className="text-xs font-semibold text-gray-700">Categorías</legend>
+            <legend className="text-xs font-semibold text-gray-700">{tr(ui, "Categorías")}</legend>
             <div className="mt-1 flex flex-col gap-1 max-h-48 overflow-y-auto">
               {options.categories.map((c) => (
                 <label key={c._id} className="flex items-center gap-2 text-sm">
@@ -236,30 +239,30 @@ const ProductEditor = ({
             {errors.categories && <span className="block text-xs text-red-600 mt-1">{errors.categories}</span>}
           </fieldset>
           <label className="block">
-            <span className="text-xs font-semibold text-gray-700">Marca</span>
+            <span className="text-xs font-semibold text-gray-700">{tr(ui, "Marca")}</span>
             <select value={form.brand} onChange={(e) => update({ brand: e.target.value })} className={`${INPUT} mt-1`}>
-              <option value="">Sin marca</option>
+              <option value="">{tr(ui, "Sin marca")}</option>
               {options.brands.map((b) => <option key={b._id} value={b._id}>{b.title}</option>)}
             </select>
             {errors.brand && <span className="block text-xs text-red-600 mt-1">{errors.brand}</span>}
           </label>
           <label className="block">
-            <span className="text-xs font-semibold text-gray-700">Estado</span>
+            <span className="text-xs font-semibold text-gray-700">{tr(ui, "Estado")}</span>
             <select value={form.status} onChange={(e) => update({ status: e.target.value })} className={`${INPUT} mt-1`}>
-              <option value="">Ninguno</option>
-              {Object.entries(PRODUCT_STATUSES).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+              <option value="">{tr(ui, "Ninguno")}</option>
+              {Object.entries(PRODUCT_STATUSES).map(([value, label]) => <option key={value} value={value}>{tr(ui, label)}</option>)}
             </select>
           </label>
           <label className="block">
-            <span className="text-xs font-semibold text-gray-700">Tipo</span>
+            <span className="text-xs font-semibold text-gray-700">{tr(ui, "Tipo")}</span>
             <select value={form.variant} onChange={(e) => update({ variant: e.target.value })} className={`${INPUT} mt-1`}>
-              <option value="">Ninguno</option>
-              {Object.entries(PRODUCT_VARIANTS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+              <option value="">{tr(ui, "Ninguno")}</option>
+              {Object.entries(PRODUCT_VARIANTS).map(([value, label]) => <option key={value} value={value}>{tr(ui, label)}</option>)}
             </select>
           </label>
           <label className="flex items-center gap-2 text-sm">
             <input type="checkbox" checked={form.isFeatured} onChange={(e) => update({ isFeatured: e.target.checked })} />
-            Destacado
+            {tr(ui, "Destacado")}
           </label>
         </div>
       </div>

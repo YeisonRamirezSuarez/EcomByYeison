@@ -4,11 +4,13 @@ import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Search } from "lucide-react";
+import { useAdminLocale } from "@/components/admin/AdminLocaleProvider";
+import { tr, type AdminText } from "@/lib/adminText";
 import { formatPrice, type CurrencyCode } from "@/constants/currencies";
 import { PRODUCT_STATE_LABELS, filterProducts, type ProductFilter, type ProductRow, type ProductState } from "@/lib/catalog";
 
 const PAGE_SIZE = 20;
-const FILTERS: { key: ProductFilter; label: string }[] = [
+const FILTERS: { key: ProductFilter; label: AdminText }[] = [
   { key: "activos", label: "Activos" },
   { key: "por-publicar", label: "Por publicar" },
   { key: "archivados", label: "Archivados" },
@@ -21,6 +23,7 @@ const STATE_COLORS: Record<ProductState, string> = {
 };
 
 const ProductsList = ({ rows, currency }: { rows: ProductRow[]; currency: CurrencyCode }) => {
+  const ui = useAdminLocale();
   const [filter, setFilter] = useState<ProductFilter>("activos");
   const [query, setQuery] = useState("");
   const [page, setPage] = useState(0);
@@ -43,7 +46,7 @@ const ProductsList = ({ rows, currency }: { rows: ProductRow[]; currency: Curren
               filter === key ? "bg-shop_dark_green text-white border-shop_dark_green" : "border-gray-200 text-gray-700"
             }`}
           >
-            {label} ({count(key)})
+            {tr(ui, label)} ({count(key)})
           </button>
         ))}
         <label className="relative ml-auto w-full sm:w-64">
@@ -51,15 +54,15 @@ const ProductsList = ({ rows, currency }: { rows: ProductRow[]; currency: Curren
           <input
             value={query}
             onChange={(e) => { setQuery(e.target.value); setPage(0); }}
-            placeholder="Buscar por nombre"
-            aria-label="Buscar por nombre"
+            placeholder={tr(ui, "Buscar por nombre")}
+            aria-label={tr(ui, "Buscar por nombre")}
             className="w-full border border-gray-200 rounded-lg pl-8 pr-3 py-2 text-sm"
           />
         </label>
       </div>
 
       {visible.length === 0 ? (
-        <p className="p-8 text-center text-sm text-gray-500">No hay productos aquí.</p>
+        <p className="p-8 text-center text-sm text-gray-500">{tr(ui, "No hay productos aquí.")}</p>
       ) : (
         <ul className="divide-y">
           {visible.map((row) => (
@@ -70,13 +73,13 @@ const ProductsList = ({ rows, currency }: { rows: ProductRow[]; currency: Curren
                 ) : (
                   <div className="h-10 w-10 rounded-lg bg-gray-100" />
                 )}
-                <span className="flex-1 min-w-0 text-sm font-medium text-gray-900 truncate">{row.name || "Sin nombre"}</span>
+                <span className="flex-1 min-w-0 text-sm font-medium text-gray-900 truncate">{row.name || tr(ui, "Sin nombre")}</span>
                 <span className="hidden sm:block w-24 text-right text-sm text-gray-700">{formatPrice(row.price, currency)}</span>
                 <span className={`hidden sm:block w-20 text-right text-sm ${row.stock > 0 ? "text-gray-700" : "text-red-600"}`}>
-                  {row.stock} u.
+                  {tr(ui, "{n} u.", { n: row.stock })}
                 </span>
                 <span className={`w-28 text-center text-xs font-semibold rounded-full px-2 py-1 ${STATE_COLORS[row.state]}`}>
-                  {PRODUCT_STATE_LABELS[row.state]}
+                  {tr(ui, PRODUCT_STATE_LABELS[row.state])}
                 </span>
               </Link>
             </li>
@@ -87,11 +90,11 @@ const ProductsList = ({ rows, currency }: { rows: ProductRow[]; currency: Curren
       {pages > 1 && (
         <div className="flex items-center justify-between p-4 border-t text-sm">
           <button type="button" disabled={current === 0} onClick={() => setPage(current - 1)} className="px-3 py-1.5 rounded-lg border disabled:opacity-40">
-            Anterior
+            {tr(ui, "Anterior")}
           </button>
-          <span className="text-gray-600">Página {current + 1} de {pages}</span>
+          <span className="text-gray-600">{tr(ui, "Página {page} de {pages}", { page: current + 1, pages })}</span>
           <button type="button" disabled={current >= pages - 1} onClick={() => setPage(current + 1)} className="px-3 py-1.5 rounded-lg border disabled:opacity-40">
-            Siguiente
+            {tr(ui, "Siguiente")}
           </button>
         </div>
       )}

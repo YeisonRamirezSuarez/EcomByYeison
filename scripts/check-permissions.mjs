@@ -1335,4 +1335,18 @@ assert.equal(ck.checkoutLines([{ id: "p1", quantity: 1 }], [{ ...SERVER[0], pric
   assert.equal(v.validateImageFile({ type: "text/plain", size: 10 }, undefined, "en"), "Only JPG, PNG, WEBP or SVG up to 4 MB");
 }
 
+// Catalog validators in the panel language (lib/catalog.ts); no ui = today's Spanish
+{
+  const c = await import("../lib/catalog.ts");
+  const lz = await import("../lib/localize.ts");
+  assert.deepEqual(c.validateProduct({}).errors, { name: "Campo obligatorio (español)", slug: "Campo obligatorio", price: "Campo obligatorio" });
+  assert.deepEqual(c.validateProduct({}, "es", "en").errors, { name: "Required (Spanish)", slug: "Required", price: "Required" });
+  assert.equal(c.validateCategory({}, "en", "en").errors.titleEn, "Required (English)");
+  assert.equal(c.validateBrand({}).errors.title, "Campo obligatorio (español)");
+  assert.equal(c.validateBrand({ title: "x".repeat(200), slug: "x" }, "es", "en").errors.title, "Up to 80 characters");
+  // Pins how the "English missing" badge works: lacksLanguage looks for the Spanish message, so
+  // the editors' calls inside lacksLanguage(...) must keep validating without ui.
+  assert.equal(lz.lacksLanguage(c.validateProduct({ name: "Mesa", slug: "mesa", price: 10 }, "en"), "en"), true);
+}
+
 console.log("check-permissions: ok");
