@@ -1,5 +1,5 @@
 import { isThemeKey, type ThemeKey } from "@/constants/themes";
-import { validateStyles, type Styles } from "@/lib/styles";
+import { checkStyles, type Styles } from "@/lib/styles";
 
 // Messages between the appearance editor and the store inside its iframe. Both sides check
 // event.origin and event.source before parsing; anything with another shape is ignored.
@@ -18,8 +18,8 @@ export function parseEditorMessage(data: unknown): EditorMessage | null {
   if (v.type === "preview-refresh") return { type: "preview-refresh" };
   if (v.type === "focus-section" && typeof v.key === "string" && KEY.test(v.key)) return { type: "focus-section", key: v.key };
   if (v.type === "preview-styles" && isThemeKey(v.theme)) {
-    const styles = validateStyles(v.styles);
-    return styles.ok ? { type: "preview-styles", theme: v.theme, styles: styles.value } : null;
+    const { value, errors } = checkStyles(v.styles);
+    return Object.keys(errors).length === 0 ? { type: "preview-styles", theme: v.theme, styles: value } : null;
   }
   return null;
 }

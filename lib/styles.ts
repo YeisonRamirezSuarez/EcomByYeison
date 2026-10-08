@@ -1,8 +1,6 @@
-// Store-wide styles edited in Apariencia → Estilos. Pure: no runtime imports, so
-// scripts/check-permissions.mjs can run it (tr comes from the pure lib/adminText).
-import type { Locale } from "./i18n";
-import type { ValidationResult } from "./validation";
-import { tr, type AdminText } from "./adminText/index.ts";
+// Store-wide styles edited in Apariencia → Estilos. Pure, and no runtime import of adminText: store
+// client components use it. The panel-language validateStyles lives in lib/stylesValidate.ts.
+import type { AdminText } from "./adminText/index.ts";
 
 export const FONTS = {
   poppins: "Poppins",
@@ -47,7 +45,7 @@ const HEX = /^#[0-9a-fA-F]{6}$/;
 const asObject = (value: unknown): Record<string, unknown> =>
   value && typeof value === "object" && !Array.isArray(value) ? (value as Record<string, unknown>) : {};
 
-function parseStyles(input: unknown, errors: Record<string, string>, ui: Locale = "es"): Styles {
+function parseStyles(input: unknown, errors: Record<string, AdminText>): Styles {
   const v = asObject(input);
   const rawColors = asObject(v.colors);
   const colors: Styles["colors"] = {};
@@ -55,13 +53,13 @@ function parseStyles(input: unknown, errors: Record<string, string>, ui: Locale 
     const c = rawColors[field];
     if (c === undefined || c === null || c === "") continue;
     if (typeof c === "string" && HEX.test(c)) colors[field] = c.toLowerCase();
-    else errors[`colors.${field}`] = tr(ui, "Color inválido");
+    else errors[`colors.${field}`] = "Color inválido";
   }
   const choose = <T extends string>(key: string, options: Record<T, string>, fallback: T): T => {
     const raw = v[key];
     if (raw === undefined || raw === null || raw === "") return fallback;
     if (typeof raw === "string" && Object.hasOwn(options, raw)) return raw as T;
-    errors[key] = tr(ui, "Opción inválida");
+    errors[key] = "Opción inválida";
     return fallback;
   };
   return {
@@ -73,10 +71,11 @@ function parseStyles(input: unknown, errors: Record<string, string>, ui: Locale 
   };
 }
 
-export function validateStyles(input: unknown, ui: Locale = "es"): ValidationResult<Styles> {
-  const errors: Record<string, string> = {};
-  const value = parseStyles(input, errors, ui);
-  return Object.keys(errors).length > 0 ? { ok: false, errors } : { ok: true, value };
+// Errors are the Spanish AdminText keys; lib/stylesValidate.ts turns them into the panel language.
+export function checkStyles(input: unknown): { value: Styles; errors: Record<string, AdminText> } {
+  const errors: Record<string, AdminText> = {};
+  const value = parseStyles(input, errors);
+  return { value, errors };
 }
 
 // Lenient read of what Sanity has: an invalid field falls back to its default.

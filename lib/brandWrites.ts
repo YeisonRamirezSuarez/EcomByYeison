@@ -8,7 +8,7 @@ import {
   validateSocial,
 } from "@/lib/validation";
 import { homeSectionsWrite, validateHomeSections } from "@/lib/homeSections";
-import { validateStyles } from "@/lib/styles";
+import { validateStyles } from "@/lib/stylesValidate";
 import { backendClient } from "@/sanity/lib/backendClient";
 
 export type Write = { set: Record<string, unknown>; unset: string[]; images: ImageValue[]; categories?: string[] };

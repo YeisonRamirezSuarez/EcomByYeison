@@ -6,7 +6,7 @@ import { enUS } from "@clerk/localizations";
 import { clerkEs } from "@/lib/clerkEs";
 import type { Locale } from "@/lib/i18n";
 
-// locale: the visitor's language resolved on the server. The admin panel omits it (Spanish).
+// locale: the visitor's language resolved on the server. The admin layout passes the panel language.
 const ClientClerkProvider = ({
   children,
   nonce,

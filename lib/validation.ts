@@ -13,6 +13,9 @@ import type {
 } from "./brand";
 import type { Locale } from "./i18n";
 import { tr, type AdminText } from "./adminText/index.ts";
+import { isHttpsUrl, SOCIAL_KEYS } from "./social.ts";
+
+export { isHttpsUrl, SOCIAL_KEYS, SOCIAL_LABELS, type SocialKey } from "./social.ts";
 
 export type ValidationResult<T> =
   | { ok: true; value: T }
@@ -27,28 +30,6 @@ export const PAGE_LABELS = {
   faqs: "Preguntas frecuentes",
   help: "Ayuda",
 } as const satisfies Record<PageKey, AdminText>;
-
-export const SOCIAL_KEYS = [
-  "facebook",
-  "instagram",
-  "tiktok",
-  "youtube",
-  "linkedin",
-  "x",
-  "whatsapp",
-  "pinterest",
-] as const;
-export type SocialKey = (typeof SOCIAL_KEYS)[number];
-export const SOCIAL_LABELS: Record<SocialKey, string> = {
-  facebook: "Facebook",
-  instagram: "Instagram",
-  tiktok: "TikTok",
-  youtube: "YouTube",
-  linkedin: "LinkedIn",
-  x: "X",
-  whatsapp: "WhatsApp",
-  pinterest: "Pinterest",
-};
 
 export const CONTENT_ICONS = {
   truck: "Camión",
@@ -85,16 +66,6 @@ const hrefError = (ui: Locale) => tr(ui, "Usa una ruta que empiece por / o un en
 const tooLong = (max: number, ui: Locale) => tr(ui, "Máximo {max} caracteres", { max });
 
 type Errors = Record<string, string>;
-
-export function isHttpsUrl(value: unknown): boolean {
-  if (typeof value !== "string" || value.length > 300) return false;
-  try {
-    const url = new URL(value);
-    return url.protocol === "https:" && url.hostname.length > 0;
-  } catch {
-    return false;
-  }
-}
 
 export function isValidHref(value: unknown): boolean {
   if (typeof value !== "string" || value.length > 300) return false;

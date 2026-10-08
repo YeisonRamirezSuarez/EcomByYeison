@@ -20,7 +20,7 @@ import {
 } from "./ui/tooltip";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
-import { isHttpsUrl, SOCIAL_KEYS, SOCIAL_LABELS, type SocialKey } from "@/lib/validation";
+import { isHttpsUrl, SOCIAL_KEYS, SOCIAL_LABELS, type SocialKey } from "@/lib/social";
 import { useBrand } from "./StoreSettingsProvider";
 
 interface Props {

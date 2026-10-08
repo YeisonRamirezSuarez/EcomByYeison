@@ -9,7 +9,12 @@ const AdminLocaleContext = createContext<Locale>("es");
 // <html lang>; inside the panel it is corrected here.
 export function AdminLocaleProvider({ locale, children }: { locale: Locale; children: React.ReactNode }) {
   useEffect(() => {
-    document.documentElement.lang = locale;
+    const html = document.documentElement;
+    const previous = html.lang;
+    html.lang = locale;
+    return () => {
+      html.lang = previous;
+    };
   }, [locale]);
   return <AdminLocaleContext.Provider value={locale}>{children}</AdminLocaleContext.Provider>;
 }

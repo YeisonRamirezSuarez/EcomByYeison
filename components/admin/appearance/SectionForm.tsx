@@ -188,7 +188,7 @@ const Fields = ({ section: s, errors, categories, lang, onChange }: { section: H
                 <option value="">{tr(ui, "Elige una categoría")}</option>
                 {categories.map((c) => (
                   <option key={c._id} value={c._id}>
-                    {c.title}
+                    {c.title || tr(ui, "Sin título")}
                   </option>
                 ))}
               </select>

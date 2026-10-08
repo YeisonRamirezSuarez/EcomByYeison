@@ -816,7 +816,7 @@ assert.equal(ck.checkoutLines([{ id: "p1", quantity: 1 }], [{ ...SERVER[0], pric
 
 // Store styles (Apariencia → Estilos)
 {
-  const st = await import("../lib/styles.ts");
+  const st = { ...(await import("../lib/styles.ts")), ...(await import("../lib/stylesValidate.ts")) };
   assert.deepEqual(st.validateStyles({}).value, st.DEFAULT_STYLES);
   assert.deepEqual(st.validateStyles(undefined).value, st.DEFAULT_STYLES);
   assert.deepEqual(st.DEFAULT_STYLES, { colors: {}, headingFont: "poppins", bodyFont: "poppins", corners: "soft", buttons: "filled" });
@@ -1374,7 +1374,7 @@ assert.equal(ck.checkoutLines([{ id: "p1", quantity: 1 }], [{ ...SERVER[0], pric
 // Apariencia validators in the panel language (lib/homeSections.ts, lib/styles.ts)
 {
   const h = await import("../lib/homeSections.ts");
-  const s = await import("../lib/styles.ts");
+  const s = await import("../lib/stylesValidate.ts");
   assert.equal(h.validateHomeSections([]).errors.sections, "Faltan secciones: Banner principal, Productos por tipo, Categorías, Marcas, Blog");
   assert.equal(h.validateHomeSections([], "es", "en").errors.sections, "Missing sections: Main banner, Products by type, Categories, Brands, Blog");
   assert.equal(h.validateHomeSections({}, "es", "en").errors.sections, "Invalid section list");
@@ -1390,6 +1390,9 @@ assert.equal(ck.checkoutLines([{ id: "p1", quantity: 1 }], [{ ...SERVER[0], pric
   assert.equal(v.validateBanner({ title: "x".repeat(400) }, "es", "en").errors.title, "Up to 60 characters");
   assert.equal(v.validateContact({ email: "nope" }, "en").errors.email, "Invalid email");
   assert.equal(v.validateSocial({ facebook: "x" }, "en").errors.facebook, "Must be an https:// link");
+  const badIcon = { blocks: [{ icon: "nope", title: "a", titleEn: "a", text: "b", textEn: "b" }] };
+  assert.equal(v.validatePage(badIcon).errors["blocks.0.icon"], "Ícono inválido");
+  assert.equal(v.validatePage(badIcon, "es", "en").errors["blocks.0.icon"], "Invalid icon");
 }
 
 // Campaign texts in the panel language (lib/newsletter.ts)

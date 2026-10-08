@@ -121,8 +121,8 @@ export type Option = { _id: string; title: string };
 export async function getCatalogOptions(): Promise<{ categories: Option[]; brands: Option[] }> {
   return backendClient.fetch(
     `{
-      "categories": *[_type == "category"] | ${BY_TITLE}{ _id, "title": select(length(title) > 0 => title, length(titleEn) > 0 => titleEn, "Sin título") },
-      "brands": *[_type == "brand"] | ${BY_TITLE}{ _id, "title": select(length(title) > 0 => title, length(titleEn) > 0 => titleEn, "Sin título") }
+      "categories": *[_type == "category"] | ${BY_TITLE}{ _id, "title": select(length(title) > 0 => title, length(titleEn) > 0 => titleEn, "") },
+      "brands": *[_type == "brand"] | ${BY_TITLE}{ _id, "title": select(length(title) > 0 => title, length(titleEn) > 0 => titleEn, "") }
     }`,
     {},
     FRESH

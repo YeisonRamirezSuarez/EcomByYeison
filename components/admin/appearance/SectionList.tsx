@@ -35,7 +35,7 @@ const Row = ({
       dragControls={controls}
       className="flex items-center gap-1 rounded-xl border border-gray-200 bg-white px-1.5 py-1.5 text-sm"
     >
-      {/* Mouse/touch only: keyboard and screen readers use Subir/Bajar. */}
+      {/* Mouse/touch only: keyboard and screen readers use the Mover arriba / Mover abajo buttons. */}
       <button
         type="button"
         tabIndex={-1}

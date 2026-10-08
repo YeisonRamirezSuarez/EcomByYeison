@@ -232,7 +232,7 @@ const ProductEditor = ({
                     onChange={(e) => update({
                       categories: e.target.checked ? [...form.categories, c._id] : form.categories.filter((x) => x !== c._id),
                     })} />
-                  {c.title}
+                  {c.title || tr(ui, "Sin título")}
                 </label>
               ))}
             </div>
@@ -242,7 +242,7 @@ const ProductEditor = ({
             <span className="text-xs font-semibold text-gray-700">{tr(ui, "Marca")}</span>
             <select value={form.brand} onChange={(e) => update({ brand: e.target.value })} className={`${INPUT} mt-1`}>
               <option value="">{tr(ui, "Sin marca")}</option>
-              {options.brands.map((b) => <option key={b._id} value={b._id}>{b.title}</option>)}
+              {options.brands.map((b) => <option key={b._id} value={b._id}>{b.title || tr(ui, "Sin título")}</option>)}
             </select>
             {errors.brand && <span className="block text-xs text-red-600 mt-1">{errors.brand}</span>}
           </label>
