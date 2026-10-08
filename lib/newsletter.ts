@@ -147,7 +147,8 @@ function text(errors: Errors, key: string, value: unknown, max: number, required
 
 function int(errors: Errors, key: string, value: unknown, min: number, max: number, fallback: number): number {
   if (value === undefined || value === null || value === "") return fallback;
-  const n = typeof value === "string" ? Number(value) : value;
+  // Plain digits only: Number() would also take "1e3" or "0x10".
+  const n = typeof value === "string" ? (/^\d+$/.test(value.trim()) ? Number(value) : NaN) : value;
   if (typeof n === "number" && Number.isInteger(n) && n >= min && n <= max) return n;
   errors[key] = `Elige un número entre ${min} y ${max}`;
   return fallback;

@@ -43,6 +43,8 @@ const CampaignEditor = ({ id, initial, initialProducts, missing: initialMissing,
   const [pending, startTransition] = useTransition();
   const router = useRouter();
   const [locked, setLocked] = useState(progress.status !== "draft");
+  // Follows a send started in this tab (the server's status only arrives on the next load).
+  const [status, setStatus] = useState(progress.status);
   const editable = !locked;
 
   const save = useAutosave(content, validateCampaign, (value) => saveCampaign(id, value), {
@@ -95,7 +97,7 @@ const CampaignEditor = ({ id, initial, initialProducts, missing: initialMissing,
     <div className="flex flex-col gap-3">
       <div className="flex flex-wrap items-center gap-2 bg-white rounded-2xl shadow-sm px-4 py-2.5">
         <h1 className="text-lg font-bold text-shop_dark_green mr-2">Campaña</h1>
-        <span className="text-xs font-semibold rounded-full bg-gray-100 text-gray-700 px-2.5 py-1">{CAMPAIGN_STATUS_LABELS[progress.status]}</span>
+        <span className="text-xs font-semibold rounded-full bg-gray-100 text-gray-700 px-2.5 py-1">{CAMPAIGN_STATUS_LABELS[status]}</span>
         {editable && (
           <span className="text-xs text-gray-500">
             {save.pending ? "Guardando…" : Object.keys(save.errors).length > 0 ? "Sin guardar: revisa los campos" : "Borrador guardado"}
@@ -108,7 +110,7 @@ const CampaignEditor = ({ id, initial, initialProducts, missing: initialMissing,
         <button type="button" onClick={duplicate} disabled={pending} className="px-3 py-2 rounded-lg border border-gray-300 bg-white text-sm font-semibold text-gray-700 disabled:opacity-60">
           Duplicar
         </button>
-        {progress.status !== "sending" && (
+        {status !== "sending" && (
           <button type="button" onClick={() => setAskDelete(true)} disabled={pending} className="px-3 py-2 rounded-lg text-sm font-semibold text-red-700">
             Borrar
           </button>
@@ -156,7 +158,7 @@ const CampaignEditor = ({ id, initial, initialProducts, missing: initialMissing,
           </fieldset>
           <ProductPicker chosen={chosen} missing={missing} disabled={!editable} onChange={setProducts} />
           {save.errors.products && <span className="text-xs text-red-600">{save.errors.products}</span>}
-          <CampaignSendPanel id={id} content={content} ready={ready} initialProgress={progress} failures={failures} onLock={() => setLocked(true)} />
+          <CampaignSendPanel id={id} content={content} ready={ready} initialProgress={progress} failures={failures} onLock={() => setLocked(true)} onProgress={(p) => setStatus(p.status)} />
         </div>
         <div className="flex justify-center">
           <iframe

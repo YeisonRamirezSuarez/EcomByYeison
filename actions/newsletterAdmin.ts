@@ -3,7 +3,7 @@
 import { currentUser } from "@clerk/nextjs/server";
 import { ActionError, run, type ActionResult } from "@/lib/actionResult";
 import { renderCampaignEmail } from "@/lib/campaignEmail";
-import { getEmailBrand, loadEmailProducts, runBatch, sendReadiness, toPickerProduct, type PickerProduct } from "@/lib/campaignSend";
+import { getEmailBrand, isConflict, loadEmailProducts, OTHER_TAB, runBatch, SEND_FAILED, sendReadiness, toPickerProduct, type PickerProduct } from "@/lib/campaignSend";
 import { localizeEmailBrand, localizeEmailProducts, resolveLocale } from "@/lib/localize";
 import { addUsage, getMailer } from "@/lib/mailer";
 import { campaignSendProblems, EMPTY_CAMPAIGN, errorDetail, isCampaignId, isEmail, isSubscriberId, MAX_IMPORT_ROWS, planImport, SMTP_UNREADABLE, smtpErrorMessage, subscribersCsv, validateCampaign, validateSmtpSettings, type CampaignContent, type CampaignProgress, type SmtpErrorInfo } from "@/lib/newsletter";
@@ -106,6 +106,9 @@ function newSubscriber(email: string, source: "manual" | "import", now: string) 
 }
 
 export async function addSubscriber(input: unknown): Promise<ActionResult<"created" | "exists" | "unsubscribed">> {
+  // Permission first: someone without it never gets field-by-field answers.
+  const allowed = await run(() => requirePermission("configurar"));
+  if (!allowed.ok) return allowed;
   const v = asRecord(input);
   const email = typeof v.email === "string" ? v.email.trim().toLowerCase() : "";
   const errors: Record<string, string> = {};
@@ -113,7 +116,6 @@ export async function addSubscriber(input: unknown): Promise<ActionResult<"creat
   if (v.consent !== true) errors.consent = PERMISSION_ONE;
   if (Object.keys(errors).length > 0) return { ok: false, error: INVALID_FORM, errors };
   return run(async () => {
-    await requirePermission("configurar");
     const status = await getSubscriberStatus(subscriberDocId(email));
     // Never re-activates someone who unsubscribed: only they can, from the store.
     if (status) return status === "unsubscribed" ? "unsubscribed" : "exists";
@@ -136,22 +138,26 @@ async function importPlan(emails: string[]) {
 }
 
 export async function previewImport(input: unknown): Promise<ActionResult<ImportCounts>> {
+  // Permission first: someone without it never gets field-by-field answers.
+  const allowed = await run(() => requirePermission("configurar"));
+  if (!allowed.ok) return allowed;
   const emails = cleanEmails(input);
   if (!emails) return { ok: false, error: BAD_LIST };
   return run(async () => {
-    await requirePermission("configurar");
     const plan = await importPlan(emails);
     return { create: plan.create.length, already: plan.already, skippedUnsubscribed: plan.skippedUnsubscribed };
   });
 }
 
 export async function importSubscribers(input: unknown): Promise<ActionResult<ImportCounts>> {
+  // Permission first: someone without it never gets field-by-field answers.
+  const allowed = await run(() => requirePermission("configurar"));
+  if (!allowed.ok) return allowed;
   const v = asRecord(input);
   const emails = cleanEmails(v.emails);
   if (!emails) return { ok: false, error: BAD_LIST };
   if (v.consent !== true) return { ok: false, error: PERMISSION_MANY, errors: { consent: PERMISSION_MANY } };
   return run(async () => {
-    await requirePermission("configurar");
     const plan = await importPlan(emails);
     const now = new Date().toISOString();
     // ponytail: 200 documents per transaction keeps each request small; 5000 rows = 25 requests.
@@ -231,10 +237,12 @@ export async function createCampaign(): Promise<ActionResult<{ id: string }>> {
 }
 
 export async function saveCampaign(id: string, input: unknown): Promise<ActionResult<null>> {
+  // Permission first: someone without it never gets field-by-field answers.
+  const allowed = await run(() => requirePermission("configurar"));
+  if (!allowed.ok) return allowed;
   const checked = validateCampaign(input);
   if (!checked.ok) return { ok: false, error: INVALID_FORM, errors: checked.errors };
   return run(async () => {
-    await requirePermission("configurar");
     const campaign = await findCampaign(id);
     if (campaign.progress.status !== "draft") throw new ActionError("Esta campaña ya no se puede editar; duplícala para cambiarla");
     await backendClient.patch(campaign._id).ifRevisionId(campaign._rev).set(campaignFields(checked.value)).commit();
@@ -319,7 +327,12 @@ export async function startCampaign(id: string): Promise<ActionResult<CampaignPr
     if (status === "draft") {
       patch.set({ cursor: "", total: ready.activeCount, sent: 0, failed: 0, failures: [], startedAt: new Date().toISOString() });
     }
-    await patch.commit();
+    try {
+      await patch.commit();
+    } catch (error) {
+      // Another tab started (or sent a batch of) this campaign since it was read.
+      throw isConflict(error) ? new ActionError(OTHER_TAB) : error;
+    }
     return (await findCampaign(id)).progress;
   });
 }
@@ -327,7 +340,12 @@ export async function startCampaign(id: string): Promise<ActionResult<CampaignPr
 export async function sendCampaignBatch(id: string): Promise<ActionResult<CampaignProgress>> {
   return run(async () => {
     await requirePermission("configurar");
-    return runBatch(await findCampaign(id));
+    const campaign = await findCampaign(id);
+    return runBatch(campaign).catch((error) => {
+      if (error instanceof ActionError) throw error;
+      console.log("Campaign batch failed", error);
+      throw new ActionError(SEND_FAILED);
+    });
   });
 }
 

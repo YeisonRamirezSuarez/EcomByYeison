@@ -954,6 +954,12 @@ assert.equal(ck.checkoutLines([{ id: "p1", quantity: 1 }], [{ ...SERVER[0], pric
   assert.ok(nl.validateSmtpSettings({ ...smtp, password: "" }, { hasStoredPassword: true }).ok); // keeps the saved one
   assert.ok(nl.validateSmtpSettings({ ...smtp, user: "", password: "" }, { hasStoredPassword: false }).ok); // no login
   assert.ok(nl.validateSmtpSettings({ ...smtp, host: "smtp example.com" }, { hasStoredPassword: false }).errors.host);
+  // Numbers are plain digits: "1e3" and "0x10" are not ports or limits
+  for (const odd of ["1e3", "0x10", "5.0"]) {
+    const r = nl.validateSmtpSettings({ ...smtp, port: odd, dailyLimit: odd }, { hasStoredPassword: false });
+    assert.ok(!r.ok && r.errors.port && r.errors.dailyLimit, odd);
+  }
+  assert.equal(nl.validateSmtpSettings({ ...smtp, port: "465", dailyLimit: 300 }, { hasStoredPassword: false }).value.port, 465);
   assert.equal(nl.validateSmtpSettings({ ...smtp, security: "rara" }, { hasStoredPassword: false }).value.security, "starttls");
 
   // Campaign

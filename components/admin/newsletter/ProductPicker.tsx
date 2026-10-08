@@ -27,15 +27,20 @@ const ProductPicker = ({
 
   useEffect(() => {
     if (disabled) return;
+    // A slow answer for an older term must not replace the results of the newer one.
+    let current = true;
     const timer = setTimeout(
       () =>
         startTransition(async () => {
           const result = await searchCampaignProducts(term);
-          if (result.ok) setResults(result.data);
+          if (current && result.ok) setResults(result.data);
         }),
       300
     );
-    return () => clearTimeout(timer);
+    return () => {
+      current = false;
+      clearTimeout(timer);
+    };
   }, [term, disabled]);
 
   const move = (i: number, step: -1 | 1) => {

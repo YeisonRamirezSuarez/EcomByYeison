@@ -50,12 +50,14 @@ function fromEnv(): Mailer | null {
 }
 
 // null = no outgoing mail configured. Throws if the saved password can't be decrypted.
-// The transport is rebuilt only when the settings document changes (its _rev).
+// The transport is rebuilt only when the settings document changes (its _rev), or the store
+// name it sends as (no "from" name saved) changes.
 export async function getMailer(): Promise<Mailer | null> {
   const doc = await getSmtpDoc();
-  const key = doc?.host ? `settings:${doc._rev}` : "env";
+  const storeName = doc?.host && !doc.fromName ? (await getSiteSettings()).storeName : "";
+  const key = doc?.host ? `settings:${doc._rev}:${storeName}` : "env";
   if (cached?.key === key) return cached.mailer;
-  const mailer = doc?.host ? fromSettings(doc, (await getSiteSettings()).storeName) : fromEnv();
+  const mailer = doc?.host ? fromSettings(doc, storeName) : fromEnv();
   cached = mailer ? { key, mailer } : null;
   return mailer;
 }

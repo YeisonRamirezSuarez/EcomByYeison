@@ -7,6 +7,8 @@ import { addSubscriber, exportSubscribers, importSubscribers, previewImport, typ
 import { INPUT } from "@/components/admin/brand/fields";
 import { parseEmailCsv } from "@/lib/newsletter";
 
+const MAX_FILE_BYTES = 1_000_000;
+
 type Panel = "add" | "import" | null;
 type Summary = ImportCounts & { emails: string[]; invalid: string[]; duplicates: number };
 
@@ -56,6 +58,11 @@ const SubscriberTools = () => {
     startTransition(async () => {
       setSummary(null);
       setFileError("");
+      // Checked before reading: 5000 rows with a few columns weigh far less than 1 MB.
+      if (file.size > MAX_FILE_BYTES) {
+        setFileError("El archivo pesa más de 1 MB. Deja solo la columna de correos o divídelo.");
+        return;
+      }
       const parsed = parseEmailCsv(await file.text());
       if (!parsed.ok) {
         setFileError(parsed.error);
@@ -78,7 +85,12 @@ const SubscriberTools = () => {
         toast.error(result.error);
         return;
       }
-      toast.success(`${result.data.create} suscriptores importados`);
+      // The panel closes, so the toast keeps the summary.
+      const { create, already, skippedUnsubscribed } = result.data;
+      toast.success(
+        `${create} suscriptores importados · ${already} ya estaban · ${skippedUnsubscribed} omitidos por estar dados de baja · ${summary.invalid.length} inválidos · ${summary.duplicates} repetidos`,
+        { duration: 8000 }
+      );
       open(null);
       router.refresh();
     });
@@ -133,7 +145,11 @@ const SubscriberTools = () => {
             type="file"
             accept=".csv,text/csv"
             aria-label="Archivo CSV"
-            onChange={(e) => e.target.files?.[0] && readFile(e.target.files[0])}
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              e.target.value = ""; // so the same file can be picked again
+              if (file) readFile(file);
+            }}
             className="text-xs"
           />
           <p className="text-xs text-gray-500">Una columna llamada email o correo (separada por coma o punto y coma). Máximo 5000 filas.</p>

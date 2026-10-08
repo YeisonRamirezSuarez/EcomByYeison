@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { Check, X } from "lucide-react";
 import { deleteSmtpSettings, saveSmtpSettings, testSmtp, type SmtpTest } from "@/actions/newsletterAdmin";
@@ -46,6 +47,7 @@ const SmtpSection = ({ initial, keyReady, unreadable, envConfigured }: { initial
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [test, setTest] = useState<SmtpTest | null>(null);
   const [askRemove, setAskRemove] = useState(false);
+  const router = useRouter();
   const [pending, startTransition] = useTransition();
   const set = (key: keyof Form) => (event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
     setForm((f) => ({ ...f, [key]: event.target.value }));
@@ -68,6 +70,7 @@ const SmtpSection = ({ initial, keyReady, unreadable, envConfigured }: { initial
       setSaved(true);
       setForm((f) => ({ ...f, password: "" }));
       toast.success("Configuración del correo guardada");
+      router.refresh(); // the server re-checks the saved password (the "unreadable" notice)
     });
 
   const runTest = () =>

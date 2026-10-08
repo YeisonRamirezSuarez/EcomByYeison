@@ -71,8 +71,9 @@ export async function sendReadiness(address: string): Promise<SendReadiness & { 
   };
 }
 
-const OTHER_TAB = "Otra pestaña está enviando esta campaña";
-const isConflict = (error: unknown) => (error as { statusCode?: number } | null)?.statusCode === 409;
+export const OTHER_TAB = "Otra pestaña está enviando esta campaña";
+export const SEND_FAILED = "No se pudo continuar el envío";
+export const isConflict = (error: unknown) => (error as { statusCode?: number } | null)?.statusCode === 409;
 
 async function pauseWith(campaign: CampaignDoc, reason: PauseReason, message: string): Promise<CampaignProgress> {
   await backendClient.patch(campaign._id).set({ status: "paused", pauseReason: reason, pauseMessage: message }).commit();
@@ -96,9 +97,8 @@ export async function runBatch(campaign: CampaignDoc): Promise<CampaignProgress>
   if (!mailer || !secret || !base) return pauseWith(campaign, "smtp", "El correo de salida no está configurado. Revisa Ajustes → Correo.");
 
   const take = batchSize(await remainingSendsToday(mailer.dailyLimit));
-  if (take === 0) return pauseWith(campaign, "limit", `Llegaste al tope de hoy (${mailer.dailyLimit}). Continúa mañana.`);
-
-  const batch = await getNextBatch(campaign.cursor, take);
+  // At the daily limit, still look for one more person: a campaign with nobody left is sent, not paused.
+  const batch = await getNextBatch(campaign.cursor, Math.max(take, 1));
   if (batch.length === 0) {
     try {
       await backendClient.patch(campaign._id).ifRevisionId(campaign._rev).set({ status: "sent", finishedAt: new Date().toISOString() }).unset(["pauseReason", "pauseMessage"]).commit();
@@ -108,6 +108,7 @@ export async function runBatch(campaign: CampaignDoc): Promise<CampaignProgress>
     }
     return { ...campaign.progress, status: "sent", pauseReason: null, pauseMessage: "" };
   }
+  if (take === 0) return pauseWith(campaign, "limit", `Llegaste al tope de hoy (${mailer.dailyLimit}). Continúa mañana.`);
 
   // Read everything the emails need before reserving, so a read error never skips people.
   const { brand: storeBrand, currency, languages } = await getEmailBrand();

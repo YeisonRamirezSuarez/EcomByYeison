@@ -15,6 +15,8 @@ import {
 } from "@/lib/newsletter";
 
 const LEFT_OPEN = "El envío quedó a medias (se cerró la página). Pulsa Continuar para seguir.";
+// The draft view has no Continuar button.
+const retryText = (status: CampaignProgress["status"]) => (status === "draft" ? "Intenta de nuevo." : "Pulsa Continuar para reintentar.");
 
 const CampaignSendPanel = ({
   id,
@@ -23,6 +25,7 @@ const CampaignSendPanel = ({
   initialProgress,
   failures,
   onLock,
+  onProgress,
 }: {
   id: string;
   content: CampaignContent;
@@ -30,6 +33,7 @@ const CampaignSendPanel = ({
   initialProgress: CampaignProgress;
   failures: CampaignFailure[];
   onLock: () => void;
+  onProgress: (progress: CampaignProgress) => void;
 }) => {
   // A campaign left in "sending" with no tab sending (page closed) shows as paused.
   const [progress, setProgress] = useState<CampaignProgress>(
@@ -43,25 +47,30 @@ const CampaignSendPanel = ({
   const router = useRouter();
   const problems = campaignSendProblems(content, progress.status === "draft" ? ready : { ...ready, activeCount: Math.max(ready.activeCount, 1) });
 
-  // The draft view has no Continuar button.
-  const retry = progress.status === "draft" ? "Intenta de nuevo." : "Pulsa Continuar para reintentar.";
+  const show = (next: CampaignProgress) => {
+    setProgress(next);
+    onProgress(next);
+  };
 
   const loop = async (first: () => Promise<ActionResult<CampaignProgress>>) => {
     setRunning(true);
     setPausing(false);
     setError("");
     stop.current = false;
+    // The retry hint follows the status the panel shows when it fails, not the one at the start.
+    let status = progress.status;
     try {
       let result = await first();
       if (result.ok) onLock();
       while (result.ok) {
-        setProgress(result.data);
+        show(result.data);
+        status = result.data.status;
         if (result.data.status !== "sending" || stop.current) break;
         result = await sendCampaignBatch(id);
       }
-      if (!result.ok) setError(`${result.error.replace(/\.$/, "")}. ${retry}`);
+      if (!result.ok) setError(`${result.error.replace(/\.$/, "")}. ${retryText(status)}`);
     } catch {
-      setError(`Se perdió la conexión con el servidor. ${retry}`);
+      setError(`Se perdió la conexión con el servidor. ${retryText(status)}`);
     } finally {
       setRunning(false);
       router.refresh(); // failures list from the server
@@ -79,7 +88,7 @@ const CampaignSendPanel = ({
     stop.current = true;
     setPausing(true);
     const result = await pauseCampaign(id);
-    if (result.ok) setProgress(result.data);
+    if (result.ok) show(result.data);
   };
 
   const done = progress.sent + progress.failed;
