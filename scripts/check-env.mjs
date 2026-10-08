@@ -5,7 +5,7 @@ import { mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import Stripe from "stripe";
-import { checkEnv, findWebhook, pickSingleUser, readEnvFile, webhookUrl, WEBHOOK_EVENT } from "./deploy-lib.mjs";
+import { checkEnv, findWebhook, pickSingleUser, PRIVATE_TYPES, publicPrivateDocs, readEnvFile, webhookUrl, WEBHOOK_EVENT } from "./deploy-lib.mjs";
 
 const args = process.argv.slice(2);
 
@@ -93,6 +93,14 @@ if (args.includes("--self-test")) {
   assert.equal(findWebhook(endpoints, "https://nueva.com/api/webhook"), null);
   assert.equal(WEBHOOK_EVENT, "checkout.session.completed");
 
+  // Documents with personal data must not be readable without a token
+  for (const type of ["address", "order", "subscriber", "campaign", "smtpSettings"]) assert.ok(PRIVATE_TYPES.includes(type), type);
+  assert.equal(publicPrivateDocs(0), null);
+  assert.equal(
+    publicPrivateDocs(2),
+    "Sanity muestra sin token 2 documento(s) que deberían ser privados (direcciones, pedidos, suscriptores, campañas o correo); revísalos en /studio",
+  );
+
   // make:superadmin changes exactly one user
   assert.throws(() => pickSingleUser([], "ana@tienda.com"), /^Error: No hay ningún usuario con ana@tienda\.com\. Pide al dueño que se registre primero en la tienda\.$/);
   assert.throws(() => pickSingleUser([{ id: "u1" }, { id: "u2" }], "ana@tienda.com"), /^Error: Hay 2 usuarios con ana@tienda\.com; no se cambió nada\. Revísalos en el panel de Clerk\.$/);
@@ -111,6 +119,14 @@ async function checkOnline(env) {
   for (const name of ["SANITY_API_TOKEN", "SANITY_API_READ_TOKEN"]) {
     const status = await httpStatus(`https://${project}.api.sanity.io/v${version}/data/query/${dataset}?query=${query}`, env[name]);
     if (status !== 200) errors.push(`Sanity no aceptó ${name} (${status})`);
+  }
+  // Tokenless, like any visitor: private documents must not show up.
+  try {
+    const visible = await fetch(`https://${project}.api.sanity.io/v${version}/data/query/${dataset}?query=${encodeURIComponent(`count(*[_type in ${JSON.stringify(PRIVATE_TYPES)}])`)}`);
+    const problem = visible.ok ? publicPrivateDocs((await visible.json()).result) : `Sanity no respondió a la consulta pública (${visible.status})`;
+    if (problem) errors.push(problem);
+  } catch {
+    errors.push("Sanity no respondió a la consulta pública (sin conexión)");
   }
   const clerk = await httpStatus("https://api.clerk.com/v1/users/count", env.CLERK_SECRET_KEY);
   if (clerk !== 200) errors.push(`Clerk no aceptó CLERK_SECRET_KEY (${clerk})`);

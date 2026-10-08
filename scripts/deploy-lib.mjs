@@ -97,3 +97,11 @@ export function pickSingleUser(users, email) {
   if (users.length > 1) throw new Error(`Hay ${users.length} usuarios con ${email}; no se cambió nada. Revísalos en el panel de Clerk.`);
   return users[0];
 }
+
+// Types holding personal or secret data; their ids carry a dot, which Sanity hides from tokenless reads.
+export const PRIVATE_TYPES = ["address", "order", "subscriber", "campaign", "smtpSettings"];
+
+export function publicPrivateDocs(count) {
+  if (!count) return null;
+  return `Sanity muestra sin token ${count} documento(s) que deberían ser privados (direcciones, pedidos, suscriptores, campañas o correo); revísalos en /studio`;
+}

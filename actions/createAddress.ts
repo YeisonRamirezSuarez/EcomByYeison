@@ -1,5 +1,6 @@
 "use server";
 
+import { randomUUID } from "node:crypto";
 import { currentUser } from "@clerk/nextjs/server";
 import { backendClient } from "@/sanity/lib/backendClient";
 import { Address } from "@/sanity.types";
@@ -46,7 +47,9 @@ export async function createAddress(
     );
   }
 
+  // The dot in the id keeps the address out of Sanity's public (tokenless) API.
   const created = await backendClient.create({
+    _id: `address.${randomUUID()}`,
     _type: "address",
     clerkUserId: user.id,
     email: user.primaryEmailAddress?.emailAddress ?? "",

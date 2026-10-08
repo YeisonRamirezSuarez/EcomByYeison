@@ -20,7 +20,7 @@ Sin uno de los dos, la tienda no puede cobrar.
 ## 1. Sanity (contenido)
 
 1. En [sanity.io/manage](https://www.sanity.io/manage) crea un proyecto con el nombre de la tienda. Anota el **Project ID**.
-2. En **Datasets**, confirma que existe `production` con visibilidad **Public**. Si no existe, créalo. La tienda lee el catálogo sin token, así que el dataset no puede ser privado. Los pedidos, los suscriptores y las campañas usan ids que el API público no muestra.
+2. En **Datasets**, confirma que existe `production` con visibilidad **Public**. Si no existe, créalo. La tienda lee el catálogo sin token, así que el dataset no puede ser privado. Las direcciones, los pedidos, los suscriptores y las campañas usan ids que el API público no muestra; `check:env --online` revisa que ninguno quede a la vista.
 3. En **API → CORS origins**, agrega `https://tiendaana.com` con **Allow credentials** marcado. Sin esto `/studio` no funciona.
 4. En **API → Tokens**, crea dos tokens. Copia cada uno al crearlo: Sanity no lo vuelve a mostrar.
    - `Tienda escritura`, con permiso **Editor**: va en `SANITY_API_TOKEN`.
