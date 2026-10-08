@@ -9,13 +9,30 @@ import {
 } from "@/sanity/queries";
 import dayjs from "dayjs";
 import { Calendar, ChevronLeftIcon, Pencil } from "lucide-react";
-import { PortableText } from "next-sanity";
+import { PortableText, toPlainText } from "next-sanity";
+import type { Metadata } from "next";
+import { metaDescription } from "@/lib/seo";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import React from "react";
 import { getServerLocale } from "@/lib/locale";
 import { t } from "@/lib/i18n";
+
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params;
+  const blog: SINGLE_BLOG_QUERY_RESULT = await getSingleBlog(slug);
+  if (!blog?.title) return {};
+  const url = `/blog/${slug}`;
+  const description = metaDescription(toPlainText(blog.body ?? []));
+  const image = blog.mainImage ? urlFor(blog.mainImage).width(1200).url() : undefined;
+  return {
+    title: blog.title,
+    description,
+    alternates: { canonical: url },
+    openGraph: { title: blog.title, description, url, type: "article", images: image ? [{ url: image, width: 1200 }] : undefined },
+  };
+}
 
 const SingleBlogPage = async ({
   params,

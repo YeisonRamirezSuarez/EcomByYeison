@@ -14,6 +14,31 @@ import { RxBorderSplit } from "react-icons/rx";
 import { TbTruckDelivery } from "react-icons/tb";
 import { getServerLocale } from "@/lib/locale";
 import { t } from "@/lib/i18n";
+import type { Metadata } from "next";
+import { urlFor } from "@/sanity/lib/image";
+import { getSiteSettings } from "@/sanity/queries/siteSettings";
+import { jsonLdScript, metaDescription, productJsonLd } from "@/lib/seo";
+
+type ProductParams = { params: Promise<{ slug: string }> };
+
+// Share/search image: the first product photo at 1200 px wide.
+const shareImage = (images: Parameters<typeof urlFor>[0][] | null | undefined) =>
+  images?.[0] ? urlFor(images[0]).width(1200).url() : undefined;
+
+export async function generateMetadata({ params }: ProductParams): Promise<Metadata> {
+  const { slug } = await params;
+  const product = await getProductBySlug(slug);
+  if (!product) return {};
+  const description = metaDescription(product.description);
+  const image = shareImage(product.images);
+  const url = `/product/${slug}`;
+  return {
+    title: product.name,
+    description,
+    alternates: { canonical: url },
+    openGraph: { title: product.name, description, url, type: "website", images: image ? [{ url: image, width: 1200 }] : undefined },
+  };
+}
 
 const SingleProductPage = async ({
   params,
@@ -26,8 +51,19 @@ const SingleProductPage = async ({
   if (!product) {
     return notFound();
   }
+  const { currency } = await getSiteSettings();
+  const structuredData = productJsonLd({
+    name: product.name ?? "",
+    description: metaDescription(product.description),
+    image: shareImage(product.images),
+    url: `${process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"}/product/${slug}`,
+    price: product.price,
+    currency,
+    inStock: (product.stock ?? 0) > 0,
+  });
   return (
     <Container className="flex flex-col md:flex-row gap-10 py-10">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdScript(structuredData) }} />
       <ImageView images={product?.images} isStock={product?.stock} />
       <div className="w-full md:w-1/2 flex flex-col gap-5">
         <div className="space-y-1">

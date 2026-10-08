@@ -1451,4 +1451,48 @@ assert.equal(ck.checkoutLines([{ id: "p1", quantity: 1 }], [{ ...SERVER[0], pric
   assert.equal(icons.pngUrl(`${logo.url}?w=10`, 154), `${logo.url}?w=154&fm=png`);
 }
 
+// SEO: sitemap entries, product structured data, short descriptions (lib/seo.ts)
+{
+  const seo = await import("../lib/seo.ts");
+  const base = "https://tienda.com";
+
+  const entries = seo.sitemapEntries(base, {
+    products: [{ slug: "zapato rojo", _updatedAt: "2026-10-01T00:00:00Z" }],
+    categories: [{ slug: "calzado", _updatedAt: "2026-09-01T00:00:00Z" }],
+    blogs: [{ slug: "novedades" }],
+  });
+  assert.deepEqual(entries[0], { url: "https://tienda.com" });
+  assert.ok(entries.some((e) => e.url === "https://tienda.com/shop"));
+  assert.deepEqual(entries.find((e) => e.url.includes("/product/")), { url: "https://tienda.com/product/zapato%20rojo", lastModified: "2026-10-01T00:00:00Z" });
+  assert.deepEqual(entries.find((e) => e.url.includes("/category/")), { url: "https://tienda.com/category/calzado", lastModified: "2026-09-01T00:00:00Z" });
+  assert.deepEqual(entries.find((e) => e.url.includes("/blog/")), { url: "https://tienda.com/blog/novedades" });
+  // Private or per-person pages never go to search engines
+  for (const path of ["/cart", "/orders", "/wishlist", "/admin", "/studio", "/success"]) {
+    assert.ok(!entries.some((e) => e.url === base + path), path);
+    assert.ok(seo.ROBOTS_DISALLOW.includes(path), path);
+  }
+
+  assert.equal(seo.metaDescription(undefined), undefined);
+  assert.equal(seo.metaDescription("   "), undefined);
+  assert.equal(seo.metaDescription("  Zapato   de\ncuero  "), "Zapato de cuero");
+  const long = seo.metaDescription("palabra ".repeat(40));
+  assert.ok(long.length <= 160 && long.endsWith("…") && !long.includes("  "), long);
+
+  const ld = seo.productJsonLd({ name: "Zapato", description: "Cuero", image: "https://cdn.sanity.io/x.jpg", url: `${base}/product/zapato`, price: 49.9, currency: "usd", inStock: true });
+  assert.deepEqual(ld, {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: "Zapato",
+    description: "Cuero",
+    image: ["https://cdn.sanity.io/x.jpg"],
+    url: `${base}/product/zapato`,
+    offers: { "@type": "Offer", price: "49.90", priceCurrency: "USD", availability: "https://schema.org/InStock", url: `${base}/product/zapato` },
+  });
+  assert.equal(seo.productJsonLd({ name: "Z", url: base, price: 10, currency: "COP", inStock: false }).offers.availability, "https://schema.org/OutOfStock");
+  assert.equal(seo.productJsonLd({ name: "Z", url: base, price: 0, currency: "USD", inStock: true }).offers, undefined);
+  // A product text can't close the inline script tag
+  assert.ok(!seo.jsonLdScript({ name: "</script><script>alert(1)</script>" }).includes("<"));
+  assert.deepEqual(JSON.parse(seo.jsonLdScript({ name: "a<b" })), { name: "a<b" });
+}
+
 console.log("check-permissions: ok");
