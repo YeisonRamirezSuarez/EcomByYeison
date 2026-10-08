@@ -89,3 +89,10 @@ export function checkEnv(env) {
 export const webhookUrl = (base) => `${base.replace(/\/+$/, "")}/api/webhook`;
 
 export const findWebhook = (endpoints, url) => endpoints.find((endpoint) => endpoint.url === url) ?? null;
+
+// make:superadmin must change exactly one account.
+export function pickSingleUser(users, email) {
+  if (users.length === 0) throw new Error(`No hay ningún usuario con ${email}. Pide al dueño que se registre primero en la tienda.`);
+  if (users.length > 1) throw new Error(`Hay ${users.length} usuarios con ${email}; no se cambió nada. Revísalos en el panel de Clerk.`);
+  return users[0];
+}

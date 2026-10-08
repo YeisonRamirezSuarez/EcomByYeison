@@ -5,7 +5,7 @@ import { mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import Stripe from "stripe";
-import { checkEnv, findWebhook, readEnvFile, webhookUrl, WEBHOOK_EVENT } from "./deploy-lib.mjs";
+import { checkEnv, findWebhook, pickSingleUser, readEnvFile, webhookUrl, WEBHOOK_EVENT } from "./deploy-lib.mjs";
 
 const args = process.argv.slice(2);
 
@@ -90,6 +90,11 @@ if (args.includes("--self-test")) {
   assert.equal(findWebhook(endpoints, "https://tienda.com/api/webhook").id, "we_2");
   assert.equal(findWebhook(endpoints, "https://nueva.com/api/webhook"), null);
   assert.equal(WEBHOOK_EVENT, "checkout.session.completed");
+
+  // make:superadmin changes exactly one user
+  assert.throws(() => pickSingleUser([], "ana@tienda.com"), /^Error: No hay ningún usuario con ana@tienda\.com\. Pide al dueño que se registre primero en la tienda\.$/);
+  assert.throws(() => pickSingleUser([{ id: "u1" }, { id: "u2" }], "ana@tienda.com"), /^Error: Hay 2 usuarios con ana@tienda\.com; no se cambió nada\. Revísalos en el panel de Clerk\.$/);
+  assert.equal(pickSingleUser([{ id: "u1" }], "ana@tienda.com").id, "u1");
 
   console.log("check-env self-test: ok");
   process.exit(0);

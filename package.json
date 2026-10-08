@@ -11,6 +11,8 @@
     "check:permissions": "node --experimental-strip-types scripts/check-permissions.mjs",
     "check:admin-text": "node scripts/check-admin-text.mjs",
     "check:env": "node scripts/check-env.mjs",
+    "make:superadmin": "node scripts/make-superadmin.mjs",
+    "stripe:webhook": "node scripts/stripe-webhook.mjs",
     "seed:yeison": "node --env-file=.env.local scripts/seed-ecom-by-yeison.mjs"
   },
   "dependencies": {
