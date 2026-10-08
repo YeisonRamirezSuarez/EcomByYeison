@@ -19,6 +19,9 @@ async function ensureSettings() {
 }
 
 export async function savePage(pageKey: string, data: unknown): Promise<ActionResult<null>> {
+  // Permission first: someone without it never gets field-by-field answers.
+  const allowed = await run(() => requirePermission("configurar"));
+  if (!allowed.ok) return allowed;
   if (!(PAGE_KEYS as readonly string[]).includes(pageKey)) {
     return { ok: false, error: INVALID_FORM };
   }
@@ -30,7 +33,6 @@ export async function savePage(pageKey: string, data: unknown): Promise<ActionRe
     blocks: r.value.blocks.map((block) => ({ _type: "contentBlock", ...block })),
   };
   return run(async () => {
-    await requirePermission("configurar");
     await ensureSettings();
     await backendClient
       .patch(SITE_SETTINGS_ID)
@@ -43,13 +45,14 @@ export async function savePage(pageKey: string, data: unknown): Promise<ActionRe
 }
 
 export async function uploadImage(formData: FormData): Promise<ActionResult<ImageValue>> {
+  // Permission first (used by Apariencia: configurar, and the catalog: productos).
+  const allowed = await run(() => requireAnyPermission("configurar", "productos"));
+  if (!allowed.ok) return allowed;
   const file = formData.get("file");
   if (!(file instanceof File) || validateImageFile(file)) {
     return { ok: false, error: IMAGE_ERROR };
   }
   return run(async () => {
-    // Used by Apariencia (configurar) and the catalog (productos).
-    await requireAnyPermission("configurar", "productos");
     const asset = await backendClient.assets.upload(
       "image",
       Buffer.from(await file.arrayBuffer()),

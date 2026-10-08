@@ -30,6 +30,9 @@ async function ensureDraft() {
 }
 
 export async function saveAppearanceDraft(section: string, data: unknown): Promise<ActionResult<null>> {
+  // Permission first: someone without it never gets field-by-field answers.
+  const allowed = await run(() => requirePermission("configurar"));
+  if (!allowed.ok) return allowed;
   let write: Write;
   if (section === "theme") {
     if (!isThemeKey(data)) return { ok: false, error: INVALID_FORM };
@@ -40,8 +43,6 @@ export async function saveAppearanceDraft(section: string, data: unknown): Promi
     if (!planned.ok) return { ok: false, error: INVALID_FORM, errors: planned.errors };
     write = planned.write;
   }
-  const allowed = await run(() => requirePermission("configurar"));
-  if (!allowed.ok) return allowed;
   const found = await run(() => findMissingCategories(write.categories ?? []));
   if (!found.ok) return found;
   if (found.data.length > 0) return { ok: false, error: INVALID_FORM, errors: categoryErrors(data, found.data) };
