@@ -1,4 +1,5 @@
-// Pure role/permission rules. No imports: also run by scripts/check-permissions.mjs.
+// Pure role/permission rules. Imports only a type: also run by scripts/check-permissions.mjs.
+import type { AdminText } from "./adminText/index.ts";
 
 export const ROLES = ["superadmin", "admin", "empleado", "cliente"] as const;
 export type Role = (typeof ROLES)[number];
@@ -26,7 +27,7 @@ export type AdminSection =
   | "usuarios"
   | "ajustes";
 
-export const ROLE_LABELS: Record<Role, string> = {
+export const ROLE_LABELS: Record<Role, AdminText> = {
   superadmin: "Superadmin",
   admin: "Administrador",
   empleado: "Empleado",

@@ -7,6 +7,8 @@ import { X } from "lucide-react";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { Dialog, DialogOverlay, DialogPortal, DialogTitle } from "@/components/ui/dialog";
 import PriceFormatter from "@/components/PriceFormatter";
+import { tr, dateLocale } from "@/lib/adminText";
+import { useAdminLocale } from "@/components/admin/AdminLocaleProvider";
 import { urlFor } from "@/sanity/lib/image";
 import { ORDER_STATUSES, ORDER_STATUS_LABELS, isOrderStatus, statusColor, statusLabel } from "@/lib/orderStatus";
 import type { AdminOrder } from "./types";
@@ -20,6 +22,7 @@ const OrderDrawer = ({
   onClose: () => void;
   onUpdated: (order: AdminOrder) => void;
 }) => {
+  const ui = useAdminLocale();
   const [saving, setSaving] = useState(false);
 
   const changeStatus = async (newStatus: string) => {
@@ -34,9 +37,9 @@ const OrderDrawer = ({
       if (!response.ok) throw new Error(String(response.status));
       // The API returns the patched document without expanded products: keep ours.
       onUpdated({ ...order, status: newStatus });
-      toast.success(`Pedido marcado como ${ORDER_STATUS_LABELS[newStatus]}`);
+      toast.success(tr(ui, "Pedido marcado como {status}", { status: tr(ui, ORDER_STATUS_LABELS[newStatus]) }));
     } catch {
-      toast.error("No se pudo cambiar el estado");
+      toast.error(tr(ui, "No se pudo cambiar el estado"));
     } finally {
       setSaving(false);
     }
@@ -56,19 +59,19 @@ const OrderDrawer = ({
             <>
               <div className="flex items-start justify-between gap-3 px-6 py-5 border-b">
                 <div>
-                  <DialogTitle className="font-bold text-shop_dark_green">Pedido #{order.orderNumber.slice(0, 12)}</DialogTitle>
+                  <DialogTitle className="font-bold text-shop_dark_green">{tr(ui, "Pedido #{number}", { number: order.orderNumber.slice(0, 12) })}</DialogTitle>
                   <p className="text-xs text-gray-500 mt-0.5">
-                    {order.orderDate ? new Date(order.orderDate).toLocaleString("es") : ""}
+                    {order.orderDate ? new Date(order.orderDate).toLocaleString(dateLocale(ui)) : ""}
                   </p>
                 </div>
-                <DialogPrimitive.Close aria-label="Cerrar" className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 text-gray-500">
+                <DialogPrimitive.Close aria-label={tr(ui, "Cerrar")} className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 text-gray-500">
                   <X size={16} />
                 </DialogPrimitive.Close>
               </div>
 
               <div className="flex-1 overflow-y-auto px-6 py-5 flex flex-col gap-6">
                 <label className="block">
-                  <span className="text-xs font-semibold text-gray-700">Estado</span>
+                  <span className="text-xs font-semibold text-gray-700">{tr(ui, "Estado")}</span>
                   <div className="flex items-center gap-3 mt-1">
                     <select
                       value={order.status ?? ""}
@@ -76,18 +79,18 @@ const OrderDrawer = ({
                       onChange={(e) => changeStatus(e.target.value)}
                       className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white disabled:opacity-60"
                     >
-                      {!isOrderStatus(order.status) && <option value={order.status ?? ""}>{statusLabel(order.status)}</option>}
+                      {!isOrderStatus(order.status) && <option value={order.status ?? ""}>{statusLabel(order.status, ui)}</option>}
                       {ORDER_STATUSES.map((s) => (
-                        <option key={s} value={s}>{ORDER_STATUS_LABELS[s]}</option>
+                        <option key={s} value={s}>{tr(ui, ORDER_STATUS_LABELS[s])}</option>
                       ))}
                     </select>
-                    <span className={`text-xs font-semibold rounded-full px-2.5 py-1 ${statusColor(order.status)}`}>{statusLabel(order.status)}</span>
+                    <span className={`text-xs font-semibold rounded-full px-2.5 py-1 ${statusColor(order.status)}`}>{statusLabel(order.status, ui)}</span>
                   </div>
-                  <span className="block text-xs text-gray-500 mt-1">Al marcar &quot;Entregado&quot; se envía la factura por correo.</span>
+                  <span className="block text-xs text-gray-500 mt-1">{tr(ui, "Al marcar \"Entregado\" se envía la factura por correo.")}</span>
                 </label>
 
                 <section>
-                  <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-2">Cliente</h3>
+                  <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-2">{tr(ui, "Cliente")}</h3>
                   <p className="text-sm font-medium text-gray-800">{order.customerName}</p>
                   <p className="text-sm text-gray-600">{order.email}</p>
                   {a && (
@@ -98,7 +101,7 @@ const OrderDrawer = ({
                 </section>
 
                 <section>
-                  <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-2">Productos</h3>
+                  <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-2">{tr(ui, "Productos")}</h3>
                   <ul className="divide-y">
                     {order.products?.map((item) => {
                       const image = item.product?.images?.[0];
@@ -109,7 +112,7 @@ const OrderDrawer = ({
                           ) : (
                             <span className="w-12 h-12 rounded-lg bg-gray-100" />
                           )}
-                          <span className="flex-1 text-sm text-gray-800">{item.product?.name || "Producto eliminado"}</span>
+                          <span className="flex-1 text-sm text-gray-800">{item.product?.name || tr(ui, "Producto eliminado")}</span>
                           <span className="text-sm text-gray-500">x{item.quantity ?? 1}</span>
                           <PriceFormatter amount={item.product?.price} currency={order.currency} />
                         </li>
@@ -121,12 +124,12 @@ const OrderDrawer = ({
                 <section className="rounded-xl bg-shop_light_pink p-4 flex flex-col gap-1.5 text-sm">
                   {(order.amountDiscount ?? 0) > 0 && (
                     <div className="flex justify-between">
-                      <span>Descuento</span>
+                      <span>{tr(ui, "Descuento")}</span>
                       <PriceFormatter amount={order.amountDiscount} currency={order.currency} />
                     </div>
                   )}
                   <div className="flex justify-between font-bold text-shop_dark_green">
-                    <span>Total ({(order.currency ?? "").toUpperCase()})</span>
+                    <span>{tr(ui, "Total ({currency})", { currency: (order.currency ?? "").toUpperCase() })}</span>
                     <PriceFormatter amount={order.totalPrice} currency={order.currency} className="text-shop_dark_green font-bold" />
                   </div>
                 </section>

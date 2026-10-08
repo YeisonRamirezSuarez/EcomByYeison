@@ -1,4 +1,6 @@
-// Order statuses for the admin dashboard. No imports: also run by scripts/check-permissions.mjs.
+// Order statuses for the admin dashboard. Imports only lib/adminText: also run by scripts/check-permissions.mjs.
+import { tr, type AdminText } from "./adminText/index.ts";
+import type { Locale } from "./i18n";
 
 export const ORDER_STATUSES = [
   "pending",
@@ -11,7 +13,7 @@ export const ORDER_STATUSES = [
 ] as const;
 export type OrderStatus = (typeof ORDER_STATUSES)[number];
 
-export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
+export const ORDER_STATUS_LABELS: Record<OrderStatus, AdminText> = {
   pending: "Pendiente",
   paid: "Pagado",
   processing: "En proceso",
@@ -35,8 +37,8 @@ export function isOrderStatus(value: unknown): value is OrderStatus {
   return typeof value === "string" && (ORDER_STATUSES as readonly string[]).includes(value);
 }
 
-export const statusLabel = (value?: string): string =>
-  value === undefined ? "—" : isOrderStatus(value) ? ORDER_STATUS_LABELS[value] : value;
+export const statusLabel = (value?: string, ui: Locale = "es"): string =>
+  value === undefined ? "—" : isOrderStatus(value) ? tr(ui, ORDER_STATUS_LABELS[value]) : value;
 
 export const statusColor = (value?: string): string =>
   isOrderStatus(value) ? ORDER_STATUS_COLORS[value] : "bg-gray-100 text-gray-700";

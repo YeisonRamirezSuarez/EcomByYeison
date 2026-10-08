@@ -5,6 +5,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Search } from "lucide-react";
 import PriceFormatter from "@/components/PriceFormatter";
 import { Skeleton } from "@/components/ui/skeleton";
+import { tr, dateLocale } from "@/lib/adminText";
+import { useAdminLocale } from "@/components/admin/AdminLocaleProvider";
 import {
   ORDER_STATUSES,
   ORDER_STATUS_LABELS,
@@ -20,6 +22,7 @@ import type { AdminOrder } from "./types";
 const PAGE_SIZE = 20;
 
 const OrdersManager = () => {
+  const ui = useAdminLocale();
   const router = useRouter();
   const params = useSearchParams();
   const selectedId = params.get("pedido");
@@ -71,7 +74,7 @@ const OrdersManager = () => {
               status === s ? "bg-shop_dark_green text-white border-shop_dark_green" : "bg-white text-gray-600 border-gray-200 hover:border-gray-300"
             }`}
           >
-            {s === "all" ? "Todos" : ORDER_STATUS_LABELS[s]} ({counts[s]})
+            {tr(ui, s === "all" ? "Todos" : ORDER_STATUS_LABELS[s])} ({counts[s]})
           </button>
         ))}
       </div>
@@ -85,30 +88,30 @@ const OrdersManager = () => {
             setQuery(e.target.value);
             setPage(0);
           }}
-          placeholder="Buscar por número, nombre o correo"
-          aria-label="Buscar pedidos"
+          placeholder={tr(ui, "Buscar por número, nombre o correo")}
+          aria-label={tr(ui, "Buscar pedidos")}
           className="w-full border border-gray-200 rounded-lg pl-9 pr-3 py-2 text-sm"
         />
       </label>
 
-      {failed && <p role="alert" className="mb-3 text-sm text-red-700">No se pudieron cargar los pedidos. Reintentando…</p>}
+      {failed && <p role="alert" className="mb-3 text-sm text-red-700">{tr(ui, "No se pudieron cargar los pedidos. Reintentando…")}</p>}
 
       {orders === null ? (
         <div className="flex flex-col gap-2">
           {Array.from({ length: 5 }, (_, i) => <Skeleton key={i} className="h-11 w-full" />)}
         </div>
       ) : visible.length === 0 ? (
-        <p className="py-10 text-center text-sm text-gray-500">No hay pedidos con estos filtros.</p>
+        <p className="py-10 text-center text-sm text-gray-500">{tr(ui, "No hay pedidos con estos filtros.")}</p>
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="text-left text-xs uppercase tracking-wide text-gray-500 border-b">
-                <th className="py-2 pr-3 font-semibold">Número</th>
-                <th className="py-2 pr-3 font-semibold">Fecha</th>
-                <th className="py-2 pr-3 font-semibold">Cliente</th>
-                <th className="py-2 pr-3 font-semibold">Total</th>
-                <th className="py-2 font-semibold">Estado</th>
+                <th className="py-2 pr-3 font-semibold">{tr(ui, "Número")}</th>
+                <th className="py-2 pr-3 font-semibold">{tr(ui, "Fecha")}</th>
+                <th className="py-2 pr-3 font-semibold">{tr(ui, "Cliente")}</th>
+                <th className="py-2 pr-3 font-semibold">{tr(ui, "Total")}</th>
+                <th className="py-2 font-semibold">{tr(ui, "Estado")}</th>
               </tr>
             </thead>
             <tbody>
@@ -119,14 +122,14 @@ const OrdersManager = () => {
                       #{order.orderNumber.slice(0, 8)}
                     </button>
                   </td>
-                  <td className="py-3 pr-3 text-gray-600 whitespace-nowrap">{order.orderDate ? new Date(order.orderDate).toLocaleDateString("es") : "—"}</td>
+                  <td className="py-3 pr-3 text-gray-600 whitespace-nowrap">{order.orderDate ? new Date(order.orderDate).toLocaleDateString(dateLocale(ui)) : "—"}</td>
                   <td className="py-3 pr-3">
                     <span className="block font-medium text-gray-800">{order.customerName}</span>
                     <span className="block text-xs text-gray-500">{order.email}</span>
                   </td>
                   <td className="py-3 pr-3"><PriceFormatter amount={order.totalPrice} currency={order.currency} /></td>
                   <td className="py-3">
-                    <span className={`text-xs font-semibold rounded-full px-2.5 py-1 whitespace-nowrap ${statusColor(order.status)}`}>{statusLabel(order.status)}</span>
+                    <span className={`text-xs font-semibold rounded-full px-2.5 py-1 whitespace-nowrap ${statusColor(order.status)}`}>{statusLabel(order.status, ui)}</span>
                   </td>
                 </tr>
               ))}
@@ -137,9 +140,9 @@ const OrdersManager = () => {
 
       {pages > 1 && (
         <div className="flex items-center justify-end gap-2 mt-4 text-sm">
-          <button type="button" disabled={current === 0} onClick={() => setPage(current - 1)} className="px-3 py-1.5 rounded-lg border disabled:opacity-40">Anterior</button>
+          <button type="button" disabled={current === 0} onClick={() => setPage(current - 1)} className="px-3 py-1.5 rounded-lg border disabled:opacity-40">{tr(ui, "Anterior")}</button>
           <span className="text-gray-600">{current + 1} / {pages}</span>
-          <button type="button" disabled={current >= pages - 1} onClick={() => setPage(current + 1)} className="px-3 py-1.5 rounded-lg border disabled:opacity-40">Siguiente</button>
+          <button type="button" disabled={current >= pages - 1} onClick={() => setPage(current + 1)} className="px-3 py-1.5 rounded-lg border disabled:opacity-40">{tr(ui, "Siguiente")}</button>
         </div>
       )}
 

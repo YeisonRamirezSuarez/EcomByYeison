@@ -4,8 +4,11 @@ import { useCallback, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { listUsers, setUserRole, type UserPage } from "@/actions/admin";
 import { ROLE_LABELS, type Role } from "@/lib/permissions";
+import { tr } from "@/lib/adminText";
+import { useAdminLocale } from "@/components/admin/AdminLocaleProvider";
 
 const UsersTab = () => {
+  const ui = useAdminLocale();
   const [search, setSearch] = useState("");
   const [query, setQuery] = useState("");
   const [page, setPage] = useState(0);
@@ -36,7 +39,7 @@ const UsersTab = () => {
       toast.error(result.error);
       return;
     }
-    toast.success(`Rol actualizado a ${ROLE_LABELS[role]}`);
+    toast.success(tr(ui, "Rol actualizado a {role}", { role: tr(ui, ROLE_LABELS[role]) }));
     load(query, page);
   };
 
@@ -56,22 +59,22 @@ const UsersTab = () => {
           type="search"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Buscar por correo o nombre"
-          aria-label="Buscar usuarios"
+          placeholder={tr(ui, "Buscar por correo o nombre")}
+          aria-label={tr(ui, "Buscar usuarios")}
           className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm"
         />
         <button
           type="submit"
           className="px-3 py-2 rounded-lg bg-shop_dark_green text-white text-sm font-semibold"
         >
-          Buscar
+          {tr(ui, "Buscar")}
         </button>
       </form>
 
-      {loading && !data && <p className="text-sm text-gray-500">Cargando usuarios…</p>}
+      {loading && !data && <p className="text-sm text-gray-500">{tr(ui, "Cargando usuarios…")}</p>}
 
       {data && data.users.length === 0 && (
-        <p className="text-sm text-gray-500">No se encontraron usuarios.</p>
+        <p className="text-sm text-gray-500">{tr(ui, "No se encontraron usuarios.")}</p>
       )}
 
       {data && data.users.length > 0 && (
@@ -89,23 +92,23 @@ const UsersTab = () => {
                   value={user.role}
                   disabled={savingId === user.id}
                   onChange={(e) => handleRoleChange(user.id, e.target.value as Role)}
-                  aria-label={`Rol de ${user.email}`}
+                  aria-label={tr(ui, "Rol de {email}", { email: user.email })}
                   className="border border-gray-200 rounded-lg px-2 py-1.5 text-sm bg-white"
                 >
                   {!user.assignable.includes(user.role) && (
                     <option value={user.role} disabled>
-                      {ROLE_LABELS[user.role]}
+                      {tr(ui, ROLE_LABELS[user.role])}
                     </option>
                   )}
                   {user.assignable.map((role) => (
                     <option key={role} value={role}>
-                      {ROLE_LABELS[role]}
+                      {tr(ui, ROLE_LABELS[role])}
                     </option>
                   ))}
                 </select>
               ) : (
                 <span className="text-xs font-semibold text-gray-600 px-2 py-1 rounded-full bg-gray-100">
-                  {ROLE_LABELS[user.role]}
+                  {tr(ui, ROLE_LABELS[user.role])}
                 </span>
               )}
             </li>
@@ -120,17 +123,17 @@ const UsersTab = () => {
             disabled={page === 0 || loading}
             className="px-3 py-1.5 rounded-lg border disabled:opacity-40"
           >
-            Anterior
+            {tr(ui, "Anterior")}
           </button>
           <span className="text-gray-500">
-            Página {page + 1} de {totalPages}
+            {tr(ui, "Página {page} de {pages}", { page: page + 1, pages: totalPages })}
           </span>
           <button
             onClick={() => setPage((p) => p + 1)}
             disabled={page + 1 >= totalPages || loading}
             className="px-3 py-1.5 rounded-lg border disabled:opacity-40"
           >
-            Siguiente
+            {tr(ui, "Siguiente")}
           </button>
         </div>
       )}

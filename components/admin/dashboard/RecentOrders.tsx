@@ -53,7 +53,7 @@ const RecentOrders = async ({ orders }: { orders: RecentOrder[] }) => {
                 <span
                   className={`text-xs font-semibold rounded-full px-2.5 py-0.5 justify-self-start ${statusColor(order.status)}`}
                 >
-                  {statusLabel(order.status)}
+                  {statusLabel(order.status, ui)}
                 </span>
               </Link>
             </li>

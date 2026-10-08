@@ -439,6 +439,12 @@ assert.deepEqual([...os.ORDER_STATUSES], ["pending", "paid", "processing", "ship
 assert.equal(os.statusLabel("out_for_delivery"), "En reparto");
 assert.equal(os.statusLabel("raro"), "raro");
 assert.equal(os.statusLabel(undefined), "—");
+// Order status labels in the panel language (lib/orderStatus.ts)
+assert.equal(os.statusLabel("paid"), "Pagado");
+assert.equal(os.statusLabel("paid", "en"), "Paid");
+assert.equal(os.statusLabel("out_for_delivery", "en"), "Out for delivery");
+assert.equal(os.statusLabel("legacy_status", "en"), "legacy_status");
+assert.equal(os.statusLabel(undefined, "en"), "—");
 const orderRows = [
   { _id: "1", orderNumber: "ABC-1", customerName: "Ana Torres", email: "ana@x.co", status: "paid" },
   { _id: "2", orderNumber: "XYZ-2", customerName: "Luis", email: "LUIS@Y.CO", status: "delivered" },

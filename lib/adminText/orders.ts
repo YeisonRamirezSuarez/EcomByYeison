@@ -1,2 +1,26 @@
 // Admin panel texts: Spanish (the key) → English. See lib/adminText/index.ts.
-export const orders = {} as const;
+export const orders = {
+  "Pendiente": "Pending",
+  "Pagado": "Paid",
+  "En proceso": "Processing",
+  "Enviado": "Shipped",
+  "En reparto": "Out for delivery",
+  "Entregado": "Delivered",
+  "Cancelado": "Cancelled",
+  "Revisa los pedidos y actualiza su estado.": "Review orders and update their status.",
+  "Pedido marcado como {status}": "Order marked as {status}",
+  "No se pudo cambiar el estado": "The status could not be changed",
+  "Pedido #{number}": "Order #{number}",
+  "Al marcar \"Entregado\" se envía la factura por correo.": "Marking \"Delivered\" sends the invoice by email.",
+  "Producto eliminado": "Deleted product",
+  "Descuento": "Discount",
+  "Total ({currency})": "Total ({currency})",
+  "Todos": "All",
+  "Buscar por número, nombre o correo": "Search by number, name or email",
+  "Buscar pedidos": "Search orders",
+  "No se pudieron cargar los pedidos. Reintentando…": "Orders could not be loaded. Retrying…",
+  "No hay pedidos con estos filtros.": "No orders match these filters.",
+  "Número": "Number",
+  "Fecha": "Date",
+  "Total": "Total",
+} as const;
