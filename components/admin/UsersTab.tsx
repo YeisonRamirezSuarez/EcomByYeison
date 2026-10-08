@@ -28,6 +28,7 @@ const UsersTab = () => {
   }, []);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- fetches the user list when the search or page changes
     load(query, page);
   }, [load, query, page]);
 

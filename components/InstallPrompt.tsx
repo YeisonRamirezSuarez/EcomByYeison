@@ -38,6 +38,7 @@ const InstallPrompt = () => {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- browser-only checks (matchMedia, localStorage) run after mount
     setMounted(true);
 
     // Already installed → nothing to prompt.

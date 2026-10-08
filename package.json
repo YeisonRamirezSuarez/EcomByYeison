@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
+    "verify": "eslint . && next typegen && tsc --noEmit && npm run check:permissions && npm run check:admin-text && npm run check:env -- --self-test",
     "typegen": "sanity schema extract && sanity typegen generate",
     "check:permissions": "node --experimental-strip-types scripts/check-permissions.mjs",
     "check:admin-text": "node scripts/check-admin-text.mjs",

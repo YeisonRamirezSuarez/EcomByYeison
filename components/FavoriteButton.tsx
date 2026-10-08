@@ -22,6 +22,7 @@ const FavoriteButton = ({
     const availableItem = favoriteProduct.find(
       (item) => item?._id === product?._id
     );
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- favorites come from localStorage; reading them after mount avoids a hydration mismatch
     setExistingProduct(availableItem || null);
   }, [product, favoriteProduct]);
 

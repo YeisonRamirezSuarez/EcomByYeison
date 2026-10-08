@@ -1,0 +1,20 @@
+# Every push and pull request: lint, types and the repo's check scripts.
+# master is production for every store, so a red run here means "don't merge".
+# The build is not repeated here: it needs each store's keys, and Vercel never publishes a failed build.
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run verify

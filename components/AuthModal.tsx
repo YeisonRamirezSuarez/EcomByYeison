@@ -26,12 +26,14 @@ export const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
   const router = useRouter();
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- client-only flag: the Clerk widgets render after mount
     setMounted(true);
   }, []);
 
   // Cerrar modal cuando se complete la autenticación
   useEffect(() => {
     if (!isOpen || !isSignedIn || !mounted) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- reacts to Clerk's sign-in, which is external state
     setShowSuccess(true);
 
     const timer = setTimeout(() => {
@@ -45,6 +47,7 @@ export const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
 
   useEffect(() => {
     if (!isOpen) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- resets the view when the parent closes the modal
       setShowSuccess(false);
       setAuthView("signIn");
     }
