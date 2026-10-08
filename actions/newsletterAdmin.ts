@@ -247,8 +247,9 @@ export async function saveCampaign(id: string, input: unknown): Promise<ActionRe
   // Permission first: someone without it never gets field-by-field answers.
   const allowed = await run(() => requirePermission("configurar"));
   if (!allowed.ok) return allowed;
-  const checked = validateCampaign(input);
-  if (!checked.ok) return { ok: false, error: tr(await getAdminLocale(), INVALID_FORM), errors: checked.errors };
+  const ui = await getAdminLocale();
+  const checked = validateCampaign(input, ui);
+  if (!checked.ok) return { ok: false, error: tr(ui, INVALID_FORM), errors: checked.errors };
   return run(async () => {
     const campaign = await findCampaign(id);
     if (campaign.progress.status !== "draft") throw new ActionError("Esta campaña ya no se puede editar; duplícala para cambiarla");
@@ -323,13 +324,14 @@ export async function sendCampaignTest(id: string): Promise<ActionResult<{ to: s
 export async function startCampaign(id: string): Promise<ActionResult<CampaignProgress>> {
   return run(async () => {
     await requirePermission("configurar");
+    const ui = await getAdminLocale();
     const campaign = await findCampaign(id);
     const { status } = campaign.progress;
     if (status === "sent") throw new ActionError("Esta campaña ya se envió");
     const { brand } = await getEmailBrand();
     const ready = await sendReadiness(brand.address || brand.addressEn || "");
     // On resume, an empty list just lets the next batch mark the campaign as sent.
-    const problems = campaignSendProblems(campaign.content, status === "draft" ? ready : { ...ready, activeCount: Math.max(ready.activeCount, 1) });
+    const problems = campaignSendProblems(campaign.content, status === "draft" ? ready : { ...ready, activeCount: Math.max(ready.activeCount, 1) }, ui);
     if (problems.length > 0) throw ActionError.raw(problems[0]);
     const patch = backendClient.patch(campaign._id).ifRevisionId(campaign._rev).set({ status: "sending" }).unset(["pauseReason", "pauseMessage"]);
     if (status === "draft") {
@@ -348,8 +350,9 @@ export async function startCampaign(id: string): Promise<ActionResult<CampaignPr
 export async function sendCampaignBatch(id: string): Promise<ActionResult<CampaignProgress>> {
   return run(async () => {
     await requirePermission("configurar");
+    const ui = await getAdminLocale();
     const campaign = await findCampaign(id);
-    return runBatch(campaign).catch((error) => {
+    return runBatch(campaign, ui).catch((error) => {
       if (error instanceof ActionError) throw error;
       console.log("Campaign batch failed", error);
       throw new ActionError(SEND_FAILED);
@@ -360,9 +363,10 @@ export async function sendCampaignBatch(id: string): Promise<ActionResult<Campai
 export async function pauseCampaign(id: string): Promise<ActionResult<CampaignProgress>> {
   return run(async () => {
     await requirePermission("configurar");
+    const ui = await getAdminLocale();
     const campaign = await findCampaign(id);
     if (campaign.progress.status === "sending") {
-      await backendClient.patch(campaign._id).set({ status: "paused", pauseReason: "user", pauseMessage: "En pausa" }).commit();
+      await backendClient.patch(campaign._id).set({ status: "paused", pauseReason: "user", pauseMessage: tr(ui, "En pausa") }).commit();
     }
     return (await findCampaign(id)).progress;
   });

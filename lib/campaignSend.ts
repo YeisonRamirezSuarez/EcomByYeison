@@ -2,10 +2,11 @@ import "server-only";
 import { formatPrice, type CurrencyCode } from "@/constants/currencies";
 import { THEMES } from "@/constants/themes";
 import { ActionError } from "@/lib/actionResult";
-import type { AdminText } from "@/lib/adminText";
+import { tr, type AdminText } from "@/lib/adminText";
 import { localizeEmailBrand, localizeEmailProducts, resolveLocale, type StoreLanguages } from "@/lib/localize";
 import { renderCampaignEmail, type EmailBrand, type EmailProduct } from "@/lib/campaignEmail";
 import { addUsage, getMailer, remainingSendsToday, type Mailer } from "@/lib/mailer";
+import type { Locale } from "@/lib/i18n";
 import { batchSize, errorDetail, failuresPatch, isEmail, isRecipientError, smtpErrorMessage, type CampaignProgress, type PauseReason, type SendReadiness, type SmtpErrorInfo } from "@/lib/newsletter";
 import { siteUrl, unsubscribeLinks } from "@/lib/unsubscribe";
 import { backendClient } from "@/sanity/lib/backendClient";
@@ -90,12 +91,12 @@ async function latest(campaign: CampaignDoc): Promise<CampaignProgress> {
 
 // One batch of up to 20. A batch only changes the status to paused (limit or SMTP) or sent;
 // if the owner paused meanwhile, it stays paused.
-export async function runBatch(campaign: CampaignDoc): Promise<CampaignProgress> {
+export async function runBatch(campaign: CampaignDoc, ui: Locale): Promise<CampaignProgress> {
   if (campaign.progress.status !== "sending") return campaign.progress;
   const secret = process.env.EMAIL_ENCRYPTION_KEY;
   const base = siteUrl();
   const mailer: Mailer | null = await getMailer().catch(() => null);
-  if (!mailer || !secret || !base) return pauseWith(campaign, "smtp", "El correo de salida no está configurado. Revisa Ajustes → Correo.");
+  if (!mailer || !secret || !base) return pauseWith(campaign, "smtp", tr(ui, "El correo de salida no está configurado. Revisa Ajustes → Correo."));
 
   const take = batchSize(await remainingSendsToday(mailer.dailyLimit));
   // At the daily limit, still look for one more person: a campaign with nobody left is sent, not paused.
@@ -109,7 +110,7 @@ export async function runBatch(campaign: CampaignDoc): Promise<CampaignProgress>
     }
     return { ...campaign.progress, status: "sent", pauseReason: null, pauseMessage: "" };
   }
-  if (take === 0) return pauseWith(campaign, "limit", `Llegaste al tope de hoy (${mailer.dailyLimit}). Continúa mañana.`);
+  if (take === 0) return pauseWith(campaign, "limit", tr(ui, "Llegaste al tope de hoy ({limit}). Continúa mañana.", { limit: mailer.dailyLimit }));
 
   // Read everything the emails need before reserving, so a read error never skips people.
   const { brand: storeBrand, currency, languages } = await getEmailBrand();
@@ -118,7 +119,7 @@ export async function runBatch(campaign: CampaignDoc): Promise<CampaignProgress>
   const brand = localizeEmailBrand(storeBrand, language);
   const products = localizeEmailProducts(await loadEmailProducts(campaign.content.products, currency), language);
   // The store's address is required in every email; settings fall back to empty when Sanity fails.
-  if (!brand.address.trim()) return pauseWith(campaign, "address", "Agrega la dirección de la tienda en Apariencia → Datos de la tienda → Contacto.");
+  if (!brand.address.trim()) return pauseWith(campaign, "address", tr(ui, "Agrega la dirección de la tienda en Apariencia → Datos de la tienda → Contacto."));
 
   // Reserve the batch before sending: a second tab gets a revision conflict instead of
   // sending the same people. If the page dies mid-batch, those reserved and not sent are lost
@@ -143,7 +144,7 @@ export async function runBatch(campaign: CampaignDoc): Promise<CampaignProgress>
     if (Date.now() - started > BATCH_BUDGET_MS) return finishBatch(campaign, batchEnd, lastDone, sent, failed, failures);
     if (!isEmail(subscriber.email)) {
       failed++;
-      failures.push({ email: subscriber.email, error: "Correo inválido" });
+      failures.push({ email: subscriber.email, error: tr(ui, "Correo inválido") });
       lastDone = subscriber._id;
       continue;
     }
@@ -163,7 +164,7 @@ export async function runBatch(campaign: CampaignDoc): Promise<CampaignProgress>
     } catch (error) {
       if (!isRecipientError(error as SmtpErrorInfo)) {
         // The server itself failed: give back the untouched part of the batch and pause.
-        return finishBatch(campaign, batchEnd, lastDone, sent, failed, failures, { status: "paused", pauseReason: "smtp", pauseMessage: smtpErrorMessage(error as SmtpErrorInfo) });
+        return finishBatch(campaign, batchEnd, lastDone, sent, failed, failures, { status: "paused", pauseReason: "smtp", pauseMessage: smtpErrorMessage(error as SmtpErrorInfo, ui) });
       }
       failed++;
       failures.push({ email: subscriber.email, error: errorDetail(error) });

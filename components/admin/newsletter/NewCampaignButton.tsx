@@ -4,10 +4,13 @@ import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { createCampaign } from "@/actions/newsletterAdmin";
+import { useAdminLocale } from "@/components/admin/AdminLocaleProvider";
+import { tr } from "@/lib/adminText";
 
 const NewCampaignButton = () => {
   const [pending, startTransition] = useTransition();
   const router = useRouter();
+  const ui = useAdminLocale();
   return (
     <button
       type="button"
@@ -21,7 +24,7 @@ const NewCampaignButton = () => {
       }
       className="px-4 py-2 rounded-lg bg-shop_orange text-white text-sm font-semibold disabled:opacity-60"
     >
-      Nueva campaña
+      {tr(ui, "Nueva campaña")}
     </button>
   );
 };

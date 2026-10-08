@@ -2,6 +2,8 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
 import CampaignEditor from "@/components/admin/newsletter/CampaignEditor";
+import { getAdminLocale } from "@/lib/adminLocale";
+import { tr } from "@/lib/adminText";
 import { requireSection } from "@/lib/adminAccess";
 import { getEmailBrand, loadEmailProducts, sendReadiness } from "@/lib/campaignSend";
 import { isCampaignId } from "@/lib/newsletter";
@@ -12,6 +14,7 @@ export const maxDuration = 60;
 
 export default async function CampaignPage({ params }: { params: Promise<{ id: string }> }) {
   await requireSection("boletin");
+  const ui = await getAdminLocale();
   const { id } = await params;
   if (!isCampaignId(id)) notFound();
   const campaign = await getCampaign(`campaign.${id}`);
@@ -22,7 +25,7 @@ export default async function CampaignPage({ params }: { params: Promise<{ id: s
   return (
     <>
       <Link href="/admin/boletin?tab=campanas" className="inline-flex items-center gap-1 text-sm text-gray-600 hover:text-shop_dark_green mb-3">
-        <ChevronLeft size={16} /> Campañas
+        <ChevronLeft size={16} /> {tr(ui, "Campañas")}
       </Link>
       <CampaignEditor
         id={id}

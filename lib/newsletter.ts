@@ -48,7 +48,7 @@ export type SubscriberRow = { _id: string; email: string; subscribedAt: string |
 export type SubscriberFilters = { search: string; status: SubscriberStatus | "all"; page: number };
 
 export type CampaignStatus = "draft" | "sending" | "paused" | "sent";
-export const CAMPAIGN_STATUS_LABELS: Record<CampaignStatus, string> = {
+export const CAMPAIGN_STATUS_LABELS: Record<CampaignStatus, AdminText> = {
   draft: "Borrador",
   sending: "Enviando",
   paused: "En pausa",
@@ -177,43 +177,43 @@ export function validateSmtpSettings(input: unknown, { hasStoredPassword }: { ha
 }
 
 // Draft rules: a draft may be empty. What sending needs is in campaignSendProblems.
-export function validateCampaign(input: unknown): ValidationResult<CampaignContent> {
+export function validateCampaign(input: unknown, ui: Locale = "es"): ValidationResult<CampaignContent> {
   const v = asObject(input);
   const errors: Errors = {};
-  const subject = text(errors, "subject", v.subject, 150);
-  const preheader = text(errors, "preheader", v.preheader, 150);
-  const title = text(errors, "title", v.title, 120);
-  const body = text(errors, "text", v.text, 3000);
+  const subject = text(errors, "subject", v.subject, 150, false, ui);
+  const preheader = text(errors, "preheader", v.preheader, 150, false, ui);
+  const title = text(errors, "title", v.title, 120, false, ui);
+  const body = text(errors, "text", v.text, 3000, false, ui);
   const b = asObject(v.button);
-  const label = text(errors, "button.label", b.label, 30);
-  const href = text(errors, "button.href", b.href, 200);
-  if (href && !errors["button.href"] && !isValidHref(href)) errors["button.href"] = HREF_ERROR("es");
+  const label = text(errors, "button.label", b.label, 30, false, ui);
+  const href = text(errors, "button.href", b.href, 200, false, ui);
+  if (href && !errors["button.href"] && !isValidHref(href)) errors["button.href"] = HREF_ERROR(ui);
   let image: ImageValue | null = null;
   if (v.image !== null && v.image !== undefined) {
     const i = asObject(v.image);
     if (typeof i.assetId === "string" && ASSET_ID.test(i.assetId) && isHttpsUrl(i.url)) image = { assetId: i.assetId, url: i.url as string };
-    else errors.image = "Imagen inválida";
+    else errors.image = tr(ui, "Imagen inválida");
   }
   const raw = Array.isArray(v.products) ? v.products : [];
   const ids = raw.filter((id): id is string => typeof id === "string" && DOC_ID.test(id));
-  if (ids.length !== raw.length) errors.products = "Producto inválido";
+  if (ids.length !== raw.length) errors.products = tr(ui, "Producto inválido");
   const products = [...new Set(ids)];
-  if (products.length > MAX_CAMPAIGN_PRODUCTS) errors.products = `Máximo ${MAX_CAMPAIGN_PRODUCTS} productos`;
+  if (products.length > MAX_CAMPAIGN_PRODUCTS) errors.products = tr(ui, "Máximo {max} productos", { max: MAX_CAMPAIGN_PRODUCTS });
   return result(errors, { subject, preheader, image, title, text: body, button: { label, href }, products, language: v.language === "es" || v.language === "en" ? v.language : null });
 }
 
 export const SMTP_UNREADABLE: AdminText = "No se pudo leer la contraseña guardada. Vuelve a escribirla en Ajustes → Correo.";
 
-export function campaignSendProblems(content: CampaignContent, ready: SendReadiness): string[] {
+export function campaignSendProblems(content: CampaignContent, ready: SendReadiness, ui: Locale = "es"): string[] {
   const problems: string[] = [];
-  if (ready.smtpUnreadable) problems.push(SMTP_UNREADABLE);
-  else if (!ready.smtpReady) problems.push("Configura el correo de salida en Ajustes → Correo.");
-  if (!ready.keyReady) problems.push("Falta la clave de cifrado en el servidor (EMAIL_ENCRYPTION_KEY).");
-  if (!ready.baseUrl) problems.push("Falta la dirección pública de la tienda en el servidor (NEXT_PUBLIC_BASE_URL).");
-  if (!ready.address.trim()) problems.push("Agrega la dirección de la tienda en Apariencia → Datos de la tienda → Contacto.");
-  if (!content.subject.trim()) problems.push("Escribe el asunto.");
-  if (!content.title.trim()) problems.push("Escribe el título.");
-  if (ready.activeCount === 0) problems.push("No hay suscriptores activos.");
+  if (ready.smtpUnreadable) problems.push(tr(ui, SMTP_UNREADABLE));
+  else if (!ready.smtpReady) problems.push(tr(ui, "Configura el correo de salida en Ajustes → Correo."));
+  if (!ready.keyReady) problems.push(tr(ui, "Falta la clave de cifrado en el servidor (EMAIL_ENCRYPTION_KEY)."));
+  if (!ready.baseUrl) problems.push(tr(ui, "Falta la dirección pública de la tienda en el servidor (NEXT_PUBLIC_BASE_URL)."));
+  if (!ready.address.trim()) problems.push(tr(ui, "Agrega la dirección de la tienda en Apariencia → Datos de la tienda → Contacto."));
+  if (!content.subject.trim()) problems.push(tr(ui, "Escribe el asunto."));
+  if (!content.title.trim()) problems.push(tr(ui, "Escribe el título."));
+  if (ready.activeCount === 0) problems.push(tr(ui, "No hay suscriptores activos."));
   return problems;
 }
 

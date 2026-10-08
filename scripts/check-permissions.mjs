@@ -1392,4 +1392,15 @@ assert.equal(ck.checkoutLines([{ id: "p1", quantity: 1 }], [{ ...SERVER[0], pric
   assert.equal(v.validateSocial({ facebook: "x" }, "en").errors.facebook, "Must be an https:// link");
 }
 
+// Campaign texts in the panel language (lib/newsletter.ts)
+{
+  const nl = await import("../lib/newsletter.ts");
+  assert.equal(nl.validateCampaign({ subject: "x".repeat(400) }).errors.subject, "Máximo 150 caracteres");
+  assert.equal(nl.validateCampaign({ subject: "x".repeat(400) }, "en").errors.subject, "Up to 150 characters");
+  const content = { ...nl.EMPTY_CAMPAIGN, subject: "Hola", title: "Hola" };
+  const ready = { smtpReady: true, keyReady: true, baseUrl: "https://example.com", address: "", activeCount: 1 };
+  assert.deepEqual(nl.campaignSendProblems(content, ready), ["Agrega la dirección de la tienda en Apariencia → Datos de la tienda → Contacto."]);
+  assert.deepEqual(nl.campaignSendProblems(content, ready, "en"), ["Add the store address in Appearance → Store data → Contact."]);
+}
+
 console.log("check-permissions: ok");
