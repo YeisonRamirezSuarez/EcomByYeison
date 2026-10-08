@@ -53,6 +53,7 @@ NEXT_PUBLIC_SANITY_PROJECT_ID=tu_project_id
 NEXT_PUBLIC_SANITY_DATASET=production
 NEXT_PUBLIC_SANITY_API_VERSION=2025-03-20
 SANITY_API_TOKEN=tu_token
+SANITY_API_READ_TOKEN=tu_token_de_lectura
 
 # Clerk
 NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_...
@@ -67,6 +68,12 @@ STRIPE_WEBHOOK_SECRET=whsec_...
 
 # Correo (boletín)
 EMAIL_ENCRYPTION_KEY=genera_una_clave
+# Correo de salida por variables (opcional; el panel también lo configura en Ajustes → Correo)
+# SMTP_HOST=smtp.gmail.com
+# SMTP_USER=tu_correo
+# SMTP_PASSWORD=tu_contraseña_de_aplicación
+# SMTP_PORT=587
+# SMTP_FROM_EMAIL=tu_correo
 
 # App
 NEXT_PUBLIC_BASE_URL=http://localhost:3000
@@ -148,9 +155,6 @@ npm run start
 
 ## 🌐 Deploy en Vercel
 
-1. Sube el repositorio a GitHub
-2. Conecta el repo en [vercel.com](https://vercel.com)
-3. Agrega todas las variables de `.env.local` en los ajustes del proyecto
-4. Deploy automático en cada push a `main`
+Cada cliente tiene su propia tienda: proyecto de Vercel, dominio, Clerk, Sanity y Stripe. Sigue la guía [docs/despliegue-cliente.md](docs/despliegue-cliente.md).
 
-> **Importante:** Configura el webhook de Stripe apuntando a `https://tu-dominio.vercel.app/api/webhook`
+Para revisar un archivo de variables: `npm run check:env -- .env.cliente` (agrega `--online` para probar las claves).
