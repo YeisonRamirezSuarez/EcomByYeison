@@ -1,6 +1,8 @@
 // Store-wide styles edited in Apariencia → Estilos. Pure: no runtime imports, so
-// scripts/check-permissions.mjs can run it.
+// scripts/check-permissions.mjs can run it (tr comes from the pure lib/adminText).
+import type { Locale } from "./i18n";
 import type { ValidationResult } from "./validation";
+import { tr, type AdminText } from "./adminText/index.ts";
 
 export const FONTS = {
   poppins: "Poppins",
@@ -20,12 +22,12 @@ export const COLOR_FIELDS = {
   accent: "Acento · ofertas e insignias",
   secondary: "Secundario",
   background: "Fondo",
-} as const;
+} as const satisfies Record<string, AdminText>;
 export type ColorField = keyof typeof COLOR_FIELDS;
 
-export const CORNERS = { square: "Rectas", soft: "Suaves", round: "Redondas" } as const;
+export const CORNERS = { square: "Rectas", soft: "Suaves", round: "Redondas" } as const satisfies Record<string, AdminText>;
 export type Corners = keyof typeof CORNERS;
-export const BUTTON_STYLES = { filled: "Rellenos", outline: "Con borde" } as const;
+export const BUTTON_STYLES = { filled: "Rellenos", outline: "Con borde" } as const satisfies Record<string, AdminText>;
 export type ButtonStyle = keyof typeof BUTTON_STYLES;
 
 export type Styles = {
@@ -45,7 +47,7 @@ const HEX = /^#[0-9a-fA-F]{6}$/;
 const asObject = (value: unknown): Record<string, unknown> =>
   value && typeof value === "object" && !Array.isArray(value) ? (value as Record<string, unknown>) : {};
 
-function parseStyles(input: unknown, errors: Record<string, string>): Styles {
+function parseStyles(input: unknown, errors: Record<string, string>, ui: Locale = "es"): Styles {
   const v = asObject(input);
   const rawColors = asObject(v.colors);
   const colors: Styles["colors"] = {};
@@ -53,13 +55,13 @@ function parseStyles(input: unknown, errors: Record<string, string>): Styles {
     const c = rawColors[field];
     if (c === undefined || c === null || c === "") continue;
     if (typeof c === "string" && HEX.test(c)) colors[field] = c.toLowerCase();
-    else errors[`colors.${field}`] = "Color inválido";
+    else errors[`colors.${field}`] = tr(ui, "Color inválido");
   }
   const choose = <T extends string>(key: string, options: Record<T, string>, fallback: T): T => {
     const raw = v[key];
     if (raw === undefined || raw === null || raw === "") return fallback;
     if (typeof raw === "string" && Object.hasOwn(options, raw)) return raw as T;
-    errors[key] = "Opción inválida";
+    errors[key] = tr(ui, "Opción inválida");
     return fallback;
   };
   return {
@@ -71,9 +73,9 @@ function parseStyles(input: unknown, errors: Record<string, string>): Styles {
   };
 }
 
-export function validateStyles(input: unknown): ValidationResult<Styles> {
+export function validateStyles(input: unknown, ui: Locale = "es"): ValidationResult<Styles> {
   const errors: Record<string, string> = {};
-  const value = parseStyles(input, errors);
+  const value = parseStyles(input, errors, ui);
   return Object.keys(errors).length > 0 ? { ok: false, errors } : { ok: true, value };
 }
 

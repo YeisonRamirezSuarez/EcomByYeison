@@ -2,8 +2,12 @@
 
 import { Check } from "lucide-react";
 import { THEMES, type ThemeKey } from "@/constants/themes";
+import { tr } from "@/lib/adminText";
+import { useAdminLocale } from "@/components/admin/AdminLocaleProvider";
 
-const ThemePicker = ({ value, onChange }: { value: ThemeKey; onChange: (key: ThemeKey) => void }) => (
+const ThemePicker = ({ value, onChange }: { value: ThemeKey; onChange: (key: ThemeKey) => void }) => {
+  const ui = useAdminLocale();
+  return (
   <div className="grid grid-cols-2 gap-2">
     {(Object.keys(THEMES) as ThemeKey[]).map((key) => {
       const theme = THEMES[key];
@@ -24,7 +28,7 @@ const ThemePicker = ({ value, onChange }: { value: ThemeKey; onChange: (key: The
               <span key={color} className="w-3.5 h-3.5 rounded-full shadow-sm" style={{ backgroundColor: color }} />
             ))}
           </span>
-          <span className="text-xs font-semibold text-gray-700">{theme.name}</span>
+          <span className="text-xs font-semibold text-gray-700">{tr(ui, theme.name)}</span>
           {active && (
             <span className="absolute top-1.5 right-1.5 w-4 h-4 rounded-full flex items-center justify-center" style={{ backgroundColor: theme.primary }}>
               <Check size={9} className="text-white" />
@@ -34,6 +38,7 @@ const ThemePicker = ({ value, onChange }: { value: ThemeKey; onChange: (key: The
       );
     })}
   </div>
-);
+  );
+};
 
 export default ThemePicker;

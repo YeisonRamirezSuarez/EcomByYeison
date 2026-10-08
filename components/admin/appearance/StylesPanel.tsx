@@ -2,6 +2,8 @@
 
 import { AlertTriangle } from "lucide-react";
 import { THEMES, type ThemeKey } from "@/constants/themes";
+import { tr, type AdminText } from "@/lib/adminText";
+import { useAdminLocale } from "@/components/admin/AdminLocaleProvider";
 import {
   BUTTON_STYLES,
   COLOR_FIELDS,
@@ -29,7 +31,8 @@ const Heading = ({ children }: { children: React.ReactNode }) => (
   <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-400">{children}</h3>
 );
 
-function Segmented<T extends string>({ value, options, onChange }: { value: T; options: Record<T, string>; onChange: (value: T) => void }) {
+function Segmented<T extends string>({ value, options, onChange }: { value: T; options: Record<T, AdminText>; onChange: (value: T) => void }) {
+  const ui = useAdminLocale();
   return (
     <div className="flex gap-1" role="group">
       {(Object.keys(options) as T[]).map((key) => (
@@ -42,7 +45,7 @@ function Segmented<T extends string>({ value, options, onChange }: { value: T; o
             value === key ? "bg-shop_dark_green text-white border-shop_dark_green" : "border-gray-200 text-gray-600 hover:bg-gray-50"
           }`}
         >
-          {options[key]}
+          {tr(ui, options[key])}
         </button>
       ))}
     </div>
@@ -78,30 +81,31 @@ const StylesPanel = ({
   onThemeChange: (key: ThemeKey) => void;
   onChange: (styles: Styles) => void;
 }) => {
+  const ui = useAdminLocale();
   const color = (field: ColorField) => styles.colors[field] ?? PALETTE[field](theme);
   const custom = Object.keys(styles.colors).length > 0;
   // White text sits on these two colors; name the ones where it reads badly.
   const unreadable = (["button", "primary"] as const)
     .filter((field) => contrastRatio("#ffffff", color(field)) < MIN_CONTRAST)
-    .map((field) => COLOR_FIELDS[field].split(" · ")[0]);
+    .map((field) => tr(ui, COLOR_FIELDS[field]).split(" · ")[0]);
 
   return (
     <div className="flex flex-col gap-6">
       <section className="flex flex-col gap-2">
-        <Heading>1 · Paleta</Heading>
+        <Heading>{tr(ui, "1 · Paleta")}</Heading>
         <ThemePicker value={theme} onChange={onThemeChange} />
         {custom && (
           <p className="text-xs text-gray-600">
-            Paleta personalizada ·{" "}
+            {tr(ui, "Paleta personalizada ·")}{" "}
             <button type="button" onClick={() => onChange({ ...styles, colors: {} })} className="font-semibold text-shop_orange underline">
-              Volver a la paleta
+              {tr(ui, "Volver a la paleta")}
             </button>
           </p>
         )}
       </section>
 
       <section className="flex flex-col gap-2">
-        <Heading>2 · Colores</Heading>
+        <Heading>{tr(ui, "2 · Colores")}</Heading>
         {(Object.keys(COLOR_FIELDS) as ColorField[]).map((field) => (
           <label key={field} className="flex items-center gap-3 text-sm text-gray-700">
             <input
@@ -110,7 +114,7 @@ const StylesPanel = ({
               onChange={(e) => onChange({ ...styles, colors: { ...styles.colors, [field]: e.target.value } })}
               className="h-8 w-10 cursor-pointer rounded border border-gray-200 bg-white p-0.5"
             />
-            <span className="flex-1">{COLOR_FIELDS[field]}</span>
+            <span className="flex-1">{tr(ui, COLOR_FIELDS[field])}</span>
             <span className="font-mono text-xs text-gray-400">{color(field)}</span>
             {errors[`colors.${field}`] && <span className="text-xs text-red-600">{errors[`colors.${field}`]}</span>}
           </label>
@@ -118,24 +122,24 @@ const StylesPanel = ({
         {unreadable.length > 0 && (
           <p role="status" className="flex gap-2 rounded-lg bg-amber-50 border border-amber-200 px-3 py-2 text-xs text-amber-900">
             <AlertTriangle size={14} className="shrink-0 mt-0.5" />
-            El texto blanco puede leerse mal sobre: {unreadable.join(", ")}.
+            {tr(ui, "El texto blanco puede leerse mal sobre: {list}.", { list: unreadable.join(", ") })}
           </p>
         )}
       </section>
 
       <section className="flex flex-col gap-3">
-        <Heading>3 · Tipografía</Heading>
-        <FontSelect label="Títulos" value={styles.headingFont} sample="Así se ven tus títulos" onChange={(headingFont) => onChange({ ...styles, headingFont })} />
-        <FontSelect label="Textos" value={styles.bodyFont} sample="Y así el resto de los textos." onChange={(bodyFont) => onChange({ ...styles, bodyFont })} />
+        <Heading>{tr(ui, "3 · Tipografía")}</Heading>
+        <FontSelect label={tr(ui, "Títulos")} value={styles.headingFont} sample={tr(ui, "Así se ven tus títulos")} onChange={(headingFont) => onChange({ ...styles, headingFont })} />
+        <FontSelect label={tr(ui, "Textos")} value={styles.bodyFont} sample={tr(ui, "Y así el resto de los textos.")} onChange={(bodyFont) => onChange({ ...styles, bodyFont })} />
       </section>
 
       <section className="flex flex-col gap-2">
-        <Heading>4 · Esquinas</Heading>
+        <Heading>{tr(ui, "4 · Esquinas")}</Heading>
         <Segmented value={styles.corners} options={CORNERS} onChange={(corners) => onChange({ ...styles, corners })} />
       </section>
 
       <section className="flex flex-col gap-2">
-        <Heading>5 · Botones</Heading>
+        <Heading>{tr(ui, "5 · Botones")}</Heading>
         <Segmented value={styles.buttons} options={BUTTON_STYLES} onChange={(buttons) => onChange({ ...styles, buttons })} />
       </section>
     </div>

@@ -1355,4 +1355,15 @@ assert.equal(ck.checkoutLines([{ id: "p1", quantity: 1 }], [{ ...SERVER[0], pric
   assert.equal(lz.lacksLanguage(c.validateProduct({ name: "Mesa", slug: "mesa", price: 10 }, "en"), "en"), true);
 }
 
+// Apariencia validators in the panel language (lib/homeSections.ts, lib/styles.ts)
+{
+  const h = await import("../lib/homeSections.ts");
+  const s = await import("../lib/styles.ts");
+  assert.equal(h.validateHomeSections([]).errors.sections, "Faltan secciones: Banner principal, Productos por tipo, Categorías, Marcas, Blog");
+  assert.equal(h.validateHomeSections([], "es", "en").errors.sections, "Missing sections: Main banner, Products by type, Categories, Brands, Blog");
+  assert.equal(h.validateHomeSections({}, "es", "en").errors.sections, "Invalid section list");
+  assert.equal(s.validateStyles({ buttons: "x" }).errors.buttons, "Opción inválida");
+  assert.equal(s.validateStyles({ buttons: "x" }, "en").errors.buttons, "Invalid option");
+}
+
 console.log("check-permissions: ok");

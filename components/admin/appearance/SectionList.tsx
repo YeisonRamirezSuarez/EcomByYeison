@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { Reorder, useDragControls } from "motion/react";
 import { AlertTriangle, ChevronDown, ChevronUp, Eye, EyeOff, GripVertical, Plus } from "lucide-react";
+import { tr } from "@/lib/adminText";
+import { useAdminLocale } from "@/components/admin/AdminLocaleProvider";
 import { MAX_SECTIONS, NEW_KINDS, SECTION_HINTS, SECTION_LABELS, type HomeSection, type NewKind } from "@/lib/homeSections";
 
 const ICON = "p-1 rounded text-gray-500 hover:bg-gray-100 disabled:opacity-30";
@@ -24,6 +26,7 @@ const Row = ({
   onMove: (step: -1 | 1) => void;
   onToggle: () => void;
 }) => {
+  const ui = useAdminLocale();
   const controls = useDragControls();
   return (
     <Reorder.Item
@@ -37,28 +40,28 @@ const Row = ({
         type="button"
         tabIndex={-1}
         aria-hidden="true"
-        title="Arrastrar para mover"
+        title={tr(ui, "Arrastrar para mover")}
         onPointerDown={(e) => controls.start(e)}
         className="touch-none cursor-grab p-1 text-gray-400"
       >
         <GripVertical size={16} />
       </button>
       <button type="button" id={`section-${section._key}-open`} onClick={onOpen} className={`flex-1 min-w-0 truncate text-left font-semibold ${section.hidden ? "text-gray-400" : "text-gray-800"}`}>
-        {SECTION_LABELS[section.kind]}
+        {tr(ui, SECTION_LABELS[section.kind])}
         {(section.title || section.titleEn) && <span className="font-normal text-gray-500"> · {section.title || section.titleEn}</span>}
       </button>
       {warning && (
-        <span title="Incompleta: no se muestra en la tienda" className="text-amber-500">
-          <AlertTriangle size={15} aria-label="Incompleta" />
+        <span title={tr(ui, "Incompleta: no se muestra en la tienda")} className="text-amber-500">
+          <AlertTriangle size={15} aria-label={tr(ui, "Incompleta")} />
         </span>
       )}
-      <button type="button" id={`section-${section._key}-up`} aria-label="Subir" disabled={first} onClick={() => onMove(-1)} className={ICON}>
+      <button type="button" id={`section-${section._key}-up`} aria-label={tr(ui, "Mover arriba")} disabled={first} onClick={() => onMove(-1)} className={ICON}>
         <ChevronUp size={15} />
       </button>
-      <button type="button" id={`section-${section._key}-down`} aria-label="Bajar" disabled={last} onClick={() => onMove(1)} className={ICON}>
+      <button type="button" id={`section-${section._key}-down`} aria-label={tr(ui, "Mover abajo")} disabled={last} onClick={() => onMove(1)} className={ICON}>
         <ChevronDown size={15} />
       </button>
-      <button type="button" aria-label={section.hidden ? "Mostrar" : "Ocultar"} aria-pressed={section.hidden} onClick={onToggle} className={ICON}>
+      <button type="button" aria-label={section.hidden ? tr(ui, "Mostrar") : tr(ui, "Ocultar")} aria-pressed={section.hidden} onClick={onToggle} className={ICON}>
         {section.hidden ? <EyeOff size={15} /> : <Eye size={15} />}
       </button>
     </Reorder.Item>
@@ -80,6 +83,7 @@ const SectionList = ({
   onOpen: (key: string) => void;
   onAdd: (kind: NewKind) => void;
 }) => {
+  const ui = useAdminLocale();
   const [adding, setAdding] = useState(false);
   const move = (i: number, step: -1 | 1) => {
     const next = [...sections];
@@ -96,7 +100,7 @@ const SectionList = ({
 
   return (
     <div className="flex flex-col gap-2">
-      <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">Secciones del inicio</p>
+      <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">{tr(ui, "Secciones del inicio")}</p>
       {error && <p className="text-xs text-red-600">{error}</p>}
       <Reorder.Group axis="y" values={sections} onReorder={onChange} className="flex flex-col gap-1.5">
         {sections.map((section, i) => (
@@ -113,7 +117,7 @@ const SectionList = ({
         ))}
       </Reorder.Group>
       {sections.length >= MAX_SECTIONS ? (
-        <p className="text-xs text-gray-500">Llegaste al máximo de {MAX_SECTIONS} secciones.</p>
+        <p className="text-xs text-gray-500">{tr(ui, "Llegaste al máximo de {max} secciones.", { max: MAX_SECTIONS })}</p>
       ) : adding ? (
         <div className="flex flex-col gap-1 rounded-xl border border-gray-200 p-2">
           {NEW_KINDS.map((kind) => (
@@ -126,12 +130,12 @@ const SectionList = ({
               }}
               className="rounded-lg px-2 py-1.5 text-left hover:bg-gray-50"
             >
-              <span className="block text-sm font-semibold text-gray-800">{SECTION_LABELS[kind]}</span>
-              <span className="block text-xs text-gray-500">{SECTION_HINTS[kind]}</span>
+              <span className="block text-sm font-semibold text-gray-800">{tr(ui, SECTION_LABELS[kind])}</span>
+              <span className="block text-xs text-gray-500">{tr(ui, SECTION_HINTS[kind])}</span>
             </button>
           ))}
           <button type="button" onClick={() => setAdding(false)} className="self-start px-2 py-1 text-xs font-semibold text-gray-500">
-            Cancelar
+            {tr(ui, "Cancelar")}
           </button>
         </div>
       ) : (
@@ -141,7 +145,7 @@ const SectionList = ({
           onClick={() => setAdding(true)}
           className="flex items-center justify-center gap-1.5 rounded-xl border-2 border-dashed border-shop_orange/50 py-2 text-sm font-semibold text-shop_orange hover:bg-shop_orange/5"
         >
-          <Plus size={15} /> Agregar sección
+          <Plus size={15} /> {tr(ui, "Agregar sección")}
         </button>
       )}
     </div>

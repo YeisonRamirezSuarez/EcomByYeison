@@ -7,6 +7,8 @@ import { appearancePatch } from "@/lib/brand";
 import { assertImagesExist, findMissingCategories, planSection, type Write } from "@/lib/brandWrites";
 import { categoryErrors } from "@/lib/homeSections";
 import { INVALID_FORM } from "@/lib/validation";
+import { tr } from "@/lib/adminText";
+import { getAdminLocale } from "@/lib/adminLocale";
 import { isThemeKey } from "@/constants/themes";
 import { backendClient } from "@/sanity/lib/backendClient";
 import {
@@ -33,19 +35,20 @@ export async function saveAppearanceDraft(section: string, data: unknown): Promi
   // Permission first: someone without it never gets field-by-field answers.
   const allowed = await run(() => requirePermission("configurar"));
   if (!allowed.ok) return allowed;
+  const ui = await getAdminLocale();
   let write: Write;
   if (section === "theme") {
-    if (!isThemeKey(data)) return { ok: false, error: INVALID_FORM };
+    if (!isThemeKey(data)) return { ok: false, error: tr(ui, INVALID_FORM) };
     write = { set: { theme: data }, unset: [], images: [] };
   } else {
     const { primary } = await getSiteSettings();
-    const planned = planSection(section, data, primary);
-    if (!planned.ok) return { ok: false, error: INVALID_FORM, errors: planned.errors };
+    const planned = planSection(section, data, primary, ui);
+    if (!planned.ok) return { ok: false, error: tr(ui, INVALID_FORM), errors: planned.errors };
     write = planned.write;
   }
   const found = await run(() => findMissingCategories(write.categories ?? []));
   if (!found.ok) return found;
-  if (found.data.length > 0) return { ok: false, error: INVALID_FORM, errors: categoryErrors(data, found.data) };
+  if (found.data.length > 0) return { ok: false, error: tr(ui, INVALID_FORM), errors: categoryErrors(data, found.data, ui) };
   return run(async () => {
     await assertImagesExist(write.images);
     await ensureDraft();

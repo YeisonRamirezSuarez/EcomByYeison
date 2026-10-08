@@ -3,6 +3,7 @@
 import type { ImageValue, LocalizedCta } from "./brand";
 import type { Locale } from "./i18n";
 import type { ValidationResult } from "./validation";
+import { tr, type AdminText } from "./adminText/index.ts";
 
 export const BUILT_IN_KINDS = ["banner", "productTabs", "categories", "brands", "blog"] as const;
 export const NEW_KINDS = ["imageText", "promo", "products", "richText", "testimonials", "newsletter"] as const;
@@ -10,7 +11,7 @@ export type BuiltInKind = (typeof BUILT_IN_KINDS)[number];
 export type NewKind = (typeof NEW_KINDS)[number];
 export type SectionKind = BuiltInKind | NewKind;
 
-export const SECTION_LABELS: Record<SectionKind, string> = {
+export const SECTION_LABELS = {
   banner: "Banner principal",
   productTabs: "Productos por tipo",
   categories: "Categorías",
@@ -22,22 +23,22 @@ export const SECTION_LABELS: Record<SectionKind, string> = {
   richText: "Texto libre",
   testimonials: "Testimonios",
   newsletter: "Suscripción al boletín",
-};
+} as const satisfies Record<SectionKind, AdminText>;
 
-export const SECTION_HINTS: Record<NewKind, string> = {
+export const SECTION_HINTS = {
   imageText: "Una foto con título, texto y botón.",
   promo: "Una franja de color para destacar una oferta.",
   products: "Productos de una categoría, destacados o en oferta.",
   richText: "Un bloque de texto libre.",
   testimonials: "Opiniones de tus clientes con estrellas.",
   newsletter: "Formulario para suscribirse al boletín.",
-};
+} as const satisfies Record<NewKind, AdminText>;
 
 export const MAX_SECTIONS = 20;
 export const MAX_TESTIMONIALS = 6;
 export const PRODUCT_COUNTS = [4, 8, 12] as const;
-export const PRODUCT_SOURCES = { category: "Una categoría", featured: "Destacados", sale: "En oferta" } as const;
-export const PROMO_BACKGROUNDS = { primary: "Principal", accent: "Acento", secondary: "Secundario" } as const;
+export const PRODUCT_SOURCES = { category: "Una categoría", featured: "Destacados", sale: "En oferta" } as const satisfies Record<string, AdminText>;
+export const PROMO_BACKGROUNDS = { primary: "Principal", accent: "Acento", secondary: "Secundario" } as const satisfies Record<string, AdminText>;
 export type ProductSource = keyof typeof PRODUCT_SOURCES;
 export type PromoBackground = keyof typeof PROMO_BACKGROUNDS;
 
@@ -133,13 +134,13 @@ export function isSectionComplete(s: HomeSection): boolean {
 }
 
 type Errors = Record<string, string>;
-const REQUIRED = "Campo obligatorio";
+const required = (ui: Locale) => tr(ui, "Campo obligatorio");
 // Same text as requiredIn in lib/localize.ts (pure modules cannot import each other).
-const requiredIn = (locale: Locale) => `${REQUIRED} (${locale === "en" ? "inglés" : "español"})`;
+const requiredIn = (locale: Locale, ui: Locale) => tr(ui, locale === "en" ? "Campo obligatorio (inglés)" : "Campo obligatorio (español)");
 // Which language a required text needs: the main one when saving, "any" when reading Sanity.
 type Need = Locale | "any";
-const HREF_ERROR = "Usa una ruta que empiece por / o un enlace https://";
-const tooLong = (max: number) => `Máximo ${max} caracteres`;
+const hrefError = (ui: Locale) => tr(ui, "Usa una ruta que empiece por / o un enlace https://");
+const tooLong = (max: number, ui: Locale) => tr(ui, "Máximo {max} caracteres", { max });
 const KEY = /^[a-zA-Z0-9_-]{1,40}$/;
 const DOC_ID = /^[a-zA-Z0-9_-]{1,100}$/;
 const ASSET_ID = /^image-[a-zA-Z0-9]+-\d+x\d+-[a-z0-9]+$/;
@@ -166,64 +167,64 @@ export function isValidHref(value: unknown): boolean {
   return isHttpsUrl(value);
 }
 
-function str(errors: Errors, key: string, value: unknown, max: number, required = false) {
+function str(errors: Errors, key: string, value: unknown, max: number, ui: Locale, isRequired = false) {
   const s = typeof value === "string" ? value.trim() : "";
-  if (required && !s) errors[key] = REQUIRED;
-  else if (s.length > max) errors[key] = tooLong(max);
+  if (isRequired && !s) errors[key] = required(ui);
+  else if (s.length > max) errors[key] = tooLong(max, ui);
   return s;
 }
 
 // A text with an English twin ("title" + "titleEn"), optionally required (see Need).
-function pair(errors: Errors, key: string, v: Record<string, unknown>, name: string, max: number, required?: Need): [string, string] {
-  const es = str(errors, `${key}.${name}`, v[name], max);
-  const en = str(errors, `${key}.${name}En`, v[`${name}En`], max);
-  if (required === "any") {
-    if (!es && !en && !errors[`${key}.${name}`]) errors[`${key}.${name}`] = REQUIRED;
-  } else if (required) {
-    const field = `${key}.${required === "en" ? `${name}En` : name}`;
-    if (!(required === "en" ? en : es) && !errors[field]) errors[field] = requiredIn(required);
+function pair(errors: Errors, key: string, v: Record<string, unknown>, name: string, max: number, ui: Locale, need?: Need): [string, string] {
+  const es = str(errors, `${key}.${name}`, v[name], max, ui);
+  const en = str(errors, `${key}.${name}En`, v[`${name}En`], max, ui);
+  if (need === "any") {
+    if (!es && !en && !errors[`${key}.${name}`]) errors[`${key}.${name}`] = required(ui);
+  } else if (need) {
+    const field = `${key}.${need === "en" ? `${name}En` : name}`;
+    if (!(need === "en" ? en : es) && !errors[field]) errors[field] = requiredIn(need, ui);
   }
   return [es, en];
 }
 
-function int(errors: Errors, key: string, value: unknown, min: number, max: number): number | null {
+function int(errors: Errors, key: string, value: unknown, min: number, max: number, ui: Locale): number | null {
   if (value === null || value === undefined || value === "") return null;
   if (typeof value === "number" && Number.isInteger(value) && value >= min && value <= max) return value;
-  errors[key] = `Elige un número entre ${min} y ${max}`;
+  errors[key] = tr(ui, "Elige un número entre {min} y {max}", { min, max });
   return null;
 }
 
-function option<T extends string | number>(errors: Errors, key: string, value: unknown, options: readonly T[], fallback: T): T {
+function option<T extends string | number>(errors: Errors, key: string, value: unknown, options: readonly T[], fallback: T, ui: Locale): T {
   if (value === null || value === undefined || value === "") return fallback;
   if ((options as readonly unknown[]).includes(value)) return value as T;
-  errors[key] = "Opción inválida";
+  errors[key] = tr(ui, "Opción inválida");
   return fallback;
 }
 
-function image(errors: Errors, key: string, value: unknown): ImageValue | null {
+function image(errors: Errors, key: string, value: unknown, ui: Locale): ImageValue | null {
   if (value === null || value === undefined) return null;
   const v = asObject(value);
   if (typeof v.assetId === "string" && ASSET_ID.test(v.assetId) && isHttpsUrl(v.url)) {
     return { assetId: v.assetId, url: v.url as string };
   }
-  errors[key] = "Imagen inválida";
+  errors[key] = tr(ui, "Imagen inválida");
   return null;
 }
 
-function button(errors: Errors, key: string, value: unknown): LocalizedCta {
+function button(errors: Errors, key: string, value: unknown, ui: Locale): LocalizedCta {
   const v = asObject(value);
-  const label = str(errors, `${key}.label`, v.label, 30);
-  const labelEn = str(errors, `${key}.labelEn`, v.labelEn, 30);
+  const label = str(errors, `${key}.label`, v.label, 30, ui);
+  const labelEn = str(errors, `${key}.labelEn`, v.labelEn, 30, ui);
   const href = typeof v.href === "string" ? v.href.trim() : "";
-  if (href.length > 200) errors[`${key}.href`] = tooLong(200);
-  else if (href && !isValidHref(href)) errors[`${key}.href`] = HREF_ERROR;
-  else if ((label || labelEn) && !href) errors[`${key}.href`] = REQUIRED;
+  if (href.length > 200) errors[`${key}.href`] = tooLong(200, ui);
+  else if (href && !isValidHref(href)) errors[`${key}.href`] = hrefError(ui);
+  else if ((label || labelEn) && !href) errors[`${key}.href`] = required(ui);
   return { label, labelEn, href };
 }
 
-function testimonials(errors: Errors, p: string, value: unknown, need: Need): Testimonial[] {
+function testimonials(errors: Errors, p: string, value: unknown, need: Need, ui: Locale): Testimonial[] {
   const raw = asArray(value);
-  if (raw.length > MAX_TESTIMONIALS) errors[`${p}.items`] = `Máximo ${MAX_TESTIMONIALS} testimonios`;
+  if (raw.length > MAX_TESTIMONIALS) errors[`${p}.items`] = tr(ui, "Máximo {max} testimonios", { max: MAX_TESTIMONIALS });
   const used = new Set<string>();
   return raw.slice(0, MAX_TESTIMONIALS).map((item, j) => {
     const t = asObject(item);
@@ -231,23 +232,23 @@ function testimonials(errors: Errors, p: string, value: unknown, need: Need): Te
     let key = typeof t._key === "string" && KEY.test(t._key) ? t._key : `t${j}`;
     while (used.has(key)) key = `${key}x`;
     used.add(key);
-    const [text, textEn] = pair(errors, q, t, "text", 300, need);
+    const [text, textEn] = pair(errors, q, t, "text", 300, ui, need);
     return {
       _key: key,
-      name: str(errors, `${q}.name`, t.name, 60, true),
+      name: str(errors, `${q}.name`, t.name, 60, ui, true),
       text,
       textEn,
-      rating: int(errors, `${q}.rating`, t.rating, 1, 5) ?? 5,
-      photo: image(errors, `${q}.photo`, t.photo),
+      rating: int(errors, `${q}.rating`, t.rating, 1, 5, ui) ?? 5,
+      photo: image(errors, `${q}.photo`, t.photo, ui),
     };
   });
 }
 
-function parseSection(errors: Errors, p: string, kind: SectionKind, key: string, v: Record<string, unknown>, need: Need): HomeSection {
+function parseSection(errors: Errors, p: string, kind: SectionKind, key: string, v: Record<string, unknown>, need: Need, ui: Locale): HomeSection {
   const s = newSection(kind, key);
   s.hidden = v.hidden === true;
-  const setTitle = () => ([s.title, s.titleEn] = pair(errors, p, v, "title", 80));
-  const setText = (max: number) => ([s.text, s.textEn] = pair(errors, p, v, "text", max));
+  const setTitle = () => ([s.title, s.titleEn] = pair(errors, p, v, "title", 80, ui));
+  const setText = (max: number) => ([s.text, s.textEn] = pair(errors, p, v, "text", max, ui));
   switch (kind) {
     case "banner":
       break;
@@ -257,46 +258,46 @@ function parseSection(errors: Errors, p: string, kind: SectionKind, key: string,
       break;
     case "categories":
       setTitle();
-      s.count = int(errors, `${p}.count`, v.count, 3, 12) ?? 6;
+      s.count = int(errors, `${p}.count`, v.count, 3, 12, ui) ?? 6;
       break;
     case "blog":
       setTitle();
-      s.count = int(errors, `${p}.count`, v.count, 1, 6);
+      s.count = int(errors, `${p}.count`, v.count, 1, 6, ui);
       break;
     case "imageText":
-      s.image = image(errors, `${p}.image`, v.image);
+      s.image = image(errors, `${p}.image`, v.image, ui);
       setTitle();
       setText(500);
-      s.button = button(errors, `${p}.button`, v.button);
-      s.imageSide = option(errors, `${p}.imageSide`, v.imageSide, ["left", "right"] as const, "left");
+      s.button = button(errors, `${p}.button`, v.button, ui);
+      s.imageSide = option(errors, `${p}.imageSide`, v.imageSide, ["left", "right"] as const, "left", ui);
       break;
     case "promo":
       setTitle();
       setText(300);
-      s.button = button(errors, `${p}.button`, v.button);
-      s.background = option(errors, `${p}.background`, v.background, Object.keys(PROMO_BACKGROUNDS) as PromoBackground[], "primary");
-      s.image = image(errors, `${p}.image`, v.image);
+      s.button = button(errors, `${p}.button`, v.button, ui);
+      s.background = option(errors, `${p}.background`, v.background, Object.keys(PROMO_BACKGROUNDS) as PromoBackground[], "primary", ui);
+      s.image = image(errors, `${p}.image`, v.image, ui);
       break;
     case "products": {
       setTitle();
-      s.source = option(errors, `${p}.source`, v.source, Object.keys(PRODUCT_SOURCES) as ProductSource[], "featured");
+      s.source = option(errors, `${p}.source`, v.source, Object.keys(PRODUCT_SOURCES) as ProductSource[], "featured", ui);
       if (s.source === "category") {
         const id = typeof v.category === "string" ? v.category : "";
         // An empty category is an incomplete section: it is saved and the store skips it.
-        if (id && !DOC_ID.test(id)) errors[`${p}.category`] = "Categoría inválida";
+        if (id && !DOC_ID.test(id)) errors[`${p}.category`] = tr(ui, "Categoría inválida");
         else s.category = id;
       }
-      s.count = option(errors, `${p}.count`, v.count, PRODUCT_COUNTS, 8);
+      s.count = option(errors, `${p}.count`, v.count, PRODUCT_COUNTS, 8, ui);
       break;
     }
     case "richText":
       setTitle();
       setText(2000);
-      s.align = option(errors, `${p}.align`, v.align, ["left", "center"] as const, "left");
+      s.align = option(errors, `${p}.align`, v.align, ["left", "center"] as const, "left", ui);
       break;
     case "testimonials":
       setTitle();
-      s.items = testimonials(errors, p, v.items, need);
+      s.items = testimonials(errors, p, v.items, need, ui);
       break;
     case "newsletter":
       setTitle();
@@ -306,7 +307,7 @@ function parseSection(errors: Errors, p: string, kind: SectionKind, key: string,
   return s;
 }
 
-function parseSections(input: unknown[], errors: Errors, need: Need): HomeSection[] {
+function parseSections(input: unknown[], errors: Errors, need: Need, ui: Locale): HomeSection[] {
   const keys = new Set<string>();
   const builtIns = new Set<SectionKind>();
   const sections: HomeSection[] = [];
@@ -314,28 +315,28 @@ function parseSections(input: unknown[], errors: Errors, need: Need): HomeSectio
     const v = asObject(raw);
     const p = `sections.${i}`;
     const key = typeof v._key === "string" && KEY.test(v._key) ? v._key : "";
-    if (!key || keys.has(key)) errors[`${p}._key`] = "Sección repetida o inválida";
+    if (!key || keys.has(key)) errors[`${p}._key`] = tr(ui, "Sección repetida o inválida");
     keys.add(key);
     if (!isKind(v.kind)) {
-      errors[`${p}.kind`] = "Tipo de sección desconocido";
+      errors[`${p}.kind`] = tr(ui, "Tipo de sección desconocido");
       return;
     }
     if (isBuiltIn(v.kind)) {
-      if (builtIns.has(v.kind)) errors[`${p}.kind`] = "Esta sección ya está en el inicio";
+      if (builtIns.has(v.kind)) errors[`${p}.kind`] = tr(ui, "Esta sección ya está en el inicio");
       builtIns.add(v.kind);
     }
-    sections.push(parseSection(errors, p, v.kind, key, v, need));
+    sections.push(parseSection(errors, p, v.kind, key, v, need, ui));
   });
   return sections;
 }
 
-export function validateHomeSections(input: unknown, primary: Locale = "es"): ValidationResult<HomeSection[]> {
+export function validateHomeSections(input: unknown, primary: Locale = "es", ui: Locale = "es"): ValidationResult<HomeSection[]> {
   const errors: Errors = {};
-  if (!Array.isArray(input)) return { ok: false, errors: { sections: "Lista de secciones inválida" } };
-  if (input.length > MAX_SECTIONS) errors.sections = `Máximo ${MAX_SECTIONS} secciones`;
-  const sections = parseSections(input, errors, primary);
+  if (!Array.isArray(input)) return { ok: false, errors: { sections: tr(ui, "Lista de secciones inválida") } };
+  if (input.length > MAX_SECTIONS) errors.sections = tr(ui, "Máximo {max} secciones", { max: MAX_SECTIONS });
+  const sections = parseSections(input, errors, primary, ui);
   const missing = BUILT_IN_KINDS.filter((kind) => !sections.some((s) => s.kind === kind));
-  if (missing.length > 0) errors.sections = `Faltan secciones: ${missing.map((k) => SECTION_LABELS[k]).join(", ")}`;
+  if (missing.length > 0) errors.sections = tr(ui, "Faltan secciones: {list}", { list: missing.map((k) => tr(ui, SECTION_LABELS[k])).join(", ") });
   return Object.keys(errors).length > 0 ? { ok: false, errors } : { ok: true, value: sections };
 }
 
@@ -348,7 +349,7 @@ export function readHomeSections(raw: unknown): HomeSection[] | null {
   const out: HomeSection[] = [];
   for (const item of raw.slice(0, MAX_SECTIONS)) {
     const errors: Errors = {};
-    const [section] = parseSections([item], errors, "any");
+    const [section] = parseSections([item], errors, "any", "es");
     if (!section || Object.keys(errors).length > 0 || keys.has(section._key)) continue;
     if (isBuiltIn(section.kind) && builtIns.has(section.kind)) continue;
     keys.add(section._key);
@@ -408,11 +409,11 @@ export function homeSectionsWrite(sections: HomeSection[]) {
 }
 
 // Field errors for sections whose category no longer exists (index = position in the saved list).
-export function categoryErrors(sections: unknown, missing: string[]): Record<string, string> {
+export function categoryErrors(sections: unknown, missing: string[], ui: Locale = "es"): Record<string, string> {
   const errors: Errors = {};
   asArray(sections).forEach((raw, i) => {
     const category = asObject(raw).category;
-    if (typeof category === "string" && missing.includes(category)) errors[`sections.${i}.category`] = "Esa categoría ya no existe";
+    if (typeof category === "string" && missing.includes(category)) errors[`sections.${i}.category`] = tr(ui, "Esa categoría ya no existe");
   });
   return errors;
 }

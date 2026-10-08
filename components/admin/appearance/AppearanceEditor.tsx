@@ -7,6 +7,8 @@ import type { ThemeKey } from "@/constants/themes";
 import { validateStyles, type Styles } from "@/lib/styles";
 import type { EditorMessage } from "@/lib/previewMessages";
 import { LOCALE_COOKIE, type Locale } from "@/lib/i18n";
+import { tr, type AdminText } from "@/lib/adminText";
+import { useAdminLocale } from "@/components/admin/AdminLocaleProvider";
 import type { SiteSettings } from "@/sanity/queries/siteSettings";
 import EditorLocale from "../EditorLocale";
 import IdentitySection from "../brand/IdentitySection";
@@ -31,17 +33,18 @@ import SectionList from "./SectionList";
 import SectionForm from "./SectionForm";
 
 type Tab = "inicio" | "estilos" | "datos";
-const TABS: { key: Tab; label: string }[] = [
+const TABS: { key: Tab; label: AdminText }[] = [
   { key: "inicio", label: "Inicio" },
   { key: "estilos", label: "Estilos" },
   { key: "datos", label: "Datos de la tienda" },
 ];
-const DEVICES: { key: Device; label: string }[] = [
+const DEVICES: { key: Device; label: AdminText }[] = [
   { key: "pc", label: "PC" },
   { key: "movil", label: "Móvil" },
 ];
 
 const AppearanceEditor = ({ initial, initialHasDraft, categories, previewLocale }: { initial: SiteSettings; initialHasDraft: boolean; categories: Option[]; previewLocale: Locale }) => {
+  const ui = useAdminLocale();
   const frameRef = useRef<HTMLIFrameElement | null>(null);
   const [tab, setTab] = useState<Tab>("inicio");
   const [device, setDevice] = useState<Device>("pc");
@@ -72,8 +75,8 @@ const AppearanceEditor = ({ initial, initialHasDraft, categories, previewLocale 
     onError: () => setSaveFailed(true),
   };
 
-  const stylesSave = useAutosave(styles, validateStyles, (v) => saveAppearanceDraft("styles", v), events);
-  const sectionsSave = useAutosave(sections, (input) => validateHomeSections(input, initial.primary), (v) => saveAppearanceDraft("homeSections", v), events);
+  const stylesSave = useAutosave(styles, (input) => validateStyles(input, ui), (v) => saveAppearanceDraft("styles", v), events);
+  const sectionsSave = useAutosave(sections, (input) => validateHomeSections(input, initial.primary, ui), (v) => saveAppearanceDraft("homeSections", v), events);
 
   const categoryGone = (s: HomeSection) =>
     s.kind === "products" && s.source === "category" && Boolean(s.category) && !categories.some((c) => c._id === s.category);
@@ -146,7 +149,7 @@ const AppearanceEditor = ({ initial, initialHasDraft, categories, previewLocale 
         return;
       }
       setHasDraft(false);
-      toast.success("Cambios publicados en la tienda");
+      toast.success(tr(ui, "Cambios publicados en la tienda"));
       post({ type: "preview-refresh" });
     });
 
@@ -166,8 +169,8 @@ const AppearanceEditor = ({ initial, initialHasDraft, categories, previewLocale 
   return (
     <div className="flex flex-col gap-3 lg:h-[calc(100dvh-4rem)]">
       <div className="flex flex-wrap items-center gap-2 bg-white rounded-2xl shadow-sm px-4 py-2.5">
-        <h1 className="text-lg font-bold text-shop_dark_green mr-2">Apariencia</h1>
-        <div role="tablist" aria-label="Partes del editor" className="flex gap-1">
+        <h1 className="text-lg font-bold text-shop_dark_green mr-2">{tr(ui, "Apariencia")}</h1>
+        <div role="tablist" aria-label={tr(ui, "Partes del editor")} className="flex gap-1">
           {TABS.map(({ key, label }) => (
             <button
               key={key}
@@ -177,13 +180,13 @@ const AppearanceEditor = ({ initial, initialHasDraft, categories, previewLocale 
               onClick={() => setTab(key)}
               className={`px-3 py-1.5 rounded-full text-sm font-semibold ${tab === key ? "bg-shop_dark_green text-white" : "text-gray-600 hover:bg-gray-100"}`}
             >
-              {label}
+              {tr(ui, label)}
             </button>
           ))}
         </div>
         {initial.languages.length > 1 && <EditorLocale value={edit} onChange={changeEdit} />}
         <div className="flex-1" />
-        <div className="flex rounded-full bg-gray-100 p-0.5" role="group" aria-label="Dispositivo">
+        <div className="flex rounded-full bg-gray-100 p-0.5" role="group" aria-label={tr(ui, "Dispositivo")}>
           {DEVICES.map(({ key, label }) => (
             <button
               key={key}
@@ -192,14 +195,14 @@ const AppearanceEditor = ({ initial, initialHasDraft, categories, previewLocale 
               onClick={() => setDevice(key)}
               className={`px-3 py-1 rounded-full text-xs font-semibold ${device === key ? "bg-white shadow-sm text-shop_dark_green" : "text-gray-600"}`}
             >
-              {label}
+              {tr(ui, label)}
             </button>
           ))}
         </div>
         {stylesSave.pending || sectionsSave.pending ? (
-          <span className="text-xs text-gray-500">Guardando…</span>
+          <span className="text-xs text-gray-500">{tr(ui, "Guardando…")}</span>
         ) : (
-          hasDraft && <span className="text-xs font-semibold rounded-full bg-amber-100 text-amber-800 px-2.5 py-1">Cambios sin publicar</span>
+          hasDraft && <span className="text-xs font-semibold rounded-full bg-amber-100 text-amber-800 px-2.5 py-1">{tr(ui, "Cambios sin publicar")}</span>
         )}
         <button
           type="button"
@@ -207,7 +210,7 @@ const AppearanceEditor = ({ initial, initialHasDraft, categories, previewLocale 
           onClick={() => setAskDiscard(true)}
           className="px-4 py-2 rounded-lg border border-gray-300 bg-white text-sm font-semibold text-gray-700 disabled:opacity-50"
         >
-          Descartar
+          {tr(ui, "Descartar")}
         </button>
         <button
           type="button"
@@ -215,24 +218,24 @@ const AppearanceEditor = ({ initial, initialHasDraft, categories, previewLocale 
           onClick={publish}
           className="px-4 py-2 rounded-lg bg-shop_orange text-white text-sm font-semibold disabled:opacity-50"
         >
-          {busy ? "Publicando…" : "Publicar"}
+          {busy ? tr(ui, "Publicando…") : tr(ui, "Publicar")}
         </button>
       </div>
 
       {saveFailed && (
         <p role="alert" className="rounded-xl bg-red-50 border border-red-200 p-3 text-sm text-red-800">
-          No se pudo guardar el borrador. Se intentará de nuevo con tu próximo cambio.
+          {tr(ui, "No se pudo guardar el borrador. Se intentará de nuevo con tu próximo cambio.")}
         </p>
       )}
       {askDiscard && (
         <div role="alert" className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
-          ¿Descartar los cambios sin publicar?
+          {tr(ui, "¿Descartar los cambios sin publicar?")}
           <div className="flex gap-2 mt-2">
             <button type="button" onClick={discard} disabled={busy} className="px-3 py-1.5 rounded-lg bg-amber-600 text-white text-xs font-semibold disabled:opacity-60">
-              Descartar
+              {tr(ui, "Descartar")}
             </button>
             <button type="button" onClick={() => setAskDiscard(false)} className="px-3 py-1.5 rounded-lg border border-amber-300 text-xs font-semibold">
-              Seguir editando
+              {tr(ui, "Seguir editando")}
             </button>
           </div>
         </div>
@@ -261,7 +264,7 @@ const AppearanceEditor = ({ initial, initialHasDraft, categories, previewLocale 
                 error={
                   sectionsSave.errors.sections ??
                   (Object.keys(sectionsSave.errors).length > 0
-                    ? "Hay campos por corregir en una sección. Los cambios del inicio no se guardan hasta corregirlos."
+                    ? tr(ui, "Hay campos por corregir en una sección. Los cambios del inicio no se guardan hasta corregirlos.")
                     : undefined)
                 }
                 isShown={isShown}
@@ -280,15 +283,15 @@ const AppearanceEditor = ({ initial, initialHasDraft, categories, previewLocale 
           </div>
           <div role="tabpanel" className={tab === "datos" ? "flex flex-col gap-6" : "hidden"}>
             <section className="flex flex-col gap-3">
-              <h2 className="font-bold text-gray-900">Logo y nombre</h2>
+              <h2 className="font-bold text-gray-900">{tr(ui, "Logo y nombre")}</h2>
               <IdentitySection initial={{ storeName, tagline, taglineEn, description, descriptionEn, logoType, logoText, logoSubtext, logoImage, favicon }} lang={lang} {...events} />
             </section>
             <section className="flex flex-col gap-3">
-              <h2 className="font-bold text-gray-900">Contacto</h2>
+              <h2 className="font-bold text-gray-900">{tr(ui, "Contacto")}</h2>
               <ContactSection initial={initial.contact} lang={lang} {...events} />
             </section>
             <section className="flex flex-col gap-3">
-              <h2 className="font-bold text-gray-900">Redes sociales</h2>
+              <h2 className="font-bold text-gray-900">{tr(ui, "Redes sociales")}</h2>
               <SocialSection initial={initial.social} {...events} />
             </section>
           </div>

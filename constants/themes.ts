@@ -1,7 +1,8 @@
-// Store color palettes. No imports: also run by scripts/check-permissions.mjs.
+// Store color palettes. Only a type import (pure): also run by scripts/check-permissions.mjs.
+import type { AdminText } from "../lib/adminText/index.ts";
 
 type Theme = {
-  name: string;
+  name: AdminText;
   primary: string;
   primaryBtn: string;
   light: string;
