@@ -534,7 +534,7 @@ if (args.includes("--self-test")) {
   // A file saved by Windows tools (BOM + CRLF) reads cleanly, without touching process.env
   const dir = mkdtempSync(join(tmpdir(), "check-env-"));
   const windowsFile = join(dir, ".env.windows");
-  writeFileSync(windowsFile, '﻿CHECK_ENV_SELF_TEST=production\r\nSTRIPE_WEBHOOK_SECRET="whsec_x"\r\n');
+  writeFileSync(windowsFile, '\uFEFFCHECK_ENV_SELF_TEST=production\r\nSTRIPE_WEBHOOK_SECRET="whsec_x"\r\n');
   assert.deepEqual({ ...readEnvFile(windowsFile) }, { CHECK_ENV_SELF_TEST: "production", STRIPE_WEBHOOK_SECRET: "whsec_x" });
   assert.equal(process.env.CHECK_ENV_SELF_TEST, undefined);
   assert.throws(() => readEnvFile(join(dir, "no-existe.env")), /^Error: No existe el archivo .*no-existe\.env$/);
@@ -593,7 +593,7 @@ export const WEBHOOK_EVENT = "checkout.session.completed";
 // The client's variables, kept apart from the terminal's own. Windows editors may add a BOM.
 export function readEnvFile(path = ".env.local") {
   if (!existsSync(path)) throw new Error(`No existe el archivo ${path}`);
-  return parseEnv(readFileSync(path, "utf8").replace(/^﻿/, ""));
+  return parseEnv(readFileSync(path, "utf8").replace(/^\uFEFF/, ""));
 }
 
 export function keyMode(value, kind) {

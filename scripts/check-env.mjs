@@ -34,6 +34,8 @@ if (args.includes("--self-test")) {
 
   assert.deepEqual(problems({ SANITY_API_READ_TOKEN: undefined }), ["Falta SANITY_API_READ_TOKEN"]);
   assert.deepEqual(problems({ SANITY_API_TOKEN: "  " }), ["Falta SANITY_API_TOKEN"]);
+  // A quoted value split over two lines would break the Authorization header (and echo the key)
+  assert.deepEqual(problems({ CLERK_SECRET_KEY: "sk_live_a\nb" }), ["CLERK_SECRET_KEY tiene espacios o saltos de línea"]);
   assert.deepEqual(problems({ STRIPE_SECRET_KEY: "sk_live_x" }), [
     "Stripe: STRIPE_SECRET_KEY está en modo real y NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY en modo prueba",
   ]);
@@ -79,7 +81,7 @@ if (args.includes("--self-test")) {
   // A file saved by Windows tools (BOM + CRLF) reads cleanly, without touching process.env
   const dir = mkdtempSync(join(tmpdir(), "check-env-"));
   const windowsFile = join(dir, ".env.windows");
-  writeFileSync(windowsFile, '﻿CHECK_ENV_SELF_TEST=production\r\nSTRIPE_WEBHOOK_SECRET="whsec_x"\r\n');
+  writeFileSync(windowsFile, '\uFEFFCHECK_ENV_SELF_TEST=production\r\nSTRIPE_WEBHOOK_SECRET="whsec_x"\r\n');
   assert.deepEqual({ ...readEnvFile(windowsFile) }, { CHECK_ENV_SELF_TEST: "production", STRIPE_WEBHOOK_SECRET: "whsec_x" });
   assert.equal(process.env.CHECK_ENV_SELF_TEST, undefined);
   assert.throws(() => readEnvFile(join(dir, "no-existe.env")), /^Error: No existe el archivo .*no-existe\.env$/);

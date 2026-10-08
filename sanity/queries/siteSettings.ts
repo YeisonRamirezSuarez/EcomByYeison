@@ -66,8 +66,13 @@ async function canSeeDraft(draft: boolean): Promise<boolean> {
       return false; // outside a request (scripts)
     }
   }
-  const actor = await getActor();
-  return Boolean(actor && can(actor.role, "configurar"));
+  // Routes the proxy skips (the .png icons) keep a visitor-sent header and have no Clerk context: published only.
+  try {
+    const actor = await getActor();
+    return Boolean(actor && can(actor.role, "configurar"));
+  } catch {
+    return false;
+  }
 }
 
 // Once per request per mode. Keyed by a primitive because cache() compares arguments by identity.

@@ -25,7 +25,7 @@ export const WEBHOOK_EVENT = "checkout.session.completed";
 // The client's variables, kept apart from the terminal's own. Windows editors may add a BOM.
 export function readEnvFile(path = ".env.local") {
   if (!existsSync(path)) throw new Error(`No existe el archivo ${path}`);
-  return parseEnv(readFileSync(path, "utf8").replace(/^﻿/, ""));
+  return parseEnv(readFileSync(path, "utf8").replace(/^\uFEFF/, ""));
 }
 
 export function keyMode(value, kind) {
@@ -58,6 +58,7 @@ function isBaseUrl(value) {
 export function checkEnv(env) {
   const has = (name) => Boolean(env[name]?.trim());
   const errors = REQUIRED.filter((name) => !has(name)).map((name) => `Falta ${name}`);
+  for (const name of REQUIRED) if (has(name) && /\s/.test(env[name])) errors.push(`${name} tiene espacios o saltos de línea`);
   const modes = {
     stripe: checkPair(errors, "Stripe", env, "STRIPE_SECRET_KEY", "NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY"),
     clerk: checkPair(errors, "Clerk", env, "CLERK_SECRET_KEY", "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY"),

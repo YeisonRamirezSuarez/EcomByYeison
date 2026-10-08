@@ -29,6 +29,7 @@ try {
     console.log(`${email} ahora es superadmin. Ya puede entrar a /admin.`);
   }
 } catch (error) {
-  console.error(error.message);
+  // fetch's own errors (bad header, no network) can echo the Authorization value, so they get a fixed message.
+  console.error(error instanceof TypeError ? "No se pudo llamar a Clerk: revisa CLERK_SECRET_KEY (npm run check:env) y la conexión" : error.message);
   process.exit(1);
 }
