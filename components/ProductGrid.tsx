@@ -9,13 +9,13 @@ import { Loader2 } from "lucide-react";
 import Container from "./Container";
 import HomeTabbar from "./HomeTabbar";
 import { getProductType } from "@/constants/data";
-import { Product } from "@/sanity.types";
+import type { StoreProduct } from "@/lib/localize";
 import { useLocale } from "@/components/StoreSettingsProvider";
 import { localizeProduct } from "@/lib/localize";
 import { t } from "@/lib/i18n";
 
 interface ProductGridProps {
-  initialProducts?: Product[];
+  initialProducts?: StoreProduct[];
   initialTab?: string;
 }
 
@@ -23,7 +23,7 @@ const ProductGrid = ({ initialProducts = [], initialTab }: ProductGridProps) => 
   const locale = useLocale();
   const productType = getProductType(locale);
   const defaultTab = initialTab || productType[0]?.value || "";
-  const [products, setProducts] = useState<Product[]>(initialProducts);
+  const [products, setProducts] = useState<StoreProduct[]>(initialProducts);
   const [loading, setLoading] = useState(false);
   const [selectedTab, setSelectedTab] = useState(defaultTab);
   const query = `*[_type == "product" && archived != true && variant == $variant] | order(name asc){

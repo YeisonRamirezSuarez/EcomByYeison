@@ -1,5 +1,5 @@
 "use client";
-import { Product } from "@/sanity.types";
+import type { StoreProduct } from "@/lib/localize";
 import { urlFor } from "@/sanity/lib/image";
 import Image from "next/image";
 import React from "react";
@@ -11,7 +11,7 @@ import AddToCartButton from "./AddToCartButton";
 import { useLocale } from "@/components/StoreSettingsProvider";
 import { t } from "@/lib/i18n";
 
-const ProductCard = ({ product }: { product: Product }) => {
+const ProductCard = ({ product }: { product: StoreProduct }) => {
   const locale = useLocale();
   const isOutOfStock = (product?.stock ?? 0) === 0;
 
@@ -90,7 +90,7 @@ const ProductCard = ({ product }: { product: Product }) => {
         {/* Category */}
         {product?.categories && (
           <p className="text-[10px] font-bold text-shop_light_green uppercase tracking-widest line-clamp-1">
-            {(product.categories as unknown as string[]).join(", ")}
+            {product.categories.join(", ")}
           </p>
         )}
 

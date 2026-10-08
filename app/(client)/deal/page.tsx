@@ -1,7 +1,7 @@
 import Container from "@/components/Container";
 import ProductCard from "@/components/ProductCard";
 import { getDealProducts } from "@/sanity/queries";
-import { Product } from "@/sanity.types";
+import type { StoreProduct } from "@/lib/localize";
 import React from "react";
 import { getServerLocale } from "@/lib/locale";
 import { t } from "@/lib/i18n";
@@ -16,7 +16,7 @@ const DealPage = async () => {
           <h1 className="text-3xl font-bold text-darkColor">{t(locale, "dealWeekTitle")}</h1>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2.5">
-          {products?.map((product: Product) => (
+          {products?.map((product: StoreProduct) => (
             <ProductCard key={product?._id} product={product} />
           ))}
         </div>

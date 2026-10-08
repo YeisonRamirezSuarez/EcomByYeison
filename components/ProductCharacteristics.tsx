@@ -1,4 +1,4 @@
-import { Product } from "@/sanity.types";
+import type { StoreProduct } from "@/lib/localize";
 import { getBrand } from "@/sanity/queries";
 import React from "react";
 import { getServerLocale } from "@/lib/locale";
@@ -13,7 +13,7 @@ import {
 const ProductCharacteristics = async ({
   product,
 }: {
-  product: Product | null | undefined;
+  product: StoreProduct | null | undefined;
 }) => {
   const locale = await getServerLocale();
   const brand = await getBrand(product?.slug?.current as string);

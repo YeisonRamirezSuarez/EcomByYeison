@@ -1,6 +1,6 @@
 "use client";
 
-import { MY_ORDERS_QUERYResult } from "@/sanity.types";
+import type { MyOrder } from "@/sanity/queries";
 import { TableBody, TableCell, TableRow } from "./ui/table";
 import {
   Tooltip,
@@ -17,10 +17,10 @@ import toast from "react-hot-toast";
 import { useLocale } from "@/components/StoreSettingsProvider";
 import { t } from "@/lib/i18n";
 
-const OrdersComponent = ({ orders }: { orders: MY_ORDERS_QUERYResult }) => {
+const OrdersComponent = ({ orders }: { orders: MyOrder[] }) => {
   const locale = useLocale();
   const [selectedOrder, setSelectedOrder] = useState<
-    MY_ORDERS_QUERYResult[number] | null
+    MyOrder | null
   >(null);
   
   const getStatusColor = (status: string) => {

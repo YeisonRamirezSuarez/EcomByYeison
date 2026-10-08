@@ -4,6 +4,7 @@
 import type { Brand as StoreBrand, PageContent } from "./brand";
 import type { HomeSection } from "./homeSections";
 import type { Locale } from "./i18n";
+import type { Product } from "../sanity.types";
 import type { ValidationResult } from "./validation";
 
 export type StoreLanguages = { languages: Locale[]; primary: Locale };
@@ -90,9 +91,16 @@ export type LocalizableProduct = {
   categories?: unknown;
 };
 
+// The product as the store shows it: categories are names, not references. Store components
+// and the cart use this type, never the raw Sanity Product.
+export type StoreProduct = Omit<Product, "categories"> & { categories?: string[] | null; nameEs?: string };
+
 // The product as the store shows it: name, description and category names in the visitor's
 // language. nameEs/nameEn stay so the cart (saved in the browser) can switch later (productName).
-export function localizeProduct<T extends LocalizableProduct>(product: T, locale: Locale): T {
+export function localizeProduct<T extends LocalizableProduct>(
+  product: T,
+  locale: Locale
+): Omit<T, "categories" | "nameEs"> & Pick<StoreProduct, "categories" | "nameEs"> {
   const nameEs = typeof product.nameEs === "string" ? product.nameEs : asText(product.name);
   const categories = Array.isArray(product.categories)
     ? product.categories.map((c) => (isTitled(c) ? pickText(c.title, c.titleEn, locale) : c))
@@ -103,7 +111,9 @@ export function localizeProduct<T extends LocalizableProduct>(product: T, locale
     nameEs,
     nameEn: asText(product.nameEn),
     description: pickText(product.description, product.descriptionEn, locale),
-    categories,
+    // Product queries project categories as { title, titleEn }, so they come out as names.
+    // Orders keep raw references here, but the orders page never shows categories.
+    categories: categories as string[] | null | undefined,
   };
 }
 

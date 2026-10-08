@@ -8,7 +8,7 @@ import Container from "./Container";
 import { Heart, X } from "lucide-react";
 import { Button } from "./ui/button";
 import Link from "next/link";
-import { Product } from "@/sanity.types";
+import type { StoreProduct } from "@/lib/localize";
 import toast from "react-hot-toast";
 import Image from "next/image";
 import { urlFor } from "@/sanity/lib/image";
@@ -60,7 +60,7 @@ const WishListProducts = () => {
               <tbody>
                 {favoriteProduct
                   ?.slice(0, visibleProducts)
-                  ?.map((product: Product) => (
+                  ?.map((product: StoreProduct) => (
                     <tr key={product?._id} className="border-b">
                       <td className="px-2 py-4 flex items-center gap-2">
                         <X

@@ -2,7 +2,7 @@ import Container from "@/components/Container";
 import ProductCard from "@/components/ProductCard";
 import Title from "@/components/Title";
 import { searchProducts } from "@/sanity/queries";
-import { Product } from "@/sanity.types";
+import type { StoreProduct } from "@/lib/localize";
 import { getServerLocale } from "@/lib/locale";
 import { t } from "@/lib/i18n";
 import { Search } from "lucide-react";
@@ -15,7 +15,7 @@ const SearchPage = async ({
   const locale = await getServerLocale();
   const { query } = await searchParams;
   const term = (query ?? "").trim();
-  const products: Product[] = term ? await searchProducts(term) : [];
+  const products: StoreProduct[] = term ? await searchProducts(term) : [];
 
   return (
     <div className="py-10">

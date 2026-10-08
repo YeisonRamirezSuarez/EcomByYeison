@@ -1,6 +1,6 @@
 import Container from "@/components/Container";
 import Title from "@/components/Title";
-import { SINGLE_BLOG_QUERYResult, BLOG_CATEGORIESResult, OTHERS_BLOG_QUERYResult } from "@/sanity.types";
+import { SINGLE_BLOG_QUERY_RESULT, BLOG_CATEGORIES_RESULT, OTHERS_BLOG_QUERY_RESULT } from "@/sanity.types";
 import { urlFor } from "@/sanity/lib/image";
 import {
   getBlogCategories,
@@ -25,7 +25,7 @@ const SingleBlogPage = async ({
   const locale = await getServerLocale();
   dayjs.locale(locale === "es" ? "es" : "en");
   const { slug } = await params;
-  const blog: SINGLE_BLOG_QUERYResult = await getSingleBlog(slug);
+  const blog: SINGLE_BLOG_QUERY_RESULT = await getSingleBlog(slug);
   if (!blog) return notFound();
 
   return (
@@ -204,7 +204,7 @@ const BlogLeft = async ({ slug, locale }: { slug: string; locale: "es" | "en" })
       <div className="border border-lightColor p-5 rounded-md">
         <Title className="text-base">{t(locale, "blogCategories")}</Title>
         <div className="space-y-2 mt-2">
-          {categories?.map((item: BLOG_CATEGORIESResult[number], index: number) => (
+          {categories?.map((item: BLOG_CATEGORIES_RESULT[number], index: number) => (
             <div
               key={index}
               className="text-lightColor flex items-center justify-between text-sm font-medium"
@@ -218,7 +218,7 @@ const BlogLeft = async ({ slug, locale }: { slug: string; locale: "es" | "en" })
       <div className="border border-lightColor p-5 rounded-md mt-10">
         <Title className="text-base">{t(locale, "blogLatest")}</Title>
         <div className="space-y-4 mt-4">
-          {blogs?.map((blog: OTHERS_BLOG_QUERYResult[number], index: number) => (
+          {blogs?.map((blog: OTHERS_BLOG_QUERY_RESULT[number], index: number) => (
             <Link
               href={`/blog/${blog?.slug?.current}`}
               key={index}

@@ -1,5 +1,6 @@
 "use client";
-import { BRANDS_QUERYResult, Category, Product } from "@/sanity.types";
+import { BRANDS_QUERY_RESULT, Category } from "@/sanity.types";
+import type { StoreProduct } from "@/lib/localize";
 import React, { useEffect, useRef, useState, useTransition } from "react";
 import Container from "./Container";
 import CategoryList from "./shop/CategoryList";
@@ -15,8 +16,8 @@ import { readShopFilters, shopQuery, type ShopFilterKey } from "@/lib/shopFilter
 
 interface Props {
   categories: Category[];
-  brands: BRANDS_QUERYResult;
-  products: Product[];
+  brands: BRANDS_QUERY_RESULT;
+  products: StoreProduct[];
 }
 const Shop = ({ categories, brands, products }: Props) => {
   const locale = useLocale();

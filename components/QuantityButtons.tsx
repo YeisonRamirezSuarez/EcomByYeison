@@ -1,4 +1,4 @@
-import { Product } from "@/sanity.types";
+import type { StoreProduct } from "@/lib/localize";
 import useStore from "@/store";
 import { useLocale } from "@/components/StoreSettingsProvider";
 import React from "react";
@@ -10,7 +10,7 @@ import { t } from "@/lib/i18n";
 import { productName } from "@/lib/localize";
 
 interface Props {
-  product: Product;
+  product: StoreProduct;
   className?: string;
 }
 const QuantityButtons = ({ product, className }: Props) => {

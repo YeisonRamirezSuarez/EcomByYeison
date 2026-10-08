@@ -1,5 +1,6 @@
 "use client";
-import { Category, Product } from "@/sanity.types";
+import { Category } from "@/sanity.types";
+import type { StoreProduct } from "@/lib/localize";
 import { useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import { Button } from "./ui/button";
@@ -71,7 +72,7 @@ const CategoryProducts = ({ categories, slug }: Props) => {
           </div>
         ) : products?.length > 0 ? (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2.5">
-            {products?.map((product: Product) => (
+            {products?.map((product: StoreProduct) => (
               <AnimatePresence key={product._id}>
                 <motion.div>
                   <ProductCard product={localizeProduct(product, locale)} />

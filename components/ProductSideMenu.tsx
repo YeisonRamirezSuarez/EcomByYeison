@@ -1,6 +1,6 @@
 "use client";
 import { cn } from "@/lib/utils";
-import { Product } from "@/sanity.types";
+import type { StoreProduct } from "@/lib/localize";
 import useStore from "@/store";
 import { Heart } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -12,12 +12,12 @@ const ProductSideMenu = ({
   product,
   className,
 }: {
-  product: Product;
+  product: StoreProduct;
   className?: string;
 }) => {
   const { favoriteProduct, addToFavorite } = useStore();
   const locale = useLocale();
-  const [existingProduct, setExistingProduct] = useState<Product | null>(null);
+  const [existingProduct, setExistingProduct] = useState<StoreProduct | null>(null);
   useEffect(() => {
     const availableProduct = favoriteProduct?.find(
       (item) => item?._id === product?._id

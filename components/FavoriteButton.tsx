@@ -1,5 +1,5 @@
 "use client";
-import { Product } from "@/sanity.types";
+import type { StoreProduct } from "@/lib/localize";
 import useStore from "@/store";
 import { Heart } from "lucide-react";
 import Link from "next/link";
@@ -13,11 +13,11 @@ const FavoriteButton = ({
   product,
 }: {
   showProduct?: boolean;
-  product?: Product | null | undefined;
+  product?: StoreProduct | null | undefined;
 }) => {
   const { favoriteProduct, addToFavorite } = useStore();
   const locale = useLocale();
-  const [existingProduct, setExistingProduct] = useState<Product | null>(null);
+  const [existingProduct, setExistingProduct] = useState<StoreProduct | null>(null);
   useEffect(() => {
     const availableItem = favoriteProduct.find(
       (item) => item?._id === product?._id

@@ -1,5 +1,5 @@
 "use client";
-import { Product } from "@/sanity.types";
+import type { StoreProduct } from "@/lib/localize";
 import { Button } from "./ui/button";
 import { cn } from "@/lib/utils";
 import { ShoppingBag } from "lucide-react";
@@ -11,7 +11,7 @@ import QuantityButtons from "./QuantityButtons";
 import { t } from "@/lib/i18n";
 
 interface Props {
-  product: Product;
+  product: StoreProduct;
   className?: string;
 }
 

@@ -1,16 +1,16 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { Product } from "./sanity.types";
+import type { StoreProduct } from "./lib/localize";
 import { Locale } from "@/lib/i18n";
 
 export interface CartItem {
-  product: Product;
+  product: StoreProduct;
   quantity: number;
 }
 
 interface StoreState {
   items: CartItem[];
-  addItem: (product: Product) => void;
+  addItem: (product: StoreProduct) => void;
   removeItem: (productId: string) => void;
   deleteCartProduct: (productId: string) => void;
   resetCart: () => void;
@@ -19,8 +19,8 @@ interface StoreState {
   getItemCount: (productId: string) => number;
   getGroupedItems: () => CartItem[];
   //   // favorite
-  favoriteProduct: Product[];
-  addToFavorite: (product: Product) => Promise<void>;
+  favoriteProduct: StoreProduct[];
+  addToFavorite: (product: StoreProduct) => Promise<void>;
   removeFromFavorite: (productId: string) => void;
   resetFavorite: () => void;
   locale: Locale;
@@ -90,7 +90,7 @@ const useStore = create<StoreState>()(
         return item ? item.quantity : 0;
       },
       getGroupedItems: () => get().items,
-      addToFavorite: (product: Product) => {
+      addToFavorite: (product: StoreProduct) => {
         return new Promise<void>((resolve) => {
           set((state: StoreState) => {
             const isFavorite = state.favoriteProduct.some(

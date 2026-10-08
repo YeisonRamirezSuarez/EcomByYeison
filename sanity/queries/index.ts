@@ -16,14 +16,14 @@ import {
 import { parsePriceRange } from "@/constants/currencies";
 import type { ShopFilters } from "@/lib/shopFilters";
 import type {
-  BLOG_CATEGORIESResult,
-  BRAND_QUERYResult,
-  BRANDS_QUERYResult,
-  DEAL_PRODUCTSResult,
-  GET_ALL_BLOGResult,
-  LATEST_BLOG_QUERYResult,
-  MY_ORDERS_QUERYResult,
-  OTHERS_BLOG_QUERYResult,
+  BLOG_CATEGORIES_RESULT,
+  BRAND_QUERY_RESULT,
+  BRANDS_QUERY_RESULT,
+  DEAL_PRODUCTS_RESULT,
+  GET_ALL_BLOG_RESULT,
+  LATEST_BLOG_QUERY_RESULT,
+  MY_ORDERS_QUERY_RESULT,
+  OTHERS_BLOG_QUERY_RESULT,
   Product,
 } from "@/sanity.types";
 import type { ProductSource } from "@/lib/homeSections";
@@ -75,18 +75,18 @@ const getAllBrands = async () => {
   const locale = await getServerLocale();
   try {
     const { data } = await sanityFetch({ query: BRANDS_QUERY });
-    return (data ?? []).map((brand: BRANDS_QUERYResult[number]) => localizeTaxonomy(brand, locale));
+    return (data ?? []).map((brand: BRANDS_QUERY_RESULT[number]) => localizeTaxonomy(brand, locale));
   } catch (error) {
     console.log("Error fetching all brands:", error);
     return [];
   }
 };
 
-const getLatestBlogs = async (): Promise<LATEST_BLOG_QUERYResult> => {
+const getLatestBlogs = async (): Promise<LATEST_BLOG_QUERY_RESULT> => {
   const locale = await getServerLocale();
   try {
     const { data } = await sanityFetch({ query: LATEST_BLOG_QUERY });
-    return (data ?? []).map((blog: LATEST_BLOG_QUERYResult[number]) => localizeBlog(blog, locale));
+    return (data ?? []).map((blog: LATEST_BLOG_QUERY_RESULT[number]) => localizeBlog(blog, locale));
   } catch (error) {
     console.log("Error fetching latest Blogs:", error);
     return [];
@@ -96,7 +96,7 @@ const getDealProducts = async () => {
   const locale = await getServerLocale();
   try {
     const { data } = await sanityFetch({ query: DEAL_PRODUCTS });
-    return (data ?? []).map((product: DEAL_PRODUCTSResult[number]) => localizeProduct(product, locale));
+    return (data ?? []).map((product: DEAL_PRODUCTS_RESULT[number]) => localizeProduct(product, locale));
   } catch (error) {
     console.log("Error fetching deal Products:", error);
     return [];
@@ -126,7 +126,7 @@ const getBrand = async (slug: string) => {
         slug,
       },
     });
-    return (product?.data ?? []).map((row: BRAND_QUERYResult[number] & { brandNameEn?: string | null }) => ({ ...row, brandName: pickText(row.brandName, row.brandNameEn, locale) }));
+    return (product?.data ?? []).map((row: BRAND_QUERY_RESULT[number] & { brandNameEn?: string | null }) => ({ ...row, brandName: pickText(row.brandName, row.brandNameEn, locale) }));
   } catch (error) {
     console.error("Error fetching product by ID:", error);
     return null;
@@ -138,7 +138,7 @@ const getMyOrders = async (userId: string) => {
     // Use backendClient directly to bypass caching for fresh order status
     const orders = await backendClient.fetch(MY_ORDERS_QUERY, { userId });
     return orders
-      ? orders.map((order: MY_ORDERS_QUERYResult[number]) => ({
+      ? orders.map((order: MY_ORDERS_QUERY_RESULT[number]) => ({
           ...order,
           products: order.products?.map((item) => (item.product ? { ...item, product: localizeProduct(item.product, locale) } : item)),
         }))
@@ -149,6 +149,9 @@ const getMyOrders = async (userId: string) => {
   }
 };
 
+// One order as the orders page shows it: its products come out of localizeProduct.
+export type MyOrder = NonNullable<Awaited<ReturnType<typeof getMyOrders>>>[number];
+
 const getShopProducts = async ({ category, brand, price }: ShopFilters) => {
   const locale = await getServerLocale();
   try {
@@ -157,7 +160,7 @@ const getShopProducts = async ({ category, brand, price }: ShopFilters) => {
       query: SHOP_PRODUCTS_QUERY,
       params: { selectedCategory: category, selectedBrand: brand, minPrice, maxPrice },
     });
-    return (data ?? []).map((product: Product) => localizeProduct(product, locale));
+    return (data ?? []).map((product) => localizeProduct(product, locale));
   } catch (error) {
     console.log("Error fetching shop products:", error);
     return [];
@@ -177,14 +180,14 @@ const getMyOrderCount = async (userId: string): Promise<number> => {
   }
 };
 
-const getAllBlogs = async (quantity: number): Promise<GET_ALL_BLOGResult> => {
+const getAllBlogs = async (quantity: number): Promise<GET_ALL_BLOG_RESULT> => {
   const locale = await getServerLocale();
   try {
     const { data } = await sanityFetch({
       query: GET_ALL_BLOG,
       params: { quantity },
     });
-    return (data ?? []).map((blog: GET_ALL_BLOGResult[number]) => localizeBlog(blog, locale));
+    return (data ?? []).map((blog: GET_ALL_BLOG_RESULT[number]) => localizeBlog(blog, locale));
   } catch (error) {
     console.log("Error fetching all brands:", error);
     return [];
@@ -210,7 +213,7 @@ const getBlogCategories = async () => {
     const { data } = await sanityFetch({
       query: BLOG_CATEGORIES,
     });
-    return (data ?? []).map((blog: BLOG_CATEGORIESResult[number]) => ({
+    return (data ?? []).map((blog: BLOG_CATEGORIES_RESULT[number]) => ({
       ...blog,
       blogcategories: blog.blogcategories?.map((c) => (c ? localizeTaxonomy(c, locale) : c)) ?? null,
     }));
@@ -227,7 +230,7 @@ const getOthersBlog = async (slug: string, quantity: number) => {
       query: OTHERS_BLOG_QUERY,
       params: { slug, quantity },
     });
-    return (data ?? []).map((blog: OTHERS_BLOG_QUERYResult[number]) => localizeBlog(blog, locale));
+    return (data ?? []).map((blog: OTHERS_BLOG_QUERY_RESULT[number]) => localizeBlog(blog, locale));
   } catch (error) {
     console.log("Error fetching all brands:", error);
     return [];

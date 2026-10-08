@@ -1,4 +1,4 @@
-import { MY_ORDERS_QUERYResult } from "@/sanity.types";
+import type { MyOrder } from "@/sanity/queries";
 import React from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
 import { Button } from "./ui/button";
@@ -18,7 +18,7 @@ import { useLocale } from "@/components/StoreSettingsProvider";
 import { t } from "@/lib/i18n";
 
 interface OrderDetailsDialogProps {
-  order: MY_ORDERS_QUERYResult[number] | null;
+  order: MyOrder | null;
   isOpen: boolean;
   onClose: () => void;
 }
