@@ -1417,4 +1417,38 @@ assert.equal(ck.checkoutLines([{ id: "p1", quantity: 1 }], [{ ...SERVER[0], pric
   assert.equal(at.tr("en", "Rol de {email}", { email: "ana@example.com" }), "Role for ana@example.com");
 }
 
+// App icons and iOS splash screens drawn from the store's own mark (lib/appIcons.ts)
+{
+  const icons = await import("../lib/appIcons.ts");
+  const { splashScreens } = await import("../lib/splashScreens.ts");
+  const favicon = { assetId: "f", url: "https://cdn.sanity.io/images/p/d/f-64x64.png" };
+  const logo = { assetId: "l", url: "https://cdn.sanity.io/images/p/d/l-400x100.svg" };
+
+  // Square icons: favicon first, then the image logo, but only when the store shows it
+  assert.equal(icons.iconMark({ favicon, logoType: "image", logoImage: logo }), favicon.url);
+  assert.equal(icons.iconMark({ favicon: null, logoType: "image", logoImage: logo }), logo.url);
+  assert.equal(icons.iconMark({ favicon: null, logoType: "text", logoImage: logo }), null);
+  assert.equal(icons.iconMark({ favicon: null, logoType: "image", logoImage: null }), null);
+
+  // Splash screens: the (often wide) logo first, then the favicon
+  assert.equal(icons.splashMark({ favicon, logoType: "image", logoImage: logo }), logo.url);
+  assert.equal(icons.splashMark({ favicon, logoType: "text", logoImage: logo }), favicon.url);
+  assert.equal(icons.splashMark({ favicon: null, logoType: "text", logoImage: logo }), null);
+
+  assert.equal(icons.initialOf("  ñandú store"), "Ñ");
+  assert.equal(icons.initialOf("😀 Shop"), "😀");
+  assert.equal(icons.initialOf("   "), "?");
+
+  assert.deepEqual(icons.splashSize("apple-splash-1290-2796.png"), { width: 1290, height: 2796 });
+  assert.deepEqual(icons.splashSize("apple-splash-2796-1290.png"), { width: 2796, height: 1290 });
+  for (const file of ["apple-splash-100-100.png", "apple-splash-1290-2796.png.png", "apple-splash-1290-2796", "..%2Fsw.js", "../sw.js", ""]) {
+    assert.equal(icons.splashSize(file), null, file);
+  }
+  assert.equal(splashScreens.length, 34);
+  for (const s of splashScreens) assert.ok(icons.splashSize(s.href.slice("/splash/".length)), s.href);
+
+  assert.equal(icons.pngUrl(logo.url, 154), `${logo.url}?fm=png&w=154`);
+  assert.equal(icons.pngUrl(`${logo.url}?w=10`, 154), `${logo.url}?w=154&fm=png`);
+}
+
 console.log("check-permissions: ok");
