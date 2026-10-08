@@ -4,7 +4,9 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { addSubscriber, exportSubscribers, importSubscribers, previewImport, type ImportCounts } from "@/actions/newsletterAdmin";
+import { useAdminLocale } from "@/components/admin/AdminLocaleProvider";
 import { INPUT } from "@/components/admin/brand/fields";
+import { tr, type AdminText } from "@/lib/adminText";
 import { parseEmailCsv } from "@/lib/newsletter";
 
 const MAX_FILE_BYTES = 1_000_000;
@@ -17,7 +19,7 @@ const ADD_MESSAGES = {
   created: "Suscriptor agregado",
   exists: "Ese correo ya estaba en la lista",
   unsubscribed: "Ese correo se dio de baja: solo puede volver a suscribirse desde la tienda",
-} as const;
+} as const satisfies Record<string, AdminText>;
 
 const SubscriberTools = () => {
   const [panel, setPanel] = useState<Panel>(null);
@@ -28,6 +30,7 @@ const SubscriberTools = () => {
   const [fileError, setFileError] = useState("");
   const [pending, startTransition] = useTransition();
   const router = useRouter();
+  const ui = useAdminLocale();
 
   const open = (next: Panel) => {
     setPanel(panel === next ? null : next);
@@ -46,7 +49,7 @@ const SubscriberTools = () => {
         return;
       }
       setErrors({});
-      toast[result.data === "created" ? "success" : "error"](ADD_MESSAGES[result.data]);
+      toast[result.data === "created" ? "success" : "error"](tr(ui, ADD_MESSAGES[result.data]));
       if (result.data === "created") {
         setEmail("");
         setConsent(false);
@@ -60,10 +63,10 @@ const SubscriberTools = () => {
       setFileError("");
       // Checked before reading: 5000 rows with a few columns weigh far less than 1 MB.
       if (file.size > MAX_FILE_BYTES) {
-        setFileError("El archivo pesa más de 1 MB. Deja solo la columna de correos o divídelo.");
+        setFileError(tr(ui, "El archivo pesa más de 1 MB. Deja solo la columna de correos o divídelo."));
         return;
       }
-      const parsed = parseEmailCsv(await file.text());
+      const parsed = parseEmailCsv(await file.text(), ui);
       if (!parsed.ok) {
         setFileError(parsed.error);
         return;
@@ -88,7 +91,13 @@ const SubscriberTools = () => {
       // The panel closes, so the toast keeps the summary.
       const { create, already, skippedUnsubscribed } = result.data;
       toast.success(
-        `${create} suscriptores importados · ${already} ya estaban · ${skippedUnsubscribed} omitidos por estar dados de baja · ${summary.invalid.length} inválidos · ${summary.duplicates} repetidos`,
+        tr(ui, "{create} suscriptores importados · {already} ya estaban · {skipped} omitidos por estar dados de baja · {invalid} inválidos · {duplicates} repetidos", {
+          create,
+          already,
+          skipped: skippedUnsubscribed,
+          invalid: summary.invalid.length,
+          duplicates: summary.duplicates,
+        }),
         { duration: 8000 }
       );
       open(null);
@@ -114,27 +123,27 @@ const SubscriberTools = () => {
     <div className="flex flex-col items-end gap-2">
       <div className="flex flex-wrap gap-2">
         <button type="button" onClick={() => open("add")} className={BUTTON}>
-          Agregar
+          {tr(ui, "Agregar")}
         </button>
         <button type="button" onClick={() => open("import")} className={BUTTON}>
-          Importar CSV
+          {tr(ui, "Importar CSV")}
         </button>
         <button type="button" onClick={download} disabled={pending} className={BUTTON}>
-          Exportar CSV
+          {tr(ui, "Exportar CSV")}
         </button>
       </div>
 
       {panel === "add" && (
         <div className="w-full max-w-md rounded-xl border border-gray-200 bg-white p-3 flex flex-col gap-2">
-          <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="correo@ejemplo.com" aria-label="Correo" className={INPUT} />
+          <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder={tr(ui, "correo@ejemplo.com")} aria-label={tr(ui, "Correo")} className={INPUT} />
           {errors.email && <span className="text-xs text-red-600">{errors.email}</span>}
           <label className="flex items-start gap-2 text-xs text-gray-700">
             <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} className="mt-0.5" />
-            Tengo permiso de esta persona para enviarle correos
+            {tr(ui, "Tengo permiso de esta persona para enviarle correos")}
           </label>
           {errors.consent && <span className="text-xs text-red-600">{errors.consent}</span>}
           <button type="button" onClick={add} disabled={pending} className="self-start px-3 py-1.5 rounded-lg bg-shop_dark_green text-white text-xs font-semibold disabled:opacity-60">
-            Agregar suscriptor
+            {tr(ui, "Agregar suscriptor")}
           </button>
         </div>
       )}
@@ -144,7 +153,7 @@ const SubscriberTools = () => {
           <input
             type="file"
             accept=".csv,text/csv"
-            aria-label="Archivo CSV"
+            aria-label={tr(ui, "Archivo CSV")}
             onChange={(e) => {
               const file = e.target.files?.[0];
               e.target.value = ""; // so the same file can be picked again
@@ -152,20 +161,20 @@ const SubscriberTools = () => {
             }}
             className="text-xs"
           />
-          <p className="text-xs text-gray-500">Una columna llamada email o correo (separada por coma o punto y coma). Máximo 5000 filas.</p>
+          <p className="text-xs text-gray-500">{tr(ui, "Una columna llamada email o correo (separada por coma o punto y coma). Máximo 5000 filas.")}</p>
           {fileError && <p role="alert" className="text-xs text-red-600">{fileError}</p>}
           {summary && (
             <>
               <ul className="text-xs text-gray-700 list-disc pl-4">
-                <li>{summary.create} nuevos</li>
-                <li>{summary.already} ya estaban</li>
-                <li>{summary.skippedUnsubscribed} omitidos por estar dados de baja</li>
-                <li>{summary.invalid.length} inválidos{summary.invalid.length > 0 && `: ${summary.invalid.slice(0, 10).join(", ")}`}</li>
-                <li>{summary.duplicates} repetidos en el archivo</li>
+                <li>{tr(ui, "{n} nuevos", { n: summary.create })}</li>
+                <li>{tr(ui, "{n} ya estaban", { n: summary.already })}</li>
+                <li>{tr(ui, "{n} omitidos por estar dados de baja", { n: summary.skippedUnsubscribed })}</li>
+                <li>{tr(ui, "{n} inválidos", { n: summary.invalid.length })}{summary.invalid.length > 0 && `: ${summary.invalid.slice(0, 10).join(", ")}`}</li>
+                <li>{tr(ui, "{n} repetidos en el archivo", { n: summary.duplicates })}</li>
               </ul>
               <label className="flex items-start gap-2 text-xs text-gray-700">
                 <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} className="mt-0.5" />
-                Tengo permiso de estas personas para enviarles correos
+                {tr(ui, "Tengo permiso de estas personas para enviarles correos")}
               </label>
               {errors.consent && <span className="text-xs text-red-600">{errors.consent}</span>}
               <button
@@ -174,7 +183,7 @@ const SubscriberTools = () => {
                 disabled={pending || summary.create === 0}
                 className="self-start px-3 py-1.5 rounded-lg bg-shop_dark_green text-white text-xs font-semibold disabled:opacity-60"
               >
-                Importar {summary.create}
+                {tr(ui, "Importar {n}", { n: summary.create })}
               </button>
             </>
           )}

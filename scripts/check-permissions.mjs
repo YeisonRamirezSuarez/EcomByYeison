@@ -1030,6 +1030,16 @@ assert.equal(ck.checkoutLines([{ id: "p1", quantity: 1 }], [{ ...SERVER[0], pric
   assert.ok(exported.includes("ana@example.com,2026-10-07,Importado,Dado de baja\r\n"));
   assert.ok(exported.includes("'=cmd@example.com,,Pie de página,Activo\r\n"));
 
+  // Subscriber texts in the panel language (lib/newsletter.ts)
+  {
+    const rows = [{ email: "ana@example.com", subscribedAt: "2026-10-07T10:00:00Z", source: "import", status: "unsubscribed" }];
+    assert.ok(nl.subscribersCsv(rows).startsWith("\ufeffemail,fecha,origen,estado\r\n"));
+    assert.ok(nl.subscribersCsv(rows, "en").startsWith("\ufeffemail,date,source,status\r\n"));
+    assert.ok(nl.subscribersCsv(rows, "en").includes("ana@example.com,2026-10-07,Imported,Unsubscribed\r\n"));
+    assert.deepEqual(nl.parseEmailCsv("nombre\nana"), { ok: false, error: "No encontramos una columna de correos" });
+    assert.deepEqual(nl.parseEmailCsv("nombre\nana", "en"), { ok: false, error: "No email column found" });
+  }
+
   // Filters from the URL
   assert.deepEqual(nl.readSubscriberFilters({}), { search: "", status: "all", page: 0 });
   assert.deepEqual(nl.readSubscriberFilters({ q: " ZZ ", estado: "unsubscribed", pagina: "3" }), { search: "zz", status: "unsubscribed", page: 2 });

@@ -98,9 +98,9 @@ export async function testSmtp(): Promise<ActionResult<SmtpTest>> {
   });
 }
 
-const PERMISSION_ONE = "Confirma que tienes permiso de esta persona para enviarle correos";
-const PERMISSION_MANY = "Confirma que tienes permiso de estas personas para enviarles correos";
-const BAD_LIST = "La lista de correos no es válida";
+const PERMISSION_ONE: AdminText = "Confirma que tienes permiso de esta persona para enviarle correos";
+const PERMISSION_MANY: AdminText = "Confirma que tienes permiso de estas personas para enviarles correos";
+const BAD_LIST: AdminText = "La lista de correos no es válida";
 
 const asRecord = (value: unknown): Record<string, unknown> =>
   value && typeof value === "object" && !Array.isArray(value) ? (value as Record<string, unknown>) : {};
@@ -113,12 +113,13 @@ export async function addSubscriber(input: unknown): Promise<ActionResult<"creat
   // Permission first: someone without it never gets field-by-field answers.
   const allowed = await run(() => requirePermission("configurar"));
   if (!allowed.ok) return allowed;
+  const ui = await getAdminLocale();
   const v = asRecord(input);
   const email = typeof v.email === "string" ? v.email.trim().toLowerCase() : "";
   const errors: Record<string, string> = {};
-  if (!isEmail(email)) errors.email = "Ingresa un correo válido";
-  if (v.consent !== true) errors.consent = PERMISSION_ONE;
-  if (Object.keys(errors).length > 0) return { ok: false, error: tr(await getAdminLocale(), INVALID_FORM), errors };
+  if (!isEmail(email)) errors.email = tr(ui, "Ingresa un correo válido");
+  if (v.consent !== true) errors.consent = tr(ui, PERMISSION_ONE);
+  if (Object.keys(errors).length > 0) return { ok: false, error: tr(ui, INVALID_FORM), errors };
   return run(async () => {
     const status = await getSubscriberStatus(subscriberDocId(email));
     // Never re-activates someone who unsubscribed: only they can, from the store.
@@ -145,8 +146,9 @@ export async function previewImport(input: unknown): Promise<ActionResult<Import
   // Permission first: someone without it never gets field-by-field answers.
   const allowed = await run(() => requirePermission("configurar"));
   if (!allowed.ok) return allowed;
+  const ui = await getAdminLocale();
   const emails = cleanEmails(input);
-  if (!emails) return { ok: false, error: BAD_LIST };
+  if (!emails) return { ok: false, error: tr(ui, BAD_LIST) };
   return run(async () => {
     const plan = await importPlan(emails);
     return { create: plan.create.length, already: plan.already, skippedUnsubscribed: plan.skippedUnsubscribed };
@@ -157,10 +159,11 @@ export async function importSubscribers(input: unknown): Promise<ActionResult<Im
   // Permission first: someone without it never gets field-by-field answers.
   const allowed = await run(() => requirePermission("configurar"));
   if (!allowed.ok) return allowed;
+  const ui = await getAdminLocale();
   const v = asRecord(input);
   const emails = cleanEmails(v.emails);
-  if (!emails) return { ok: false, error: BAD_LIST };
-  if (v.consent !== true) return { ok: false, error: PERMISSION_MANY, errors: { consent: PERMISSION_MANY } };
+  if (!emails) return { ok: false, error: tr(ui, BAD_LIST) };
+  if (v.consent !== true) return { ok: false, error: tr(ui, PERMISSION_MANY), errors: { consent: tr(ui, PERMISSION_MANY) } };
   return run(async () => {
     const plan = await importPlan(emails);
     const now = new Date().toISOString();
@@ -187,7 +190,7 @@ export async function deleteSubscriber(id: string): Promise<ActionResult<null>> 
 export async function exportSubscribers(): Promise<ActionResult<string>> {
   return run(async () => {
     await requirePermission("configurar");
-    return subscribersCsv(await getAllSubscribers());
+    return subscribersCsv(await getAllSubscribers(), await getAdminLocale());
   });
 }
 

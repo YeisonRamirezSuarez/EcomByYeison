@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { getAdminLocale } from "@/lib/adminLocale";
+import { tr, dateLocale, type AdminText } from "@/lib/adminText";
 import { lastPage, SOURCE_LABELS, STATUS_LABELS, type SubscriberFilters } from "@/lib/newsletter";
 import { getSubscriberCounts, getSubscriberPage } from "@/sanity/queries/newsletter";
 import DeleteSubscriberButton from "./DeleteSubscriberButton";
@@ -9,9 +11,10 @@ const FILTERS = [
   ["all", "Todos"],
   ["active", "Activos"],
   ["unsubscribed", "Dados de baja"],
-] as const;
+] as const satisfies readonly (readonly [string, AdminText])[];
 
 export default async function SubscribersTab({ filters }: { filters: SubscriberFilters }) {
+  const ui = await getAdminLocale();
   const [counts, { rows, total }] = await Promise.all([getSubscriberCounts(), getSubscriberPage(filters)]);
   const pages = lastPage(total) + 1;
   const href = (patch: { estado?: string; pagina?: number }) => {
@@ -31,11 +34,11 @@ export default async function SubscribersTab({ filters }: { filters: SubscriberF
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="flex gap-3">
           <div className="bg-white rounded-2xl shadow-sm px-4 py-3">
-            <p className="text-xs text-gray-500">Activos</p>
+            <p className="text-xs text-gray-500">{tr(ui, "Activos")}</p>
             <p className="text-xl font-bold text-gray-900">{counts.active}</p>
           </div>
           <div className="bg-white rounded-2xl shadow-sm px-4 py-3">
-            <p className="text-xs text-gray-500">Dados de baja</p>
+            <p className="text-xs text-gray-500">{tr(ui, "Dados de baja")}</p>
             <p className="text-xl font-bold text-gray-900">{counts.unsubscribed}</p>
           </div>
         </div>
@@ -50,12 +53,12 @@ export default async function SubscribersTab({ filters }: { filters: SubscriberF
             <input
               name="q"
               defaultValue={filters.search}
-              placeholder="Buscar por correo"
-              aria-label="Buscar por correo"
+              placeholder={tr(ui, "Buscar por correo")}
+              aria-label={tr(ui, "Buscar por correo")}
               className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm"
             />
             <button type="submit" className="px-3 py-1.5 rounded-lg border border-gray-300 text-sm font-semibold">
-              Buscar
+              {tr(ui, "Buscar")}
             </button>
           </form>
           <div className="flex gap-1">
@@ -66,7 +69,7 @@ export default async function SubscribersTab({ filters }: { filters: SubscriberF
                 aria-current={filters.status === key ? "page" : undefined}
                 className={`px-3 py-1.5 rounded-full text-xs font-semibold ${filters.status === key ? "bg-shop_dark_green text-white" : "text-gray-600 hover:bg-gray-100"}`}
               >
-                {label}
+                {tr(ui, label)}
               </Link>
             ))}
           </div>
@@ -74,29 +77,29 @@ export default async function SubscribersTab({ filters }: { filters: SubscriberF
 
         {rows.length === 0 ? (
           <p className="text-sm text-gray-500 py-6 text-center">
-            {filters.search || filters.status !== "all" ? "No hay suscriptores con ese filtro." : "Todavía no hay suscriptores."}
+            {filters.search || filters.status !== "all" ? tr(ui, "No hay suscriptores con ese filtro.") : tr(ui, "Todavía no hay suscriptores.")}
           </p>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="text-left text-xs text-gray-500">
-                  <th className="py-2 pr-3 font-semibold">Correo</th>
-                  <th className="py-2 pr-3 font-semibold">Fecha</th>
-                  <th className="py-2 pr-3 font-semibold">Origen</th>
-                  <th className="py-2 pr-3 font-semibold">Estado</th>
-                  <th className="py-2 font-semibold sr-only">Acciones</th>
+                  <th className="py-2 pr-3 font-semibold">{tr(ui, "Correo")}</th>
+                  <th className="py-2 pr-3 font-semibold">{tr(ui, "Fecha")}</th>
+                  <th className="py-2 pr-3 font-semibold">{tr(ui, "Origen")}</th>
+                  <th className="py-2 pr-3 font-semibold">{tr(ui, "Estado")}</th>
+                  <th className="py-2 font-semibold sr-only">{tr(ui, "Acciones")}</th>
                 </tr>
               </thead>
               <tbody>
                 {rows.map((row) => (
                   <tr key={row._id} className="border-t border-gray-100">
                     <td className="py-2 pr-3 text-gray-900 break-all">{row.email}</td>
-                    <td className="py-2 pr-3 text-gray-600 whitespace-nowrap">{row.subscribedAt ? new Date(row.subscribedAt).toLocaleDateString("es-CO") : "—"}</td>
-                    <td className="py-2 pr-3 text-gray-600">{SOURCE_LABELS[row.source]}</td>
+                    <td className="py-2 pr-3 text-gray-600 whitespace-nowrap">{row.subscribedAt ? new Date(row.subscribedAt).toLocaleDateString(dateLocale(ui)) : "—"}</td>
+                    <td className="py-2 pr-3 text-gray-600">{tr(ui, SOURCE_LABELS[row.source])}</td>
                     <td className="py-2 pr-3">
                       <span className={`text-xs font-semibold rounded-full px-2 py-0.5 ${row.status === "active" ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-600"}`}>
-                        {STATUS_LABELS[row.status]}
+                        {tr(ui, STATUS_LABELS[row.status])}
                       </span>
                     </td>
                     <td className="py-2 text-right">
@@ -111,11 +114,11 @@ export default async function SubscribersTab({ filters }: { filters: SubscriberF
 
         {pages > 1 && (
           <div className="flex items-center justify-between mt-3 text-sm">
-            {filters.page > 0 ? <Link href={href({ pagina: filters.page })}>← Anterior</Link> : <span />}
+            {filters.page > 0 ? <Link href={href({ pagina: filters.page })}>← {tr(ui, "Anterior")}</Link> : <span />}
             <span className="text-gray-500">
-              Página {filters.page + 1} de {pages}
+              {tr(ui, "Página {page} de {pages}", { page: filters.page + 1, pages })}
             </span>
-            {filters.page + 1 < pages ? <Link href={href({ pagina: filters.page + 2 })}>Siguiente →</Link> : <span />}
+            {filters.page + 1 < pages ? <Link href={href({ pagina: filters.page + 2 })}>{tr(ui, "Siguiente")} →</Link> : <span />}
           </div>
         )}
       </div>

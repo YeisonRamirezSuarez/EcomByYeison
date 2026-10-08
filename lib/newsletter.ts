@@ -42,8 +42,8 @@ export const EMPTY_SMTP: SmtpView = {
 
 export type SubscriberStatus = "active" | "unsubscribed";
 export type SubscriberSource = "footer" | "manual" | "import";
-export const STATUS_LABELS: Record<SubscriberStatus, string> = { active: "Activo", unsubscribed: "Dado de baja" };
-export const SOURCE_LABELS: Record<SubscriberSource, string> = { footer: "Pie de página", manual: "Manual", import: "Importado" };
+export const STATUS_LABELS: Record<SubscriberStatus, AdminText> = { active: "Activo", unsubscribed: "Dado de baja" };
+export const SOURCE_LABELS: Record<SubscriberSource, AdminText> = { footer: "Pie de página", manual: "Manual", import: "Importado" };
 export type SubscriberRow = { _id: string; email: string; subscribedAt: string | null; source: SubscriberSource; status: SubscriberStatus };
 export type SubscriberFilters = { search: string; status: SubscriberStatus | "all"; page: number };
 
@@ -255,7 +255,7 @@ function csvRows(text: string, delimiter: string): string[][] {
 
 // Excel in Spanish saves with ";" and a BOM; the email column is found by its header or,
 // without one, by the first cell that looks like an email.
-export function parseEmailCsv(raw: string): CsvResult {
+export function parseEmailCsv(raw: string, ui: Locale = "es"): CsvResult {
   const text = raw.replace(/^﻿/, "");
   const firstLine = text.split(/\r?\n/, 1)[0] ?? "";
   const rows = csvRows(text, count(firstLine, ";") > count(firstLine, ",") ? ";" : ",");
@@ -264,12 +264,12 @@ export function parseEmailCsv(raw: string): CsvResult {
   let start = column >= 0 ? 1 : 0;
   if (column < 0) {
     const first = rows.findIndex((row) => row.some((cell) => isEmail(clean(cell))));
-    if (first < 0) return { ok: false, error: "No encontramos una columna de correos" };
+    if (first < 0) return { ok: false, error: tr(ui, "No encontramos una columna de correos") };
     column = rows[first].findIndex((cell) => isEmail(clean(cell)));
     start = first;
   }
   const data = rows.slice(start);
-  if (data.length > MAX_IMPORT_ROWS) return { ok: false, error: `Divide el archivo en partes de ${MAX_IMPORT_ROWS}` };
+  if (data.length > MAX_IMPORT_ROWS) return { ok: false, error: tr(ui, "Divide el archivo en partes de {max}", { max: MAX_IMPORT_ROWS }) };
   const seen = new Set<string>();
   const emails: string[] = [];
   const invalid: string[] = [];
@@ -300,16 +300,16 @@ export function planImport(emails: string[], existing: Record<string, Subscriber
   return plan;
 }
 
-export function subscribersCsv(rows: SubscriberRow[]): string {
+export function subscribersCsv(rows: SubscriberRow[], ui: Locale = "es"): string {
   const cell = (value: string) => {
     // A leading = + - @ would run as a formula in Excel.
     const safe = /^[=+\-@\t\r]/.test(value) ? `'${value}` : value;
     return /[",;\n\r]/.test(safe) ? `"${safe.replace(/"/g, '""')}"` : safe;
   };
   const lines = rows.map((r) =>
-    [r.email, r.subscribedAt?.slice(0, 10) ?? "", SOURCE_LABELS[r.source], STATUS_LABELS[r.status]].map(cell).join(",")
+    [r.email, r.subscribedAt?.slice(0, 10) ?? "", tr(ui, SOURCE_LABELS[r.source]), tr(ui, STATUS_LABELS[r.status])].map(cell).join(",")
   );
-  return "﻿" + ["email,fecha,origen,estado", ...lines].join("\r\n") + "\r\n";
+  return "﻿" + [tr(ui, "email,fecha,origen,estado"), ...lines].join("\r\n") + "\r\n";
 }
 
 // Last page with rows (0-based); an empty list has one empty page.
