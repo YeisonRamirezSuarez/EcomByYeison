@@ -25,7 +25,10 @@ export const WEBHOOK_EVENT = "checkout.session.completed";
 // The client's variables, kept apart from the terminal's own. Windows editors may add a BOM.
 export function readEnvFile(path = ".env.local") {
   if (!existsSync(path)) throw new Error(`No existe el archivo ${path}`);
-  return parseEnv(readFileSync(path, "utf8").replace(/^\uFEFF/, ""));
+  const raw = readFileSync(path);
+  // Windows PowerShell 5.1 redirects text as UTF-16; read as UTF-8, every variable would look missing.
+  if (raw.includes(0)) throw new Error(`El archivo ${path} está en UTF-16; guárdalo como UTF-8`);
+  return parseEnv(raw.toString("utf8").replace(/^\uFEFF/, ""));
 }
 
 export function keyMode(value, kind) {
@@ -104,4 +107,11 @@ export const PRIVATE_TYPES = ["address", "order", "subscriber", "campaign", "smt
 export function publicPrivateDocs(count) {
   if (!count) return null;
   return `Sanity muestra sin token ${count} documento(s) que deberían ser privados (direcciones, pedidos, suscriptores, campañas o correo); revísalos en /studio`;
+}
+
+// Stripe's own messages can echo part of the key, so only the status and Stripe's error code are shown.
+export function stripeErrorMessage(error) {
+  if (!error?.statusCode) return "No se pudo conectar con Stripe";
+  if (error.statusCode === 401) return "Stripe no aceptó STRIPE_SECRET_KEY (401)";
+  return `Stripe respondió ${error.statusCode}${error.code ? ` (${error.code})` : ""}`;
 }

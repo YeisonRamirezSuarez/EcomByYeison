@@ -5,7 +5,7 @@ import { mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import Stripe from "stripe";
-import { checkEnv, findWebhook, pickSingleUser, PRIVATE_TYPES, publicPrivateDocs, readEnvFile, webhookUrl, WEBHOOK_EVENT } from "./deploy-lib.mjs";
+import { checkEnv, findWebhook, pickSingleUser, PRIVATE_TYPES, publicPrivateDocs, readEnvFile, stripeErrorMessage, webhookUrl, WEBHOOK_EVENT } from "./deploy-lib.mjs";
 
 const args = process.argv.slice(2);
 
@@ -93,6 +93,17 @@ if (args.includes("--self-test")) {
   assert.equal(findWebhook(endpoints, "https://nueva.com/api/webhook"), null);
   assert.equal(WEBHOOK_EVENT, "checkout.session.completed");
 
+  // Windows PowerShell 5.1 redirects text as UTF-16: say so instead of reporting every variable missing
+  const utf16File = join(dir, ".env.utf16");
+  writeFileSync(utf16File, Buffer.from("NEXT_PUBLIC_SANITY_DATASET=production", "utf16le"));
+  assert.throws(() => readEnvFile(utf16File), /^Error: El archivo .*\.env\.utf16 está en UTF-16; guárdalo como UTF-8$/);
+
+  // Stripe errors: only the status and Stripe's code, never its message (it can echo part of the key)
+  assert.equal(stripeErrorMessage({ statusCode: 401, message: "Invalid API Key provided: sk_test_****abcd" }), "Stripe no aceptó STRIPE_SECRET_KEY (401)");
+  assert.equal(stripeErrorMessage({ statusCode: 400, code: "url_invalid", message: "Invalid URL" }), "Stripe respondió 400 (url_invalid)");
+  assert.equal(stripeErrorMessage({ statusCode: 400 }), "Stripe respondió 400");
+  assert.equal(stripeErrorMessage({ type: "StripeConnectionError", message: "An error occurred with our connection to Stripe" }), "No se pudo conectar con Stripe");
+
   // Documents with personal data must not be readable without a token
   for (const type of ["address", "order", "subscriber", "campaign", "smtpSettings"]) assert.ok(PRIVATE_TYPES.includes(type), type);
   assert.equal(publicPrivateDocs(0), null);
@@ -143,7 +154,7 @@ async function checkOnline(env) {
       }
     }
   } catch (error) {
-    errors.push(`Stripe no aceptó STRIPE_SECRET_KEY (${error.statusCode ?? "sin conexión"})`);
+    errors.push(stripeErrorMessage(error));
   }
   return errors;
 }

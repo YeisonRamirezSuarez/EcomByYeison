@@ -1,7 +1,7 @@
 // Creates the Stripe webhook that turns paid checkouts into orders, in the key's mode (test or live).
 // Run: npm run stripe:webhook -- [archivo .env]
 import Stripe from "stripe";
-import { findWebhook, keyMode, readEnvFile, webhookUrl, WEBHOOK_EVENT } from "./deploy-lib.mjs";
+import { findWebhook, keyMode, readEnvFile, stripeErrorMessage, webhookUrl, WEBHOOK_EVENT } from "./deploy-lib.mjs";
 
 try {
   const env = readEnvFile(process.argv[2]);
@@ -23,7 +23,7 @@ try {
     console.log(endpoint.secret);
   }
 } catch (error) {
-  // Stripe's own messages can echo part of the key, so only its status is shown.
-  console.error(error.statusCode ? `Stripe respondió ${error.statusCode}: revisa STRIPE_SECRET_KEY` : error.message);
+  // Stripe errors carry a `type` like "StripeAuthenticationError"; ours are plain messages.
+  console.error(error.type?.startsWith("Stripe") ? stripeErrorMessage(error) : error.message);
   process.exit(1);
 }

@@ -52,7 +52,7 @@ Las direcciones de hoy no cambian; dejan de ser archivos fijos y pasan a ser rut
 
 - Fondo: `bg` del tema (`THEMES[theme].bg`), el mismo `background_color` del manifiesto. El caso "inicial" usa `primary` de fondo.
 - Tamaño de la marca: cerca del 80 % del lado en los íconos normales; cerca del 60 % en el maskable (zona segura de Android); centrada y pequeña en las pantallas de inicio.
-- El logo se pide al CDN de Sanity ya convertido a PNG del tamaño justo (`fm=png`, `w`), así da igual si es JPG o WebP. La documentación de Sanity no promete convertir SVG: si Sanity devuelve el SVG sin convertir, se dibuja tal cual; si no se puede dibujar, se usa la inicial.
+- El logo se pide al CDN de Sanity ya convertido a PNG del tamaño justo (`fm=png`, `w`), así da igual si es JPG o WebP. La documentación de Sanity no promete convertir SVG: si Sanity devuelve el SVG sin convertir, se usa la inicial (Satori puede dibujar algunos SVG como un cuadro vacío sin fallar). Si ni la inicial se puede dibujar, la ruta responde 503 sin caché.
 - La regla de elección (qué marca usar y qué tamaños de splash son válidos) vive en una función pura, separada del dibujo, para poder probarla.
 
 **Caché:** las rutas son dinámicas (`getSiteSettings()` lee una cabecera). Los ajustes salen de la caché de datos con la etiqueta `SITE_SETTINGS_TAG`, que `updateTag` ya invalida al publicar; el logo se descarga con `cache: "force-cache"` (cada logo nuevo tiene una URL nueva en Sanity). La respuesta lleva `Cache-Control: public, max-age=3600, s-maxage=3600`, así que un logo nuevo aparece en los íconos en máximo una hora.

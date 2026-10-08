@@ -8,18 +8,16 @@ import { iconMark, initialOf, pngUrl, splashMark } from "@/lib/appIcons";
 
 // Browsers and the CDN keep an icon up to an hour, so a new logo shows within that time.
 const HEADERS = { "Content-Type": "image/png", "Cache-Control": "public, max-age=3600, s-maxage=3600" };
-// Sanity may return an SVG unconverted; Satori can draw it, and a failure falls back below.
-const DRAWABLE = ["image/png", "image/svg+xml"];
 
 const centered = { width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" } as const;
 
-// The mark as a data URL Satori can draw, or null when it can't be fetched.
+// The mark as a PNG data URL, or null when it can't be fetched. Sanity may return an SVG unconverted;
+// Satori can draw some as an empty square without failing, so those fall back to the initial too.
 async function fetchMark(url: string, width: number): Promise<string | null> {
   try {
     const res = await fetch(pngUrl(url, width), { cache: "force-cache" });
-    const type = res.headers.get("content-type")?.split(";")[0] ?? "";
-    if (!res.ok || !DRAWABLE.includes(type)) return null;
-    return `data:${type};base64,${Buffer.from(await res.arrayBuffer()).toString("base64")}`;
+    if (!res.ok || res.headers.get("content-type")?.split(";")[0] !== "image/png") return null;
+    return `data:image/png;base64,${Buffer.from(await res.arrayBuffer()).toString("base64")}`;
   } catch {
     return null;
   }
@@ -43,6 +41,8 @@ async function draw(mark: string | null, box: number, width: number, height: num
     </div>
   );
   const body = (withMark && (await render(withMark, width, height))) || (await render(fallback, width, height));
+  // Even the fallback failed (e.g. an emoji initial while its CDN is down): never let a blank icon be cached.
+  if (!body) return new Response(null, { status: 503, headers: { "Cache-Control": "no-store" } });
   return new Response(body, { headers: HEADERS });
 }
 
