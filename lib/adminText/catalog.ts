@@ -33,7 +33,7 @@ export const catalog = {
   "Buscar por nombre": "Search by name",
   "No hay productos aquí.": "No products here.",
   "Sin nombre": "No name",
-  "{n} u.": "{n} pcs",
+  "{n} u.": "{n} units",
   "Anterior": "Previous",
   "Siguiente": "Next",
   "Página {page} de {pages}": "Page {page} of {pages}",

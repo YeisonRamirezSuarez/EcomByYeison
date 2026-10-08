@@ -114,7 +114,7 @@ const SubscriberTools = () => {
       const url = URL.createObjectURL(new Blob([result.data], { type: "text/csv;charset=utf-8" }));
       const link = document.createElement("a");
       link.href = url;
-      link.download = `suscriptores-${new Date().toISOString().slice(0, 10)}.csv`;
+      link.download = tr(ui, "suscriptores-{date}.csv", { date: new Date().toISOString().slice(0, 10) });
       link.click();
       URL.revokeObjectURL(url);
     });

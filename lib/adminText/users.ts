@@ -9,7 +9,7 @@ export const users = {
   "Buscar por correo o nombre": "Search by email or name",
   "Buscar usuarios": "Search users",
   "Buscar": "Search",
-  "Rol de {email}": "Role of {email}",
+  "Rol de {email}": "Role for {email}",
   "Cargando usuarios…": "Loading users…",
   "No se encontraron usuarios.": "No users found.",
 } as const;

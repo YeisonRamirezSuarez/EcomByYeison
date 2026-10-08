@@ -54,4 +54,5 @@ export const settings = {
   "El servidor pidió esperar (puede ser un límite de envío). Intenta más tarde.": "The server asked to wait (it may be a sending limit). Try again later.",
   "El servidor rechazó este correo.": "The server rejected this email.",
   "No se pudo enviar el correo.": "The email could not be sent.",
+  "Nombre de usuario": "Username",
 } as const;

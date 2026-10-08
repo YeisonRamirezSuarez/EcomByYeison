@@ -1406,4 +1406,15 @@ assert.equal(ck.checkoutLines([{ id: "p1", quantity: 1 }], [{ ...SERVER[0], pric
   assert.deepEqual(nl.campaignSendProblems(content, ready, "en"), ["Add the store address in Appearance → Store data → Contact."]);
 }
 
+// Admin wording follow-ups: CSV file name, SMTP username, stock units, role label
+{
+  const at = await import("../lib/adminText/index.ts");
+  assert.equal(at.tr("es", "suscriptores-{date}.csv", { date: "2026-10-08" }), "suscriptores-2026-10-08.csv");
+  assert.equal(at.tr("en", "suscriptores-{date}.csv", { date: "2026-10-08" }), "subscribers-2026-10-08.csv");
+  assert.equal(at.tr("en", "Nombre de usuario"), "Username");
+  assert.equal(at.tr("en", "Usuario"), "User");
+  assert.equal(at.tr("en", "{n} u.", { n: 3 }), "3 units");
+  assert.equal(at.tr("en", "Rol de {email}", { email: "ana@example.com" }), "Role for ana@example.com");
+}
+
 console.log("check-permissions: ok");

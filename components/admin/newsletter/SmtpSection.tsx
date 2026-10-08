@@ -130,7 +130,7 @@ const SmtpSection = ({ initial, keyReady, unreadable, envConfigured }: { initial
             </select>
           </Field>
         </div>
-        <Field label={tr(ui, "Usuario")} error={errors.user}>
+        <Field label={tr(ui, "Nombre de usuario")} error={errors.user}>
           <input value={form.user} onChange={set("user")} autoComplete="off" className={INPUT} />
         </Field>
         <Field label={tr(ui, "Contraseña")} error={errors.password}>

@@ -99,4 +99,5 @@ export const newsletter = {
   "Campaña enviada.": "Campaign sent.",
   "Continuar": "Continue",
   "Ver fallidos ({n})": "View failed ({n})",
+  "suscriptores-{date}.csv": "subscribers-{date}.csv",
 } as const;
