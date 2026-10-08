@@ -5,7 +5,7 @@ import { ActionError } from "@/lib/actionResult";
 import { localizeEmailBrand, localizeEmailProducts, resolveLocale, type StoreLanguages } from "@/lib/localize";
 import { renderCampaignEmail, type EmailBrand, type EmailProduct } from "@/lib/campaignEmail";
 import { addUsage, getMailer, remainingSendsToday, type Mailer } from "@/lib/mailer";
-import { batchSize, errorDetail, isEmail, isRecipientError, MAX_FAILURES, smtpErrorMessage, type CampaignProgress, type PauseReason, type SendReadiness, type SmtpErrorInfo } from "@/lib/newsletter";
+import { batchSize, errorDetail, failuresPatch, isEmail, isRecipientError, smtpErrorMessage, type CampaignProgress, type PauseReason, type SendReadiness, type SmtpErrorInfo } from "@/lib/newsletter";
 import { siteUrl, unsubscribeLinks } from "@/lib/unsubscribe";
 import { backendClient } from "@/sanity/lib/backendClient";
 import { countActiveSubscribers, getCampaign, getNextBatch, getProductsByIds, type CampaignDoc, type EmailProductDoc } from "@/sanity/queries/newsletter";
@@ -131,7 +131,7 @@ export async function runBatch(campaign: CampaignDoc): Promise<CampaignProgress>
   }
 
   const batchEnd = batch[batch.length - 1]._id;
-  const failures = [...campaign.failures];
+  const failures: CampaignDoc["failures"] = []; // this batch only (see failuresPatch)
   let sent = 0;
   let failed = 0;
   let lastDone = campaign.cursor;
@@ -174,20 +174,22 @@ export async function runBatch(campaign: CampaignDoc): Promise<CampaignProgress>
 // The one place a batch's results are written. If some of the batch was not sent, the cursor
 // goes back to the last one done, but only if no other tab reserved after this batch.
 async function finishBatch(campaign: CampaignDoc, batchEnd: string, lastDone: string, sent: number, failed: number, failures: CampaignDoc["failures"], extra: Record<string, unknown> = {}): Promise<CampaignProgress> {
-  const fields = { failures: failures.slice(-MAX_FAILURES), ...extra };
   let gaveBack = false;
   if (lastDone !== batchEnd) {
     const now = await getCampaign(campaign._id);
     if (now?.cursor === batchEnd) {
       try {
-        await backendClient.patch(campaign._id).ifRevisionId(now._rev).inc({ sent, failed }).set({ ...fields, cursor: lastDone }).commit();
+        await backendClient.patch(campaign._id, failuresPatch(now.failures.length, failures)).ifRevisionId(now._rev).inc({ sent, failed }).set({ ...extra, cursor: lastDone }).commit();
         gaveBack = true;
       } catch (conflict) {
         if (!isConflict(conflict)) throw conflict;
       }
     }
   }
-  if (!gaveBack) await backendClient.patch(campaign._id).inc({ sent, failed }).set(fields).commit();
+  if (!gaveBack) {
+    const patch = backendClient.patch(campaign._id, failuresPatch(campaign.failures.length, failures)).inc({ sent, failed });
+    await (Object.keys(extra).length > 0 ? patch.set(extra) : patch).commit(); // no empty "set" sent
+  }
   await addUsage(sent).catch(countFailed);
   return latest(campaign);
 }

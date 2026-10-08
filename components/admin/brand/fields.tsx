@@ -160,7 +160,12 @@ export function useAutosave<T, V = T>(
 
   useEffect(() => {
     const serialized = JSON.stringify(value);
-    if (serialized === lastSent.current) return;
+    if (serialized === lastSent.current) {
+      // Back to the saved (valid) value: drop errors left by an invalid edit in between.
+      // In a timeout, not during the effect, so React doesn't render twice.
+      const id = setTimeout(() => setErrors((current) => (Object.keys(current).length > 0 ? {} : current)));
+      return () => clearTimeout(id);
+    }
     return draftSaves.schedule(async () => {
       const { validate, action, events } = latest.current;
       const checked = validate(value);

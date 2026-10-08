@@ -1016,6 +1016,28 @@ assert.equal(ck.checkoutLines([{ id: "p1", quantity: 1 }], [{ ...SERVER[0], pric
   assert.deepEqual(nl.readSubscriberFilters({}), { search: "", status: "all", page: 0 });
   assert.deepEqual(nl.readSubscriberFilters({ q: " ZZ ", estado: "unsubscribed", pagina: "3" }), { search: "zz", status: "unsubscribed", page: 2 });
   assert.deepEqual(nl.readSubscriberFilters({ estado: "hacker", pagina: "-4" }), { search: "", status: "all", page: 0 });
+  // Absurd page numbers stay finite; a page past the end goes to the last page with rows
+  for (const pagina of ["Infinity", "1e308"]) assert.ok(Number.isFinite(nl.readSubscriberFilters({ pagina }).page * nl.PAGE_SIZE), pagina);
+  assert.equal(nl.lastPage(0), 0);
+  assert.equal(nl.lastPage(50), 0);
+  assert.equal(nl.lastPage(51), 1);
+
+  // Batch failures are appended, never rewritten (two tabs), keeping about the last MAX_FAILURES
+  {
+    const { Mutation } = await import("@sanity/mutator");
+    const apply = (doc, patch) => new Mutation({ mutations: [{ patch: { id: "c", ...patch } }] }).apply({ _id: "c", _type: "campaign", ...doc }).failures;
+    const fail = (n) => Array.from({ length: n }, (_, i) => ({ email: `f${i}@x.co`, error: "e" }));
+    const added = [{ email: "a@x.co", error: "e" }, { email: "b@x.co", error: "e" }, { email: "c@x.co", error: "e" }];
+    const full = apply({ failures: fail(49) }, nl.failuresPatch(49, added));
+    assert.equal(full.length, nl.MAX_FAILURES);
+    assert.deepEqual(full.slice(-3), added);
+    assert.equal(full[0].email, "f2@x.co");
+    // An entry another tab wrote after this batch read the list stays
+    const raced = apply({ failures: [...fail(2), { email: "tab2@x.co", error: "e" }] }, nl.failuresPatch(2, added));
+    assert.deepEqual(raced.map((f) => f.email), ["f0@x.co", "f1@x.co", "tab2@x.co", "a@x.co", "b@x.co", "c@x.co"]);
+    assert.deepEqual(apply({}, nl.failuresPatch(0, added)), added);
+    assert.deepEqual(apply({ failures: fail(1) }, nl.failuresPatch(1, [])), fail(1));
+  }
 
   // Daily limit and batches
   assert.match(nl.utcDay(new Date("2026-10-07T23:59:00Z")), /^2026-10-07$/);

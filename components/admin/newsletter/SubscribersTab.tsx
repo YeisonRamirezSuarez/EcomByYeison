@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { PAGE_SIZE, SOURCE_LABELS, STATUS_LABELS, type SubscriberFilters } from "@/lib/newsletter";
+import { redirect } from "next/navigation";
+import { lastPage, SOURCE_LABELS, STATUS_LABELS, type SubscriberFilters } from "@/lib/newsletter";
 import { getSubscriberCounts, getSubscriberPage } from "@/sanity/queries/newsletter";
 import DeleteSubscriberButton from "./DeleteSubscriberButton";
 import SubscriberTools from "./SubscriberTools";
@@ -12,7 +13,7 @@ const FILTERS = [
 
 export default async function SubscribersTab({ filters }: { filters: SubscriberFilters }) {
   const [counts, { rows, total }] = await Promise.all([getSubscriberCounts(), getSubscriberPage(filters)]);
-  const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const pages = lastPage(total) + 1;
   const href = (patch: { estado?: string; pagina?: number }) => {
     const params = new URLSearchParams({ tab: "suscriptores" });
     const estado = patch.estado ?? filters.status;
@@ -22,6 +23,8 @@ export default async function SubscribersTab({ filters }: { filters: SubscriberF
     if (pagina > 1) params.set("pagina", String(pagina));
     return `/admin/boletin?${params}`;
   };
+  // Past the end (an old link, or the last row of the last page deleted): show the last page.
+  if (filters.page >= pages) redirect(href({ pagina: pages }));
 
   return (
     <div className="flex flex-col gap-4">

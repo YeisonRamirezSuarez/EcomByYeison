@@ -83,6 +83,19 @@ export type CampaignProgress = {
   pauseMessage: string;
 };
 export type CampaignFailure = { email: string; error: string };
+
+// Sanity patch that adds a batch's failures at the end of the list instead of rewriting it, so
+// two tabs finishing batches at once keep each other's entries. Sanity applies unset before
+// insert: the oldest go first, keeping the last MAX_FAILURES.
+// ponytail: `known` is the length last read, so a race can leave a few more than MAX_FAILURES.
+export function failuresPatch(known: number, added: CampaignFailure[]) {
+  const excess = known + added.length - MAX_FAILURES;
+  return {
+    setIfMissing: { failures: [] },
+    ...(excess > 0 && { unset: [`failures[0:${excess}]`] }),
+    ...(added.length > 0 && { insert: { after: "failures[-1]", items: added } }),
+  };
+}
 export type SendReadiness = { smtpReady: boolean; smtpUnreadable?: boolean; keyReady: boolean; baseUrl: string; address: string; activeCount: number };
 
 type Errors = Record<string, string>;
@@ -297,10 +310,14 @@ export function subscribersCsv(rows: SubscriberRow[]): string {
   return "﻿" + ["email,fecha,origen,estado", ...lines].join("\r\n") + "\r\n";
 }
 
+// Last page with rows (0-based); an empty list has one empty page.
+export const lastPage = (total: number) => Math.max(0, Math.ceil(total / PAGE_SIZE) - 1);
+
 export function readSubscriberFilters(params: Record<string, string | string[] | undefined>): SubscriberFilters {
   const one = (value: string | string[] | undefined) => (Array.isArray(value) ? value[0] : value) ?? "";
   const status = one(params.estado);
-  const page = Math.floor(Number(one(params.pagina)) || 1);
+  // Capped so an absurd ?pagina= (Infinity, 1e308) stays a finite query; SubscribersTab sends it to the last page.
+  const page = Math.min(Math.floor(Number(one(params.pagina)) || 1), 1_000_000);
   return {
     search: one(params.q).trim().toLowerCase().slice(0, 100),
     status: status === "active" || status === "unsubscribed" ? status : "all",
