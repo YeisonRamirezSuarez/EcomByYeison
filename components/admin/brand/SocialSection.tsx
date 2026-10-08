@@ -2,17 +2,20 @@
 
 import { useState } from "react";
 import { saveAppearanceDraft } from "@/actions/appearance";
+import { useAdminLocale } from "@/components/admin/AdminLocaleProvider";
+import { tr } from "@/lib/adminText";
 import type { SocialSettings } from "@/lib/brand";
 import { SOCIAL_KEYS, SOCIAL_LABELS, validateSocial } from "@/lib/validation";
 import { TextField, useAutosave, SavingNote, type AutosaveEvents } from "./fields";
 
 const SocialSection = ({ initial, ...events }: { initial: SocialSettings } & AutosaveEvents) => {
+  const ui = useAdminLocale();
   const [value, setValue] = useState(initial);
-  const { errors, pending } = useAutosave(value, validateSocial, (v) => saveAppearanceDraft("social", v), events);
+  const { errors, pending } = useAutosave(value, (input) => validateSocial(input, ui), (v) => saveAppearanceDraft("social", v), events);
 
   return (
     <div className="flex flex-col gap-3">
-      <p className="text-xs text-gray-500">Pega el enlace de cada red que uses. Las vacías no se muestran.</p>
+      <p className="text-xs text-gray-500">{tr(ui, "Pega el enlace de cada red que uses. Las vacías no se muestran.")}</p>
       {SOCIAL_KEYS.map((key) => (
         <TextField
           key={key}

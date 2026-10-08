@@ -24,7 +24,7 @@ const sanityImage = (image: ImageValue) => ({
 export function planSection(section: string, data: unknown, primary: Locale = "es", ui: Locale = "es"): Planned {
   switch (section) {
     case "identity": {
-      const r = validateIdentity(data);
+      const r = validateIdentity(data, ui);
       if (!r.ok) return r;
       const { logoImage, favicon, ...texts } = r.value;
       const write: Write = { set: { ...texts }, unset: [], images: [] };
@@ -42,7 +42,7 @@ export function planSection(section: string, data: unknown, primary: Locale = "e
       return { ok: true, write };
     }
     case "banner": {
-      const r = validateBanner(data, primary);
+      const r = validateBanner(data, primary, ui);
       if (!r.ok) return r;
       const { image, stats, ...texts } = r.value;
       const banner = {
@@ -53,12 +53,12 @@ export function planSection(section: string, data: unknown, primary: Locale = "e
       return { ok: true, write: { set: { banner }, unset: [], images: image ? [image] : [] } };
     }
     case "contact": {
-      const r = validateContact(data);
+      const r = validateContact(data, ui);
       if (!r.ok) return r;
       return { ok: true, write: { set: { contact: r.value }, unset: [], images: [] } };
     }
     case "social": {
-      const r = validateSocial(data);
+      const r = validateSocial(data, ui);
       if (!r.ok) return r;
       return { ok: true, write: { set: { social: r.value }, unset: [], images: [] } };
     }

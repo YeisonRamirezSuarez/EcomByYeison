@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { savePage } from "@/actions/brand";
+import { useAdminLocale } from "@/components/admin/AdminLocaleProvider";
+import { tr } from "@/lib/adminText";
 import type { PageContent } from "@/lib/brand";
 import type { Locale } from "@/lib/i18n";
 import { lacksLanguage, localeKey, twinError, twinPatch, type StoreLanguages } from "@/lib/localize";
@@ -19,6 +21,7 @@ const PAGE_PATHS: Record<PageKey, string> = {
 };
 
 const PagesTab = ({ initialPages, languages }: { initialPages: Record<PageKey, PageContent>; languages: StoreLanguages }) => {
+  const ui = useAdminLocale();
   const { primary } = languages;
   const other: Locale = primary === "es" ? "en" : "es";
   const [edit, setEdit] = useState<Locale>(primary);
@@ -29,7 +32,7 @@ const PagesTab = ({ initialPages, languages }: { initialPages: Record<PageKey, P
   const [draft, setDraft] = useState<PageContent>(initialPages.about);
   const [askDiscard, setAskDiscard] = useState<PageKey | null>(null);
   const { errors, pending, save, clearErrors } = useSave(
-    (input) => validatePage(input, primary),
+    (input) => validatePage(input, primary, ui),
     (v) => savePage(key, v),
     (v) => {
       setSaved((prev) => ({ ...prev, [key]: v }));
@@ -53,7 +56,7 @@ const PagesTab = ({ initialPages, languages }: { initialPages: Record<PageKey, P
   return (
     <div className="grid gap-6 md:grid-cols-[220px_1fr] items-start">
       {/* Locked while saving: a late save must not land on another page's draft. */}
-      <nav className="bg-white rounded-2xl shadow-sm p-2 flex md:flex-col gap-1 overflow-x-auto" aria-label="Páginas">
+      <nav className="bg-white rounded-2xl shadow-sm p-2 flex md:flex-col gap-1 overflow-x-auto" aria-label={tr(ui, "Páginas")}>
         {PAGE_KEYS.map((k) => (
           <button
             key={k}
@@ -65,7 +68,7 @@ const PagesTab = ({ initialPages, languages }: { initialPages: Record<PageKey, P
               k === key ? "bg-shop_dark_green text-white font-semibold" : "text-gray-700 hover:bg-gray-50"
             }`}
           >
-            {PAGE_LABELS[k]}
+            {tr(ui, PAGE_LABELS[k])}
           </button>
         ))}
       </nav>
@@ -76,11 +79,11 @@ const PagesTab = ({ initialPages, languages }: { initialPages: Record<PageKey, P
           rel="noopener noreferrer"
           className="self-end text-sm font-medium text-shop_orange hover:underline"
         >
-          Ver página
+          {tr(ui, "Ver página")}
         </a>
       {askDiscard && (
         <div role="alert" className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
-          Tienes cambios sin guardar. ¿Descartarlos?
+          {tr(ui, "Tienes cambios sin guardar. ¿Descartarlos?")}
           <div className="flex gap-2 mt-2">
             <button
               type="button"
@@ -88,14 +91,14 @@ const PagesTab = ({ initialPages, languages }: { initialPages: Record<PageKey, P
               disabled={pending}
               className="px-3 py-1.5 rounded-lg bg-amber-600 text-white text-xs font-semibold disabled:opacity-60"
             >
-              Descartar
+              {tr(ui, "Descartar")}
             </button>
             <button
               type="button"
               onClick={() => setAskDiscard(null)}
               className="px-3 py-1.5 rounded-lg border border-amber-300 text-xs font-semibold"
             >
-              Seguir editando
+              {tr(ui, "Seguir editando")}
             </button>
           </div>
         </div>
@@ -103,16 +106,16 @@ const PagesTab = ({ initialPages, languages }: { initialPages: Record<PageKey, P
       {languages.languages.length > 1 && (
         <EditorLocale value={edit} onChange={setEdit} missing={lacksLanguage(validatePage(draft, other), other) ? [other] : []} />
       )}
-      <SectionCard title={PAGE_LABELS[key]} pending={pending} onSave={() => save(draft)}>
+      <SectionCard title={tr(ui, PAGE_LABELS[key])} pending={pending} onSave={() => save(draft)}>
         <TextField
-          label="Introducción"
+          label={tr(ui, "Introducción")}
           multiline
           max={2000}
           value={draft[introKey]}
           onChange={(v) => setDraft((d) => ({ ...d, ...twinPatch("intro", v, edit, lang.single) }))}
           error={twinError(errors, "", "intro", edit, primary)}
         />
-        <p className="text-xs text-gray-500 -mt-2">Separa los párrafos con una línea en blanco.</p>
+        <p className="text-xs text-gray-500 -mt-2">{tr(ui, "Separa los párrafos con una línea en blanco.")}</p>
         <BlockEditor blocks={draft.blocks} onChange={(blocks) => setDraft((d) => ({ ...d, blocks }))} errors={errors} lang={lang} />
       </SectionCard>
       </div>

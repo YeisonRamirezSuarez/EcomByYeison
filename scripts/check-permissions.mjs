@@ -1366,4 +1366,14 @@ assert.equal(ck.checkoutLines([{ id: "p1", quantity: 1 }], [{ ...SERVER[0], pric
   assert.equal(s.validateStyles({ buttons: "x" }, "en").errors.buttons, "Invalid option");
 }
 
+// Store data and page validators in the panel language (lib/validation.ts)
+{
+  const v = await import("../lib/validation.ts");
+  assert.deepEqual(v.validateIdentity({}).errors, { logoType: "Elige texto o imagen", storeName: "Campo obligatorio" });
+  assert.deepEqual(v.validateIdentity({}, "en").errors, { logoType: "Choose text or image", storeName: "Required" });
+  assert.equal(v.validateBanner({ title: "x".repeat(400) }, "es", "en").errors.title, "Up to 60 characters");
+  assert.equal(v.validateContact({ email: "nope" }, "en").errors.email, "Invalid email");
+  assert.equal(v.validateSocial({ facebook: "x" }, "en").errors.facebook, "Must be an https:// link");
+}
+
 console.log("check-permissions: ok");

@@ -3,6 +3,8 @@
 import { updateTag } from "next/cache";
 import { requireAnyPermission, requirePermission } from "@/lib/roles";
 import { run, type ActionResult } from "@/lib/actionResult";
+import { tr } from "@/lib/adminText";
+import { getAdminLocale } from "@/lib/adminLocale";
 import type { ImageValue } from "@/lib/brand";
 import {
   IMAGE_ERROR,
@@ -22,12 +24,13 @@ export async function savePage(pageKey: string, data: unknown): Promise<ActionRe
   // Permission first: someone without it never gets field-by-field answers.
   const allowed = await run(() => requirePermission("configurar"));
   if (!allowed.ok) return allowed;
+  const ui = await getAdminLocale();
   if (!(PAGE_KEYS as readonly string[]).includes(pageKey)) {
-    return { ok: false, error: INVALID_FORM };
+    return { ok: false, error: tr(ui, INVALID_FORM) };
   }
   const { primary } = await getSiteSettings();
-  const r = validatePage(data, primary);
-  if (!r.ok) return { ok: false, error: INVALID_FORM, errors: r.errors };
+  const r = validatePage(data, primary, ui);
+  if (!r.ok) return { ok: false, error: tr(ui, INVALID_FORM), errors: r.errors };
   const page = {
     ...r.value,
     blocks: r.value.blocks.map((block) => ({ _type: "contentBlock", ...block })),
@@ -48,9 +51,10 @@ export async function uploadImage(formData: FormData): Promise<ActionResult<Imag
   // Permission first (used by Apariencia: configurar, and the catalog: productos).
   const allowed = await run(() => requireAnyPermission("configurar", "productos"));
   if (!allowed.ok) return allowed;
+  const ui = await getAdminLocale();
   const file = formData.get("file");
-  if (!(file instanceof File) || validateImageFile(file)) {
-    return { ok: false, error: IMAGE_ERROR };
+  if (!(file instanceof File) || validateImageFile(file, undefined, ui)) {
+    return { ok: false, error: tr(ui, IMAGE_ERROR) };
   }
   return run(async () => {
     const asset = await backendClient.assets.upload(

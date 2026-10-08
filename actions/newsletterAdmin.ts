@@ -2,7 +2,8 @@
 
 import { currentUser } from "@clerk/nextjs/server";
 import { ActionError, run, type ActionResult } from "@/lib/actionResult";
-import type { AdminText } from "@/lib/adminText";
+import { tr, type AdminText } from "@/lib/adminText";
+import { getAdminLocale } from "@/lib/adminLocale";
 import { renderCampaignEmail } from "@/lib/campaignEmail";
 import { getEmailBrand, isConflict, loadEmailProducts, OTHER_TAB, runBatch, SEND_FAILED, sendReadiness, toPickerProduct, type PickerProduct } from "@/lib/campaignSend";
 import { localizeEmailBrand, localizeEmailProducts, resolveLocale } from "@/lib/localize";
@@ -34,7 +35,7 @@ export async function saveSmtpSettings(input: unknown): Promise<ActionResult<{ h
   const stored = await run(getSmtpDoc);
   if (!stored.ok) return stored;
   const checked = validateSmtpSettings(input, { hasStoredPassword: Boolean(stored.data?.password) });
-  if (!checked.ok) return { ok: false, error: INVALID_FORM, errors: checked.errors };
+  if (!checked.ok) return { ok: false, error: tr(await getAdminLocale(), INVALID_FORM), errors: checked.errors };
   const { password, ...settings } = checked.value;
   const secret = process.env.EMAIL_ENCRYPTION_KEY;
   if (password && !secret) return { ok: false, error: KEY_MISSING, errors: { password: KEY_MISSING } };
@@ -115,7 +116,7 @@ export async function addSubscriber(input: unknown): Promise<ActionResult<"creat
   const errors: Record<string, string> = {};
   if (!isEmail(email)) errors.email = "Ingresa un correo válido";
   if (v.consent !== true) errors.consent = PERMISSION_ONE;
-  if (Object.keys(errors).length > 0) return { ok: false, error: INVALID_FORM, errors };
+  if (Object.keys(errors).length > 0) return { ok: false, error: tr(await getAdminLocale(), INVALID_FORM), errors };
   return run(async () => {
     const status = await getSubscriberStatus(subscriberDocId(email));
     // Never re-activates someone who unsubscribed: only they can, from the store.
@@ -242,7 +243,7 @@ export async function saveCampaign(id: string, input: unknown): Promise<ActionRe
   const allowed = await run(() => requirePermission("configurar"));
   if (!allowed.ok) return allowed;
   const checked = validateCampaign(input);
-  if (!checked.ok) return { ok: false, error: INVALID_FORM, errors: checked.errors };
+  if (!checked.ok) return { ok: false, error: tr(await getAdminLocale(), INVALID_FORM), errors: checked.errors };
   return run(async () => {
     const campaign = await findCampaign(id);
     if (campaign.progress.status !== "draft") throw new ActionError("Esta campaña ya no se puede editar; duplícala para cambiarla");

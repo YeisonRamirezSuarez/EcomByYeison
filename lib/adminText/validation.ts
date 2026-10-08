@@ -11,5 +11,9 @@ export const validation = {
   "Debe ser un enlace https://": "Must be an https:// link",
   "Elige texto o imagen": "Choose text or image",
   "Opción inválida": "Invalid option",
+  "Sube una imagen para el logo": "Upload an image for the logo",
+  "Máximo {max} cifras": "Up to {max} figures",
+  "Máximo {max} bloques": "Up to {max} blocks",
+  "Ícono inválido": "Invalid icon",
   "Elige un número entre {min} y {max}": "Choose a number between {min} and {max}",
 } as const;

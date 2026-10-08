@@ -3,17 +3,21 @@
 import { useState } from "react";
 import { X } from "lucide-react";
 import { saveAppearanceDraft } from "@/actions/appearance";
+import { useAdminLocale } from "@/components/admin/AdminLocaleProvider";
+import { tr } from "@/lib/adminText";
 import type { BannerSettings, LocalizedCta } from "@/lib/brand";
 import { localeKey, twinError, twinPatch } from "@/lib/localize";
+import type { AdminText } from "@/lib/adminText";
 import { MAX_STATS, validateBanner } from "@/lib/validation";
 import { TextField, twin, type TwinLang, useAutosave, SavingNote, type AutosaveEvents } from "./fields";
 import ImageField from "./ImageField";
 
-const CTA_LABELS = { primaryCta: "Botón principal", secondaryCta: "Botón secundario" } as const;
+const CTA_LABELS = { primaryCta: "Botón principal", secondaryCta: "Botón secundario" } as const satisfies Record<string, AdminText>;
 
 const BannerSection = ({ initial, lang, ...events }: { initial: BannerSettings; lang: TwinLang } & AutosaveEvents) => {
+  const ui = useAdminLocale();
   const [value, setValue] = useState(initial);
-  const { errors, pending } = useAutosave(value, (input) => validateBanner(input, lang.primary), (v) => saveAppearanceDraft("banner", v), events);
+  const { errors, pending } = useAutosave(value, (input) => validateBanner(input, lang.primary, ui), (v) => saveAppearanceDraft("banner", v), events);
   const set = <K extends keyof BannerSettings>(key: K, v: BannerSettings[K]) =>
     setValue((prev) => ({ ...prev, [key]: v }));
   const setText = (patch: Record<string, string>) => setValue((prev) => ({ ...prev, ...patch }));
@@ -29,28 +33,28 @@ const BannerSection = ({ initial, lang, ...events }: { initial: BannerSettings; 
 
   return (
     <div className="flex flex-col gap-3">
-      <TextField label="Etiqueta" {...twin(value, "badge", lang, setText, errors)} max={40} />
-      <TextField label="Título" {...twin(value, "title", lang, setText, errors)} max={60} />
-      <TextField label="Parte resaltada del título" {...twin(value, "highlight", lang, setText, errors)} max={30} />
-      <TextField label="Subtítulo" {...twin(value, "subtitle", lang, setText, errors)} max={80} />
-      <TextField label="Descripción" multiline {...twin(value, "description", lang, setText, errors)} max={200} />
+      <TextField label={tr(ui, "Etiqueta")} {...twin(value, "badge", lang, setText, errors)} max={40} />
+      <TextField label={tr(ui, "Título")} {...twin(value, "title", lang, setText, errors)} max={60} />
+      <TextField label={tr(ui, "Parte resaltada del título")} {...twin(value, "highlight", lang, setText, errors)} max={30} />
+      <TextField label={tr(ui, "Subtítulo")} {...twin(value, "subtitle", lang, setText, errors)} max={80} />
+      <TextField label={tr(ui, "Descripción")} multiline {...twin(value, "description", lang, setText, errors)} max={200} />
       {(Object.keys(CTA_LABELS) as (keyof typeof CTA_LABELS)[]).map((key) => (
         <div key={key} className="grid grid-cols-2 gap-2">
-          <TextField label={`${CTA_LABELS[key]}: texto`} value={value[key][labelKey]} onChange={(v) => setCta(key, twinPatch("label", v, edit, single))} error={twinError(errors, `${key}.`, "label", edit, primary)} max={30} />
-          <TextField label="Enlace" placeholder="/shop" value={value[key].href} onChange={(v) => setCta(key, { href: v })} error={errors[`${key}.href`]} max={300} />
+          <TextField label={tr(ui, "{button}: texto", { button: tr(ui, CTA_LABELS[key]) })} value={value[key][labelKey]} onChange={(v) => setCta(key, twinPatch("label", v, edit, single))} error={twinError(errors, `${key}.`, "label", edit, primary)} max={30} />
+          <TextField label={tr(ui, "Enlace")} placeholder="/shop" value={value[key].href} onChange={(v) => setCta(key, { href: v })} error={errors[`${key}.href`]} max={300} />
         </div>
       ))}
-      <ImageField label="Imagen" value={value.image} onChange={(v) => set("image", v)} error={errors.image} />
+      <ImageField label={tr(ui, "Imagen")} value={value.image} onChange={(v) => set("image", v)} error={errors.image} />
       <div>
-        <span className="text-xs font-semibold text-gray-700">Cifras (máximo {MAX_STATS})</span>
+        <span className="text-xs font-semibold text-gray-700">{tr(ui, "Cifras (máximo {max})", { max: MAX_STATS })}</span>
         {errors.stats && <span className="block text-xs text-red-600 mt-1">{errors.stats}</span>}
         {value.stats.map((stat, i) => (
           <div key={stat._key} className="grid grid-cols-[1fr_1fr_auto] gap-2 items-end mt-1">
-            <TextField label="Valor" placeholder="24/7" value={stat.value} onChange={(v) => setStat(i, { value: v })} error={errors[`stats.${i}.value`]} max={10} />
-            <TextField label="Etiqueta" placeholder="Soporte" value={stat[labelKey]} onChange={(v) => setStat(i, twinPatch("label", v, edit, single))} error={twinError(errors, `stats.${i}.`, "label", edit, primary)} max={20} />
+            <TextField label={tr(ui, "Valor")} placeholder="24/7" value={stat.value} onChange={(v) => setStat(i, { value: v })} error={errors[`stats.${i}.value`]} max={10} />
+            <TextField label={tr(ui, "Etiqueta")} placeholder={tr(ui, "Soporte")} value={stat[labelKey]} onChange={(v) => setStat(i, twinPatch("label", v, edit, single))} error={twinError(errors, `stats.${i}.`, "label", edit, primary)} max={20} />
             <button
               type="button"
-              aria-label="Quitar cifra"
+              aria-label={tr(ui, "Quitar cifra")}
               onClick={() => set("stats", value.stats.filter((_, j) => j !== i))}
               className="mb-1 w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50"
             >
@@ -64,7 +68,7 @@ const BannerSection = ({ initial, lang, ...events }: { initial: BannerSettings; 
             onClick={() => set("stats", [...value.stats, { _key: crypto.randomUUID(), value: "", label: "", labelEn: "" }])}
             className="block text-xs font-semibold text-shop_dark_green mt-2"
           >
-            + Agregar cifra
+            {tr(ui, "+ Agregar cifra")}
           </button>
         )}
       </div>
