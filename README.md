@@ -77,6 +77,8 @@ EMAIL_ENCRYPTION_KEY=genera_una_clave
 
 # App
 NEXT_PUBLIC_BASE_URL=http://localhost:3000
+# Avisos de errores a un canal de Slack o Discord (opcional)
+# ERROR_WEBHOOK_URL=https://discord.com/api/webhooks/...
 ```
 
 Genera `EMAIL_ENCRYPTION_KEY` con `node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))"`. No la cambies después de salir en vivo: la contraseña SMTP guardada se vuelve ilegible y todos los enlaces de baja ya enviados dejan de funcionar.

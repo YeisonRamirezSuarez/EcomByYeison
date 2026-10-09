@@ -430,12 +430,29 @@ assert.equal(
   150
 );
 assert.equal(dash.monthSales([], "COP"), 0);
+// Partial refunds made in Stripe come off the month's sales
+assert.equal(dash.monthSales([{ totalPrice: 100, amountRefunded: 30, currency: "usd" }, { totalPrice: 50, amountRefunded: null, currency: "usd" }], "USD"), 120);
 assert.equal(dash.monthStart(new Date("2026-10-06T15:00:00Z")), "2026-10-01T00:00:00.000Z");
 assert.equal(dash.monthStart(new Date("2026-01-31T23:59:00Z")), "2026-01-01T00:00:00.000Z");
 
 // Order status and filters
 const os = await import("../lib/orderStatus.ts");
-assert.deepEqual([...os.ORDER_STATUSES], ["pending", "paid", "processing", "shipped", "out_for_delivery", "delivered", "cancelled"]);
+assert.deepEqual([...os.ORDER_STATUSES], ["pending", "paid", "processing", "shipped", "out_for_delivery", "delivered", "cancelled", "refunded"]);
+assert.equal(os.statusLabel("refunded"), "Reembolsado");
+assert.equal(os.statusLabel("refunded", "en"), "Refunded");
+{
+  const { orderStatusText, t: tt } = await import("../lib/i18n.ts");
+  assert.equal(orderStatusText("en", "refunded"), "Refunded");
+  assert.equal(orderStatusText("es", "shipped"), tt("es", "ordersShipped"));
+  assert.equal(orderStatusText("es", "raro"), tt("es", "ordersPending"));
+  assert.equal(orderStatusText("es", null), tt("es", "ordersPending"));
+}
+// Stripe refunds (charge.refunded): amounts arrive in cents and add up; a late or repeated event never lowers them
+assert.deepEqual(os.refundPatch({ amount_refunded: 500, refunded: false }, 0), { amountRefunded: 5 });
+assert.deepEqual(os.refundPatch({ amount_refunded: 2000, refunded: true }, 5), { amountRefunded: 20, status: "refunded" });
+assert.equal(os.refundPatch({ amount_refunded: 500, refunded: false }, 20), null);
+assert.equal(os.refundPatch({ amount_refunded: 2000, refunded: true }, 20), null);
+assert.deepEqual(os.refundPatch({ amount_refunded: 2000, refunded: true }, undefined), { amountRefunded: 20, status: "refunded" });
 assert.equal(os.statusLabel("out_for_delivery"), "En reparto");
 assert.equal(os.statusLabel("raro"), "raro");
 assert.equal(os.statusLabel(undefined), "—");
@@ -458,7 +475,7 @@ assert.deepEqual(ids(os.filterOrders(orderRows, "all", "  abc ")), ["1"]);
 assert.deepEqual(ids(os.filterOrders(orderRows, "all", "TORRES")), ["1"]);
 assert.deepEqual(ids(os.filterOrders(orderRows, "delivered", "ana")), []);
 assert.deepEqual(os.countByStatus(orderRows), {
-  all: 3, pending: 0, paid: 2, processing: 0, shipped: 0, out_for_delivery: 0, delivered: 1, cancelled: 0,
+  all: 3, pending: 0, paid: 2, processing: 0, shipped: 0, out_for_delivery: 0, delivered: 1, cancelled: 0, refunded: 0,
 });
 
 assert.equal("adminTabs" in perms, false);
@@ -1539,6 +1556,22 @@ assert.equal(ck.checkoutLines([{ id: "p1", quantity: 1 }], [{ ...SERVER[0], pric
   // A product text can't close the inline script tag
   assert.ok(!seo.jsonLdScript({ name: "</script><script>alert(1)</script>" }).includes("<"));
   assert.deepEqual(JSON.parse(seo.jsonLdScript({ name: "a<b" })), { name: "a<b" });
+}
+
+// Error alerts to a Slack or Discord channel (lib/alerts.ts): short, one line, no buyer data
+{
+  const al = await import("../lib/alerts.ts");
+  assert.equal(al.alertText("tienda.com", "Stripe webhook", new Error("falló\nla escritura")), "[tienda.com] Stripe webhook: falló la escritura");
+  assert.equal(al.alertText("tienda.com", "Pago", "texto"), "[tienda.com] Pago: texto");
+  assert.equal(al.alertText("tienda.com", "Pago", { raro: true }), "[tienda.com] Pago: Error desconocido");
+  const long = al.alertText("tienda.com", "Pago", new Error("x".repeat(2000)));
+  assert.ok(long.length <= 400 && long.endsWith("…"), String(long.length));
+  assert.deepEqual(al.alertBody("https://discord.com/api/webhooks/1/abc", "hola"), { content: "hola" });
+  assert.deepEqual(al.alertBody("https://hooks.slack.com/services/T/B/C", "hola"), { text: "hola" });
+  assert.equal(al.pathOnly("/success?session_id=cs_123&orderNumber=9"), "/success");
+  assert.equal(al.pathOnly("/cart"), "/cart");
+  assert.equal(al.storeName("https://tienda.com"), "tienda.com");
+  assert.equal(al.storeName(undefined), "tienda");
 }
 
 console.log("check-permissions: ok");

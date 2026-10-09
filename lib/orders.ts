@@ -9,6 +9,7 @@ import type { Locale } from "@/lib/i18n";
 import { resolveLocale } from "@/lib/localize";
 import { getSiteSettings } from "@/sanity/queries/siteSettings";
 import Stripe from "stripe";
+import { refundPatch } from "@/lib/orderStatus";
 
 type OrderMetadata = Metadata & { address?: string };
 
@@ -232,4 +233,19 @@ async function decrementStock(
     }
     console.error(`Failed to update stock for product ${productId}:`, error);
   }
+}
+
+// A refund made in Stripe (charge.refunded) is written on the order paid with that charge.
+// Charges with no order in this store are ignored.
+export async function recordRefund(charge: Stripe.Charge): Promise<void> {
+  const paymentIntent = typeof charge.payment_intent === "string" ? charge.payment_intent : charge.payment_intent?.id;
+  if (!paymentIntent) return;
+  const order = await backendClient.fetch<{ _id: string; amountRefunded?: number } | null>(
+    `*[_type == "order" && stripePaymentIntentId == $paymentIntent][0]{ _id, amountRefunded }`,
+    { paymentIntent },
+    { perspective: "published", useCdn: false, cache: "no-store" }
+  );
+  if (!order) return;
+  const patch = refundPatch(charge, order.amountRefunded);
+  if (patch) await backendClient.patch(order._id).set(patch).commit();
 }

@@ -11,7 +11,7 @@ import { backendClient } from "@/sanity/lib/backendClient";
 import { getSiteSettings } from "@/sanity/queries/siteSettings";
 
 const DASHBOARD_QUERY = `{
-  "month": *[_type == "order" && orderDate >= $start && status != "cancelled"]{ totalPrice, currency },
+  "month": *[_type == "order" && orderDate >= $start && !(status in ["cancelled", "refunded"])]{ totalPrice, amountRefunded, currency },
   "toShip": count(*[_type == "order" && status in ["paid", "processing"]]),
   "outOfStock": count(*[_type == "product" && archived != true && (!defined(stock) || stock <= 0)]),
   "recent": *[_type == "order"] | order(orderDate desc)[0...5]{ _id, orderNumber, customerName, totalPrice, currency, status }

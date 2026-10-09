@@ -10,6 +10,7 @@ export const ORDER_STATUSES = [
   "out_for_delivery",
   "delivered",
   "cancelled",
+  "refunded",
 ] as const;
 export type OrderStatus = (typeof ORDER_STATUSES)[number];
 
@@ -21,6 +22,7 @@ export const ORDER_STATUS_LABELS: Record<OrderStatus, AdminText> = {
   out_for_delivery: "En reparto",
   delivered: "Entregado",
   cancelled: "Cancelado",
+  refunded: "Reembolsado",
 };
 
 export const ORDER_STATUS_COLORS: Record<OrderStatus, string> = {
@@ -31,6 +33,7 @@ export const ORDER_STATUS_COLORS: Record<OrderStatus, string> = {
   out_for_delivery: "bg-orange-100 text-orange-800",
   delivered: "bg-green-100 text-green-800",
   cancelled: "bg-red-100 text-red-800",
+  refunded: "bg-pink-100 text-pink-800",
 };
 
 export function isOrderStatus(value: unknown): value is OrderStatus {
@@ -42,6 +45,17 @@ export const statusLabel = (value?: string, ui: Locale = "es"): string =>
 
 export const statusColor = (value?: string): string =>
   isOrderStatus(value) ? ORDER_STATUS_COLORS[value] : "bg-gray-100 text-gray-700";
+
+// Stripe's charge.refunded: amount_refunded is the running total in cents. Events can repeat or
+// arrive out of order, so only a bigger total is written; a full refund also sets the status.
+export function refundPatch(
+  charge: { amount_refunded: number; refunded: boolean },
+  storedRefunded: number | undefined
+): { amountRefunded: number; status?: "refunded" } | null {
+  const amountRefunded = charge.amount_refunded / 100;
+  if (amountRefunded <= (storedRefunded ?? 0)) return null;
+  return charge.refunded ? { amountRefunded, status: "refunded" } : { amountRefunded };
+}
 
 export type OrderRow = {
   _id: string;

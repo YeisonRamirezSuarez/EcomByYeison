@@ -10,6 +10,7 @@ import { backendClient } from "@/sanity/lib/backendClient";
 import { checkoutExtras, checkoutLines, type CheckoutProduct } from "@/lib/checkout";
 import type { ActionResult } from "@/lib/actionResult";
 import { t } from "@/lib/i18n";
+import { reportError } from "@/lib/alerts";
 
 export interface Metadata {
   orderNumber: string;
@@ -109,6 +110,7 @@ export async function createCheckoutSession(
     return { ok: true, data: session.url };
   } catch (error) {
     console.error("Error creating Checkout Session", error);
+    await reportError("Pago: no se pudo iniciar el checkout de Stripe", error);
     return { ok: false, error: t(locale, "checkoutFailed") };
   }
 }

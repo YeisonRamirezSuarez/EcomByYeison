@@ -81,8 +81,10 @@ NEXT_PUBLIC_BASE_URL=https://tiendaana.com
    npm run stripe:webhook -- .env.ana
    ```
    Copia el secreto que muestra (`whsec_…`) a `STRIPE_WEBHOOK_SECRET`. Stripe no lo vuelve a mostrar.
+   El webhook crea los pedidos pagados y anota los reembolsos hechos en Stripe. Si el webhook ya existía sin el evento de reembolsos, el mismo comando se lo agrega.
 3. Correo por variables (opcional): agrega `SMTP_HOST`, `SMTP_USER` y `SMTP_PASSWORD`, y si hace falta `SMTP_PORT` (por defecto 587) y `SMTP_FROM_EMAIL` (por defecto `SMTP_USER`). Si no lo haces, el dueño configura el correo en **Ajustes → Correo** del panel.
-4. Revisa el archivo:
+4. Avisos de errores (opcional): crea un webhook entrante en un canal de Slack o de Discord (en Discord: canal → Editar canal → Integraciones → Webhooks) y pon su dirección en `ERROR_WEBHOOK_URL`. Todas las tiendas pueden avisar al mismo canal; cada aviso dice de qué tienda es. Llega un aviso cuando falla algo en el servidor, cuando Stripe cobró pero no se pudo crear el pedido y cuando no se pudo iniciar un pago. No incluye datos de compradores.
+5. Revisa el archivo:
    ```bash
    npm run check:env -- .env.ana
    ```
@@ -129,7 +131,8 @@ Con las claves `test` de Stripe:
 2. Confirma que el pedido aparece en el panel (**Pedidos**) y en Stripe (**Payments**, modo de prueba).
 3. Si el correo está configurado, confirma que llegó el correo del pedido.
 4. Si la tienda cobra envío o impuestos, confirma que Stripe muestra la línea de envío y la de impuestos, y que el pedido en el panel muestra los mismos montos.
-5. Si creaste un producto solo para la prueba, bórralo desde el panel.
+5. Reembolsa ese pago desde Stripe (**Payments** → el pago → **Refund**) y confirma que el pedido pasa a **Reembolsado** en el panel.
+6. Si creaste un producto solo para la prueba, bórralo desde el panel.
 
 ## 8. Pasar a cobros reales
 
@@ -160,3 +163,23 @@ Cuando la cuenta Stripe del cliente esté activada:
   Trabaja en otra rama y únela a `master` solo cuando esté probada.
 - **Volver atrás en una tienda.** En Vercel, **Deployments**, abre el despliegue anterior que funcionaba y usa **Instant Rollback**. Solo afecta esa tienda; la siguiente entrega la vuelve a actualizar.
 - No subas a `master` trabajo a medias: llega a todos los clientes.
+
+## 11. Respaldos
+
+Sanity guarda el contenido, pero un borrado por error (un producto, un pedido) no tiene vuelta atrás sin un respaldo. Haz uno al entregar la tienda y luego una vez al mes, o antes de cambios grandes:
+
+```bash
+npm run backup -- .env.ana
+```
+
+Descarga todo (productos, pedidos, direcciones, ajustes e imágenes) a `backups/<proyecto>-<dataset>-<fecha>-<hora>.tar.gz` usando `SANITY_API_READ_TOKEN`. La carpeta `backups/` no se sube a git.
+
+**El archivo tiene datos personales de los compradores.** Guárdalo en un lugar privado (por ejemplo, una carpeta cifrada o un disco del cliente) y borra los respaldos viejos que ya no necesites.
+
+Para restaurar, con un token de Sanity con permiso de edición (`SANITY_AUTH_TOKEN`), y sabiendo que reemplaza los documentos con el mismo id:
+
+```bash
+npx sanity dataset import backups/<archivo>.tar.gz production --replace
+```
+
+Pruébalo antes en un dataset aparte (por ejemplo `restore-test`) si no estás seguro.

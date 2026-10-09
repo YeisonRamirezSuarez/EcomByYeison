@@ -1,13 +1,14 @@
 // Dashboard math. No imports: also run by scripts/check-permissions.mjs.
 
-export type OrderSummary = { totalPrice?: number | null; currency?: string | null };
+export type OrderSummary = { totalPrice?: number | null; amountRefunded?: number | null; currency?: string | null };
 
 // Only orders in the store's current currency are added: mixing USD and COP makes no sense.
+// Refunds made in Stripe come off.
 export function monthSales(orders: OrderSummary[], storeCurrency: string): number {
   const code = storeCurrency.toUpperCase();
   return orders.reduce(
     (sum, order) =>
-      (order.currency ?? "").toUpperCase() === code ? sum + (order.totalPrice ?? 0) : sum,
+      (order.currency ?? "").toUpperCase() === code ? sum + (order.totalPrice ?? 0) - (order.amountRefunded ?? 0) : sum,
     0
   );
 }

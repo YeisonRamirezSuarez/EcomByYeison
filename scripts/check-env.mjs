@@ -5,7 +5,7 @@ import { mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import Stripe from "stripe";
-import { checkEnv, findWebhook, pickSingleUser, PRIVATE_TYPES, publicPrivateDocs, readEnvFile, stripeErrorMessage, webhookUrl, WEBHOOK_EVENT } from "./deploy-lib.mjs";
+import { checkEnv, findWebhook, pickSingleUser, PRIVATE_TYPES, publicPrivateDocs, readEnvFile, stripeErrorMessage, webhookUrl, missingEvents, WEBHOOK_EVENTS, backupName } from "./deploy-lib.mjs";
 
 const args = process.argv.slice(2);
 
@@ -91,7 +91,14 @@ if (args.includes("--self-test")) {
   const endpoints = [{ id: "we_1", url: "https://otra.com/api/webhook" }, { id: "we_2", url: "https://tienda.com/api/webhook" }];
   assert.equal(findWebhook(endpoints, "https://tienda.com/api/webhook").id, "we_2");
   assert.equal(findWebhook(endpoints, "https://nueva.com/api/webhook"), null);
-  assert.equal(WEBHOOK_EVENT, "checkout.session.completed");
+  assert.deepEqual(WEBHOOK_EVENTS, ["checkout.session.completed", "charge.refunded"]);
+  // Backups never overwrite each other: local date and time in the name
+  assert.equal(backupName("abc123", "production", new Date(2026, 9, 8, 9, 5)), "abc123-production-2026-10-08-0905.tar.gz");
+  assert.deepEqual(missingEvents({ enabled_events: ["checkout.session.completed"] }), ["charge.refunded"]);
+  assert.deepEqual(missingEvents({ enabled_events: ["*"] }), []);
+  assert.deepEqual(missingEvents({ enabled_events: ["charge.refunded", "checkout.session.completed"] }), []);
+  assert.deepEqual(problems({ ERROR_WEBHOOK_URL: "http://hooks.slack.com/x" }), ["ERROR_WEBHOOK_URL debe empezar por https://"]);
+  assert.deepEqual(problems({ ERROR_WEBHOOK_URL: "https://discord.com/api/webhooks/1/abc" }), []);
 
   // Windows PowerShell 5.1 redirects text as UTF-16: say so instead of reporting every variable missing
   const utf16File = join(dir, ".env.utf16");
@@ -149,8 +156,8 @@ async function checkOnline(env) {
     if (new URL(url).hostname !== "localhost") {
       if (!endpoint) errors.push(`Stripe no tiene un webhook hacia ${url}: corre npm run stripe:webhook`);
       else if (endpoint.status !== "enabled") errors.push(`El webhook de Stripe hacia ${url} está desactivado`);
-      else if (!endpoint.enabled_events.some((event) => event === WEBHOOK_EVENT || event === "*")) {
-        errors.push(`El webhook de Stripe hacia ${url} no escucha ${WEBHOOK_EVENT}`);
+      else if (missingEvents(endpoint).length) {
+        errors.push(`El webhook de Stripe hacia ${url} no escucha ${missingEvents(endpoint).join(", ")}: corre npm run stripe:webhook`);
       }
     }
   } catch (error) {

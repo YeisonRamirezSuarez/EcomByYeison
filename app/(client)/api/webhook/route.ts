@@ -1,5 +1,6 @@
 import stripe from "@/lib/stripe";
-import { createOrderFromStripeSession } from "@/lib/orders";
+import { createOrderFromStripeSession, recordRefund } from "@/lib/orders";
+import { reportError } from "@/lib/alerts";
 import { headers } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
@@ -43,10 +44,22 @@ export async function POST(req: NextRequest) {
       // Return 500 so Stripe retries — safe to retry because order creation is
       // idempotent (deterministic id + existing-order check).
       console.error("Error creating order in sanity:", error);
+      // Paid in Stripe but no order yet: the most urgent thing to hear about.
+      await reportError("Webhook de Stripe: no se pudo crear el pedido (Stripe reintentará)", error);
       return NextResponse.json(
         { error: "Error processing order" },
         { status: 500 }
       );
+    }
+  }
+  if (event.type === "charge.refunded") {
+    try {
+      await recordRefund(event.data.object as Stripe.Charge);
+    } catch (error) {
+      // 500 so Stripe retries; the patch only ever raises the refunded amount.
+      console.error("Error recording refund in sanity:", error);
+      await reportError("Webhook de Stripe: no se pudo registrar el reembolso", error);
+      return NextResponse.json({ error: "Error processing refund" }, { status: 500 });
     }
   }
   return NextResponse.json({ received: true });

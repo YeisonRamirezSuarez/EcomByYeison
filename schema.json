@@ -3254,6 +3254,13 @@
         },
         "optional": true
       },
+      "amountRefunded": {
+        "type": "objectAttribute",
+        "value": {
+          "type": "number"
+        },
+        "optional": true
+      },
       "address": {
         "type": "objectAttribute",
         "value": {

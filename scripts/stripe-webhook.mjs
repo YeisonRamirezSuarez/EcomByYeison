@@ -1,7 +1,8 @@
-// Creates the Stripe webhook that turns paid checkouts into orders, in the key's mode (test or live).
+// Creates the Stripe webhook that turns paid checkouts into orders and records refunds, in the key's
+// mode (test or live). An existing webhook gets the events it lacks.
 // Run: npm run stripe:webhook -- [archivo .env]
 import Stripe from "stripe";
-import { findWebhook, keyMode, readEnvFile, stripeErrorMessage, webhookUrl, WEBHOOK_EVENT } from "./deploy-lib.mjs";
+import { findWebhook, keyMode, missingEvents, readEnvFile, stripeErrorMessage, webhookUrl, WEBHOOK_EVENTS } from "./deploy-lib.mjs";
 
 try {
   const env = readEnvFile(process.argv[2]);
@@ -15,9 +16,14 @@ try {
   const existing = findWebhook((await stripe.webhookEndpoints.list({ limit: 100 })).data, url);
   if (existing) {
     console.log(`Ya existe un webhook en modo ${mode} hacia ${url} (${existing.id}); no se creó otro.`);
+    const missing = missingEvents(existing);
+    if (missing.length) {
+      await stripe.webhookEndpoints.update(existing.id, { enabled_events: [...existing.enabled_events, ...missing] });
+      console.log(`Se agregaron al webhook los eventos: ${missing.join(", ")}.`);
+    }
     console.log("Stripe no vuelve a mostrar su secreto. Si no lo tienes: Stripe → Developers → Webhooks → ese endpoint → Roll secret, y copia el nuevo a STRIPE_WEBHOOK_SECRET.");
   } else {
-    const endpoint = await stripe.webhookEndpoints.create({ url, enabled_events: [WEBHOOK_EVENT], description: "Pedidos de la tienda" });
+    const endpoint = await stripe.webhookEndpoints.create({ url, enabled_events: WEBHOOK_EVENTS, description: "Pedidos de la tienda" });
     console.log(`Webhook creado en modo ${mode}: ${url}`);
     console.log("Copia este secreto a STRIPE_WEBHOOK_SECRET (Stripe no lo vuelve a mostrar):");
     console.log(endpoint.secret);

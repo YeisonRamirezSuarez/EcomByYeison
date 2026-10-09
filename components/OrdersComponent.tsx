@@ -15,7 +15,7 @@ import { useState } from "react";
 import OrderDetailDialog from "./OrderDetailDialog";
 import toast from "react-hot-toast";
 import { useLocale } from "@/components/StoreSettingsProvider";
-import { t } from "@/lib/i18n";
+import { orderStatusText, t } from "@/lib/i18n";
 
 const OrdersComponent = ({ orders }: { orders: MyOrder[] }) => {
   const locale = useLocale();
@@ -32,22 +32,12 @@ const OrdersComponent = ({ orders }: { orders: MyOrder[] }) => {
       out_for_delivery: "bg-orange-100 text-orange-800",
       delivered: "bg-shop_dark_green/10 text-shop_dark_green",
       cancelled: "bg-red-100 text-red-800",
+      refunded: "bg-pink-100 text-pink-800",
     };
     return colors[status] || "bg-gray-100 text-gray-800";
   };
 
-  const getStatusLabel = (status: string): string => {
-    const statusLabels: Record<string, string> = {
-      pending: t(locale, "ordersPending"),
-      paid: t(locale, "ordersPaid"),
-      processing: t(locale, "ordersProcessing"),
-      shipped: t(locale, "ordersShipped"),
-      out_for_delivery: t(locale, "ordersOutForDelivery"),
-      delivered: t(locale, "ordersDelivered"),
-      cancelled: t(locale, "ordersCancelled"),
-    };
-    return statusLabels[status] || t(locale, "ordersPending");
-  };
+  const getStatusLabel = (status: string): string => orderStatusText(locale, status);
   
   const handleDelete = () => {
     toast.error(t(locale, "ordersActionNotAvailable"));

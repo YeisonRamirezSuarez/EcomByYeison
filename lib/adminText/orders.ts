@@ -7,6 +7,7 @@ export const orders = {
   "En reparto": "Out for delivery",
   "Entregado": "Delivered",
   "Cancelado": "Cancelled",
+  "Reembolsado": "Refunded",
   "Revisa los pedidos y actualiza su estado.": "Review orders and update their status.",
   "Pedido marcado como {status}": "Order marked as {status}",
   "No se pudo cambiar el estado": "The status could not be changed",

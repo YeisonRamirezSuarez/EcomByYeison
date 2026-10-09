@@ -116,6 +116,7 @@ export const orderType = defineType({
     }),
     defineField({ name: "amountShipping", title: "Amount Shipping", type: "number" }),
     defineField({ name: "amountTax", title: "Amount Tax", type: "number" }),
+    defineField({ name: "amountRefunded", title: "Amount Refunded", type: "number" }),
     defineField({
       name: "address",
       title: "Shipping Address",

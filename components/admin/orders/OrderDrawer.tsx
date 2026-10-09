@@ -140,6 +140,12 @@ const OrderDrawer = ({
                       <PriceFormatter amount={order.amountTax} currency={order.currency} />
                     </div>
                   )}
+                  {(order.amountRefunded ?? 0) > 0 && (
+                    <div className="flex justify-between text-pink-700">
+                      <span>{tr(ui, "Reembolsado")}</span>
+                      <PriceFormatter amount={order.amountRefunded} currency={order.currency} />
+                    </div>
+                  )}
                   <div className="flex justify-between font-bold text-shop_dark_green">
                     <span>{tr(ui, "Total ({currency})", { currency: (order.currency ?? "").toUpperCase() })}</span>
                     <PriceFormatter amount={order.totalPrice} currency={order.currency} className="text-shop_dark_green font-bold" />

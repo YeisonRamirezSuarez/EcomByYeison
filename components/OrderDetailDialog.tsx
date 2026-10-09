@@ -15,7 +15,7 @@ import Image from "next/image";
 import { urlFor } from "@/sanity/lib/image";
 import PriceFormatter from "./PriceFormatter";
 import { useLocale } from "@/components/StoreSettingsProvider";
-import { t } from "@/lib/i18n";
+import { orderStatusText, t } from "@/lib/i18n";
 import { CURRENCIES, isCurrencyCode } from "@/constants/currencies";
 
 interface OrderDetailsDialogProps {
@@ -45,10 +45,7 @@ const OrderDetailDialog: React.FC<OrderDetailsDialogProps> = ({
   const tax = isCurrencyCode(code) && CURRENCIES[code].taxBehavior === "exclusive" ? order.amountTax ?? 0 : 0;
   const subtotal = (order.totalPrice ?? 0) + discount - shipping - tax;
 
-  const translatedStatus =
-    order.status === "paid"
-      ? t(locale, "ordersPaid")
-      : t(locale, "ordersPending");
+  const translatedStatus = orderStatusText(locale, order.status);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -205,6 +202,16 @@ const OrderDetailDialog: React.FC<OrderDetailsDialogProps> = ({
                 className="text-black font-bold"
               />
             </div>
+            {(order.amountRefunded ?? 0) > 0 && (
+              <div className="w-full flex items-center justify-between">
+                <strong>{t(locale, "ordersRefunded")}: </strong>
+                <PriceFormatter
+                  currency={order?.currency}
+                  amount={order.amountRefunded}
+                  className="text-black font-bold"
+                />
+              </div>
+            )}
           </div>
         </div>
       </DialogContent>

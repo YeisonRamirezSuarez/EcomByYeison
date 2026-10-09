@@ -33,6 +33,9 @@ yarn-error.log*
 # env files (can opt-in for committing if needed)
 .env*
 
+# Sanity backups (npm run backup): buyers' personal data
+/backups
+
 # vercel
 .vercel
 

@@ -36,7 +36,7 @@ const MY_ORDERS_QUERY =
 // Admin orders list (polled every 10 s): only what the list and drawer show.
 // ponytail: all orders in one response; paginate on the server when a store has many thousands.
 const ADMIN_ORDERS_QUERY = defineQuery(`*[_type == 'order'] | order(orderDate desc){
-  _id, orderNumber, customerName, email, status, orderDate, totalPrice, currency, amountDiscount, amountShipping, amountTax, address,
+  _id, orderNumber, customerName, email, status, orderDate, totalPrice, currency, amountDiscount, amountShipping, amountTax, amountRefunded, address,
   products[]{ _key, quantity, product->{ _id, "name": select(length(name) > 0 => name, nameEn), price, "images": images[0...1] } }
 }`);
 const SHOP_PRODUCTS_QUERY = defineQuery(`*[_type == 'product' && archived != true

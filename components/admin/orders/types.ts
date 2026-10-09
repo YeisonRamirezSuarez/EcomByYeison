@@ -12,6 +12,7 @@ export type AdminOrder = {
   amountDiscount?: number;
   amountShipping?: number;
   amountTax?: number;
+  amountRefunded?: number;
   address?: { name?: string; address?: string; city?: string; state?: string; zip?: string };
   products?: {
     _key: string;

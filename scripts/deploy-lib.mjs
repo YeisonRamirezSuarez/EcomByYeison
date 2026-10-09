@@ -20,7 +20,10 @@ export const REQUIRED = [
   "NEXT_PUBLIC_BASE_URL",
 ];
 export const SMTP = ["SMTP_HOST", "SMTP_PORT", "SMTP_USER", "SMTP_PASSWORD", "SMTP_FROM_EMAIL"];
-export const WEBHOOK_EVENT = "checkout.session.completed";
+// Paid checkouts become orders; refunds made in Stripe update them.
+export const WEBHOOK_EVENTS = ["checkout.session.completed", "charge.refunded"];
+export const missingEvents = (endpoint) =>
+  endpoint.enabled_events.includes("*") ? [] : WEBHOOK_EVENTS.filter((event) => !endpoint.enabled_events.includes(event));
 
 // The client's variables, kept apart from the terminal's own. Windows editors may add a BOM.
 export function readEnvFile(path = ".env.local") {
@@ -81,6 +84,9 @@ export function checkEnv(env) {
   for (const [name, path] of [["NEXT_PUBLIC_CLERK_SIGN_IN_URL", "/sign-in"], ["NEXT_PUBLIC_CLERK_SIGN_UP_URL", "/sign-up"]]) {
     if (has(name) && env[name] !== path) errors.push(`${name} debe ser ${path}`);
   }
+  if (has("ERROR_WEBHOOK_URL") && !env.ERROR_WEBHOOK_URL.startsWith("https://")) {
+    errors.push("ERROR_WEBHOOK_URL debe empezar por https://");
+  }
   // Same rule as lib/mailer.ts: SMTP_HOST turns the env mailer on; port and from have defaults.
   if (has("SMTP_HOST")) {
     for (const name of ["SMTP_USER", "SMTP_PASSWORD"]) if (!has(name)) errors.push(`Con SMTP_HOST hace falta ${name}`);
@@ -88,6 +94,13 @@ export function checkEnv(env) {
     errors.push("Falta SMTP_HOST (las demás SMTP_* no se usan sin ella)");
   }
   return { errors, modes };
+}
+
+// npm run backup: one file per run, named by local date and time so backups never overwrite each other.
+export function backupName(projectId, dataset, date) {
+  const two = (n) => String(n).padStart(2, "0");
+  const day = `${date.getFullYear()}-${two(date.getMonth() + 1)}-${two(date.getDate())}`;
+  return `${projectId}-${dataset}-${day}-${two(date.getHours())}${two(date.getMinutes())}.tar.gz`;
 }
 
 export const webhookUrl = (base) => `${base.replace(/\/+$/, "")}/api/webhook`;

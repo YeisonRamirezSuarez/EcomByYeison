@@ -207,6 +207,7 @@ type Messages = {
   ordersOutForDelivery: string;
   ordersDelivered: string;
   ordersCancelled: string;
+  ordersRefunded: string;
   ordersViewDetails: string;
   ordersActionNotAvailable: string;
   ordersDetailsTitle: string;
@@ -495,6 +496,7 @@ export const MESSAGES: Record<Locale, Messages> = {
     ordersOutForDelivery: "En camino",
     ordersDelivered: "Entregado",
     ordersCancelled: "Cancelado",
+    ordersRefunded: "Reembolsado",
     ordersViewDetails: "Haz clic para ver los detalles de la orden",
     ordersActionNotAvailable: "Acción disponible solo para administradores",
     ordersDetailsTitle: "Detalles de la orden",
@@ -781,6 +783,7 @@ export const MESSAGES: Record<Locale, Messages> = {
     ordersOutForDelivery: "Out for Delivery",
     ordersDelivered: "Delivered",
     ordersCancelled: "Cancelled",
+    ordersRefunded: "Refunded",
     ordersViewDetails: "Click to see order details",
     ordersActionNotAvailable: "Action available for admins only",
     ordersDetailsTitle: "Order Details",
@@ -869,3 +872,18 @@ export function t(locale: Locale, key: keyof Messages, vars?: Record<string, str
   const message = MESSAGES[locale]?.[key] ?? MESSAGES.es[key];
   return vars ? message.replace(/\{(\w+)\}/g, (match, name: string) => vars[name] ?? match) : message;
 }
+
+// Order status as the buyer sees it (My orders and the order detail).
+const ORDER_STATUS_KEYS: Record<string, keyof Messages> = {
+  pending: "ordersPending",
+  paid: "ordersPaid",
+  processing: "ordersProcessing",
+  shipped: "ordersShipped",
+  out_for_delivery: "ordersOutForDelivery",
+  delivered: "ordersDelivered",
+  cancelled: "ordersCancelled",
+  refunded: "ordersRefunded",
+};
+
+export const orderStatusText = (locale: Locale, status: string | null | undefined): string =>
+  t(locale, (status && ORDER_STATUS_KEYS[status]) || "ordersPending");
